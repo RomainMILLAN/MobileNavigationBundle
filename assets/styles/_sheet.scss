@@ -1,0 +1,368 @@
+@use 'tokens' as *;
+@use 'glass' as *;
+
+// ===========================
+// iOS sheets: shell, grouped lists, rows, confirmation
+// ===========================
+
+.rm-mnb-sheet {
+    position: fixed;
+    inset: 0 0 calc(0px - var(--rm-mnb-viewport-gap));
+    z-index: $rm-mnb-z-sheet;
+    visibility: hidden;
+    pointer-events: none;
+    // visibility switches after closing, to let the panel slide back down.
+    transition: visibility 0s linear $rm-mnb-duration-sheet;
+}
+
+.rm-mnb-sheet--open {
+    visibility: visible;
+    pointer-events: auto;
+    transition: visibility 0s;
+}
+
+.rm-mnb-sheet__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--rm-mnb-backdrop);
+    opacity: 0;
+    transition: opacity $rm-mnb-duration-sheet $rm-mnb-ease-sheet;
+    // iOS Safari only sends click on a div if it declares itself clickable.
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    .rm-mnb-sheet--open & {
+        opacity: 1;
+    }
+}
+
+// The glass panel only moves via transform; its blur radius is never animated.
+.rm-mnb-sheet__panel {
+    @include glass(strong);
+
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 64px);
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 48px);
+    border-radius: $rm-mnb-radius-sheet;
+    outline: none;
+    transform: translate3d(0, calc(100% + 24px), 0);
+    transition: transform $rm-mnb-duration-sheet $rm-mnb-ease-sheet;
+
+    .rm-mnb-sheet--open & {
+        transform: translate3d(0, 0, 0);
+    }
+
+    &.is-dragging {
+        transition: none;
+        will-change: transform;
+    }
+}
+
+.rm-mnb-sheet--instant,
+.rm-mnb-sheet--instant .rm-mnb-sheet__panel,
+.rm-mnb-sheet--instant .rm-mnb-sheet__backdrop {
+    transition: none !important;
+}
+
+.rm-mnb-sheet__handle {
+    position: relative;
+    flex: none;
+    display: block;
+    width: 64px;
+    height: 24px;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: grab;
+    -webkit-tap-highlight-color: transparent;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 9px;
+        left: 50%;
+        width: 36px;
+        height: 5px;
+        margin-left: -18px;
+        border-radius: 3px;
+        background: rgba(var(--rm-mnb-ink-rgb), 0.3);
+    }
+
+    &:focus-visible {
+        @include focus-ring(0);
+
+        border-radius: 8px;
+    }
+}
+
+.rm-mnb-sheet__title {
+    flex: none;
+    margin: 0 20px 12px;
+    color: var(--rm-mnb-ink);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.rm-mnb-sheet__message {
+    margin: 0 20px 16px;
+    color: var(--rm-mnb-ink);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.rm-mnb-sheet__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 12px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+// Sheet that is a sheet only on mobile (e.g. filters): above that, its content is rendered
+// in place, with no shell or glass.
+@media (min-width: $rm-mnb-mobile-max + 0.02px) {
+    .rm-mnb-sheet--mobile-only {
+        position: static;
+        z-index: auto;
+        visibility: visible;
+        pointer-events: auto;
+
+        .rm-mnb-sheet__backdrop,
+        .rm-mnb-sheet__handle,
+        .rm-mnb-sheet__title {
+            display: none;
+        }
+
+        .rm-mnb-sheet__panel {
+            position: static;
+            max-height: none;
+            border-radius: 0;
+            background: none;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            box-shadow: none;
+            outline: none;
+            transform: none;
+        }
+
+        .rm-mnb-sheet__body {
+            padding: 0;
+            overflow: visible;
+        }
+    }
+}
+
+// --- Grouped lists ---
+
+.rm-mnb-group {
+    margin-bottom: 14px;
+    overflow: hidden;
+    border-radius: $rm-mnb-radius-group;
+    background-color: var(--rm-mnb-surface);
+    box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
+
+    // iOS separator: a hairline that starts after the badge.
+    > * {
+        position: relative;
+    }
+
+    > * + *::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 58px;
+        right: 0;
+        height: 1px;
+        background: var(--rm-mnb-border);
+        pointer-events: none;
+    }
+
+    > form {
+        display: block;
+        margin: 0;
+    }
+}
+
+.rm-mnb-group__heading {
+    margin: 18px 8px 6px;
+    color: var(--rm-mnb-ink);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rm-mnb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 50px;
+    padding: 9px 14px;
+    border: 0;
+    background: none;
+    color: var(--rm-mnb-ink);
+    font-size: 16px;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover {
+        color: var(--rm-mnb-ink);
+    }
+
+    &:active {
+        background-color: rgba(var(--rm-mnb-ink-rgb), 0.07);
+    }
+
+    &:focus-visible {
+        @include focus-ring(-2px);
+    }
+
+    &--static {
+        cursor: default;
+
+        &:active {
+            background: none;
+        }
+    }
+
+    &--danger,
+    &--danger:hover {
+        color: var(--rm-mnb-danger-ink);
+    }
+}
+
+// Category code, not an accent: the color helps find a row.
+.rm-mnb-chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: $rm-mnb-radius-chip;
+    background-color: var(--rm-mnb-tone, var(--rm-mnb-tone-neutral));
+    color: #fff;
+    font-size: 18px;
+
+    // Double-use class (emitted by SheetRow/ListRow, set by hand by apps): a generic
+    // descendant covers both a raw <i> and one wrapped in .rm-mnb-icon-slot.
+    :where(i, svg) {
+        color: #fff;
+    }
+}
+
+.rm-mnb-row__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rm-mnb-row__value {
+    flex: none;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.rm-mnb-row__chevron {
+    flex: none;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.45);
+    font-size: 18px;
+}
+
+.rm-mnb-row__check {
+    @include accent-ink;
+
+    flex: none;
+    font-size: 20px;
+}
+
+// Information, not action: no accent.
+.rm-mnb-badge {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: rgba(var(--rm-mnb-ink-rgb), 0.08);
+    color: var(--rm-mnb-tone-ink-current, var(--rm-mnb-ink));
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+// iOS switch, driven by aria-checked on the row.
+.rm-mnb-switch {
+    position: relative;
+    flex: none;
+    width: 51px;
+    height: 31px;
+    border-radius: 16px;
+    background-color: rgba(var(--rm-mnb-ink-rgb), 0.2);
+    transition: background-color $rm-mnb-duration-fade ease;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 27px;
+        height: 27px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+        transition: transform $rm-mnb-duration-fade ease;
+    }
+
+    [aria-checked="true"] > & {
+        background-color: var(--rm-mnb-accent-fill);
+
+        &::after {
+            transform: translateX(20px);
+        }
+    }
+}
+
+// --- Confirmation sheet ---
+
+.rm-mnb-confirm__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px 12px;
+}
+
+.rm-mnb-confirm__button {
+    min-height: 50px;
+    border: 0;
+    border-radius: $rm-mnb-radius-group;
+    background-color: var(--rm-mnb-surface);
+    color: var(--rm-mnb-ink);
+    font-size: 17px;
+    font-weight: 600;
+    box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
+
+    &--destructive {
+        color: var(--rm-mnb-danger-ink);
+    }
+
+    &:focus-visible {
+        @include focus-ring(2px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rm-mnb-sheet,
+    .rm-mnb-sheet__panel,
+    .rm-mnb-sheet__backdrop {
+        transition-duration: 0.01ms;
+    }
+}

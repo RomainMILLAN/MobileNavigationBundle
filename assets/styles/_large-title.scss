@@ -1,0 +1,237 @@
+@use 'tokens' as *;
+@use 'glass' as *;
+
+// ===========================
+// iOS 26 large title: a row of glass controls, then the title
+// ===========================
+// Hook classes set by the app on its own markup:
+// .rm-mnb-large-title (container), __back (BackButton), __title (the <h1>), __trailing.
+
+// Round 44 px glass button: back, avatar, an icon-only action.
+.rm-mnb-glass-disc {
+    @include glass;
+
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: $rm-mnb-control-size;
+    height: $rm-mnb-control-size;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--rm-mnb-ink);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover {
+        color: var(--rm-mnb-ink);
+    }
+
+    &:focus-visible {
+        @include focus-ring(2px);
+    }
+}
+
+// 44 px tall glass pill: an action with a label.
+.rm-mnb-glass-pill {
+    @include glass;
+
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: $rm-mnb-control-size;
+    padding: 0 16px;
+    border: 0;
+    border-radius: $rm-mnb-control-size * 0.5;
+    color: var(--rm-mnb-ink);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:focus-visible {
+        @include focus-ring(2px);
+    }
+}
+
+// iOS 26 back button: a disc, a chevron, the parent's name for screen readers.
+.rm-mnb-back {
+    @include accent-ink;
+
+    font-size: 24px;
+
+    .rm-mnb-icon {
+        // The chevron is optically shifted to the left within its disc.
+        margin-left: -2px;
+    }
+}
+
+@media (max-width: $rm-mnb-mobile-max) {
+    // As on iOS 26: a 44 px row of controls (back on the left, actions and
+    // avatar on the right), then the large title alone across the full width. The actions never
+    // take space from it, so it is never truncated.
+    .rm-mnb-large-title {
+        display: grid;
+        grid-template-areas:
+            'back trailing'
+            'title title';
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 10px;
+        margin-bottom: 16px;
+        // Same height as the compact bar row: on collapse, nothing jumps.
+        padding-top: $rm-mnb-top-row-offset;
+    }
+
+    // Back and controls share the same vertical center.
+    .rm-mnb-large-title__back {
+        grid-area: back;
+        align-self: center;
+        justify-self: start;
+    }
+
+    .rm-mnb-large-title__title {
+        display: -webkit-box;
+        grid-area: title;
+        min-width: 0;
+        margin: 0;
+        overflow: hidden;
+        color: var(--rm-mnb-ink);
+        font-size: $rm-mnb-large-title-size;
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .rm-mnb-large-title__trailing {
+        display: flex;
+        grid-area: trailing;
+        align-items: center;
+        align-self: center;
+        gap: 8px;
+    }
+}
+
+// ===========================
+// iOS 26 compact bar: a blurred gradient, with glass controls floating over it
+// ===========================
+
+.rm-mnb-compact-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: $rm-mnb-z-chrome;
+    display: grid;
+    grid-template-columns: $rm-mnb-control-size minmax(0, 1fr) $rm-mnb-control-size;
+    align-items: center;
+    gap: 8px;
+    // Same margin as the page content: the back disc does not jump on collapse.
+    // The controls start below the edge effect iOS 26 paints under the status
+    // bar (blur and light veil, outside the page): any higher, it covered them.
+    padding: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset}) var(--rm-mnb-page-inset) 0;
+    height: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset} + #{$rm-mnb-control-size});
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $rm-mnb-duration-fade ease;
+
+    &.is-collapsed {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    @media (min-width: $rm-mnb-mobile-max + 0.02px) {
+        display: none;
+    }
+}
+
+// The compact bar veil: a separate element, UNDER the bar. When carried by a
+// pseudo-element of the bar, WebKit (iOS) painted it over the glass pills
+// despite the z-indexes (backdrop-filter + mask). It fades out downwards instead of
+// stopping sharply on a line, and follows the state of the bar that follows it.
+.rm-mnb-compact-bar-veil {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: $rm-mnb-z-chrome - 1;
+    height: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset} + #{$rm-mnb-control-size} + 8px + 24px);
+    // Nearly opaque across the whole control row (content no longer shows through
+    // around the pills, even when the status bar is translucent), then a short
+    // fade, below the row only. PAGE BACKGROUND color, not the card color: as
+    // on iOS, the white pills stand out from it instead of blending in.
+    background: linear-gradient(
+        rgba(var(--rm-mnb-page-bg-rgb), 0.97) 0,
+        rgba(var(--rm-mnb-page-bg-rgb), 0.97) calc(100% - 36px),
+        rgba(var(--rm-mnb-page-bg-rgb), 0) 100%
+    );
+    // No backdrop-filter here: being nearly opaque, the veil does not need it, and WebKit
+    // (iOS PWA) handles two stacked blurs poorly, which blurred the edges of the glass
+    // pills placed on top. The only blur is the pills' own.
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $rm-mnb-duration-fade ease;
+
+    &:has(+ .rm-mnb-compact-bar.is-collapsed) {
+        opacity: 1;
+    }
+
+    @media (min-width: $rm-mnb-mobile-max + 0.02px) {
+        display: none;
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+        background: var(--rm-mnb-page-bg);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+}
+
+.rm-mnb-compact-bar__leading {
+    grid-column: 1;
+}
+
+.rm-mnb-compact-bar__title {
+    @include glass;
+
+    grid-column: 2;
+    justify-self: center;
+    max-width: 100%;
+    padding: 9px 16px;
+    overflow: hidden;
+    border-radius: 18px;
+    color: var(--rm-mnb-ink);
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rm-mnb-compact-bar__trailing {
+    grid-column: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rm-mnb-compact-bar,
+    .rm-mnb-compact-bar-veil {
+        transition: none;
+    }
+}
+
+// PWA: in the installed app the document does not scroll (only .rm-mnb-scroller scrolls);
+// with absolute positioning, the bar and its veil stay at the same place on screen without being
+// fixed elements, which the iOS 26 edge effect seems to target first. The real
+// protection remains $rm-mnb-top-row-offset. In a browser, they stay fixed.
+@media (display-mode: standalone) {
+    .rm-mnb-compact-bar,
+    .rm-mnb-compact-bar-veil {
+        position: absolute;
+    }
+}

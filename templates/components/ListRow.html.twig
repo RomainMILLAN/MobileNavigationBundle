@@ -1,0 +1,44 @@
+{#
+    iOS grouped list row: tap = view, swipe = actions, selection in "Select" mode. Texts
+    arrive translated, URLs generated server side. The leading_icon block replaces the
+    <i> of the chip (variable: leading). Props: see the ListRow class.
+#}
+<div class="rm-mnb-list-row {{ attributes.render('class') }}"
+     {{ attributes.defaults(this.swipeAttributes) }}>
+    {% if selectable %}
+        <label class="rm-mnb-list-row__select">
+            <input type="checkbox" name="{{ selectable.name }}" value="{{ selectable.value }}"
+                   aria-label="{{ selectable.label }}" {{ selectable.attributes ? selectable.attributes|raw }}>
+        </label>
+    {% endif %}
+    {% if href %}
+    <a href="{{ href }}" class="rm-mnb-list-row__main" data-turbo-frame="{{ turboFrame }}">
+    {% else %}
+    <div class="rm-mnb-list-row__main rm-mnb-list-row__main--static">
+    {% endif %}
+        {% if leading %}
+            <span class="rm-mnb-chip rm-mnb-tone--{{ leading.tone }}">
+                <span class="rm-mnb-icon-slot">{% block leading_icon %}<i class="{{ leading.icon }}" aria-hidden="true"></i>{% endblock %}</span>
+            </span>
+        {% endif %}
+        <span class="rm-mnb-list-row__body">
+            <span class="rm-mnb-list-row__title{{ titleStrike ? ' rm-mnb-list-row__title--strike' }}">{{ title }}</span>
+            {% if subtitle %}
+                <span class="rm-mnb-list-row__subtitle">{{ subtitle }}</span>
+            {% endif %}
+        </span>
+        {% if value or badge %}
+            <span class="rm-mnb-list-row__trailing">
+                {% if value %}
+                    <span class="rm-mnb-list-row__value rm-mnb-tone--{{ value.tone }}"{{ this.valueAttributes|raw }}>{{ value.text }}</span>
+                {% endif %}
+                {% if badge %}
+                    <span class="rm-mnb-badge rm-mnb-tone--{{ badge.tone }}">{{ badge.label }}</span>
+                {% endif %}
+            </span>
+        {% endif %}
+        {% if chevron and href %}
+            <span class="rm-mnb-icon rm-mnb-icon--chevron rm-mnb-list-row__chevron" aria-hidden="true"></span>
+        {% endif %}
+    {% if href %}</a>{% else %}</div>{% endif %}
+</div>

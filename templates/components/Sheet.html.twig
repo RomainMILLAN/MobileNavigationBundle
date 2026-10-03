@@ -1,0 +1,19 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    iOS sheet. The <id>:open|close|toggle commands (window events) drive it. With
+    mobileOnly, above 768 px its content renders in place, without the shell: it is a
+    dialog only once open. Other attributes (class, Stimulus actions by spread) go on the
+    root. Props: see the Sheet class.
+#}
+<div class="rm-mnb-sheet{{ mobileOnly ? ' rm-mnb-sheet--mobile-only' }} {{ attributes.render('class') }}" id="{{ id }}"{% if not mobileOnly %} role="dialog" aria-modal="true"{% endif %} aria-labelledby="{{ id }}-title"
+     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents })) }}>
+    {# A <div> has no default event for Stimulus: click is explicit. #}
+    <div class="rm-mnb-sheet__backdrop" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss', 'click') }}></div>
+    <div class="rm-mnb-sheet__panel" tabindex="-1" {{ stimulus_target(rm_mnb_controller('sheet'), 'panel') }}>
+        <button type="button" class="rm-mnb-sheet__handle" aria-label="{{ 'sheet.close'|trans }}" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss') }}></button>
+        <h2 class="{{ titleHidden ? 'rm-mnb-visually-hidden' : 'rm-mnb-sheet__title' }}" id="{{ id }}-title">{{ title }}</h2>
+        <div class="rm-mnb-sheet__body"{% if scrollable %} {{ stimulus_target(rm_mnb_controller('sheet'), 'scroll') }}{% endif %}>
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>

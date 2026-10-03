@@ -1,0 +1,12 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    "Select / Done" button: toggles the selection mode of the page list. It can live
+    anywhere (top row, as on iOS): it drives the list through the
+    rm-mnb-list:toggle-selecting window event, and its label follows the
+    rm-mnb-list-selecting class the list sets on <html>.
+#}
+<button type="button" class="rm-mnb-glass-pill rm-mnb-select-toggle {{ attributes.render('class') }}"
+        {{ attributes.defaults(stimulus_controller(rm_mnb_controller('emit-event'), { name: 'rm-mnb-list:toggle-selecting' })|stimulus_action(rm_mnb_controller('emit-event'), 'emit')) }}>
+    <span class="rm-mnb-select-toggle__start">{{ 'list.select'|trans }}</span>
+    <span class="rm-mnb-select-toggle__done">{{ 'list.done'|trans }}</span>
+</button>

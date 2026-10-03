@@ -1,0 +1,11 @@
+{#
+    iOS grouped list: a rounded block of rows, with an optional heading. Props: see the
+    SheetGroup class.
+#}
+{% if heading %}
+    <h3 class="rm-mnb-group__heading">{{ heading }}</h3>
+{% endif %}
+<div class="rm-mnb-group {{ attributes.render('class') }}"
+     {{ closesSheet ? attributes.defaults(stimulus_target(rm_mnb_controller('sheet'), 'closeZone')) : attributes }}>
+    {% block content %}{% endblock %}
+</div>

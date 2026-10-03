@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="en" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="back.to" resname="back.to">
+                <source>back.to</source>
+                <target>Back to %label%</target>
+            </trans-unit>
+            <trans-unit id="sheet.close" resname="sheet.close">
+                <source>sheet.close</source>
+                <target>Close</target>
+            </trans-unit>
+            <trans-unit id="list.select" resname="list.select">
+                <source>list.select</source>
+                <target>Select</target>
+            </trans-unit>
+            <trans-unit id="list.done" resname="list.done">
+                <source>list.done</source>
+                <target>Done</target>
+            </trans-unit>
+            <trans-unit id="list.load_more" resname="list.load_more">
+                <source>list.load_more</source>
+                <target>Load more</target>
+            </trans-unit>
+            <trans-unit id="filters.label" resname="filters.label">
+                <source>filters.label</source>
+                <target>Filters</target>
+            </trans-unit>
+            <trans-unit id="filters.label_active" resname="filters.label_active">
+                <source>filters.label_active</source>
+                <target>{1}Filters, 1 active filter|]1,Inf[Filters, %count% active filters</target>
+            </trans-unit>
+            <trans-unit id="filters.search" resname="filters.search">
+                <source>filters.search</source>
+                <target>Search</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

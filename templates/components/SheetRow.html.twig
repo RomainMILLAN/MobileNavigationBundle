@@ -1,0 +1,31 @@
+{#
+    Row of a grouped list: a link with href, a button otherwise, a static row with static.
+    Other attributes (role, aria-*, Stimulus actions by spread) go on the row. The content
+    block replaces the chip and the label when the app must put its targets there; the
+    icon block replaces the <i> of the chip. Props: see the SheetRow class.
+#}
+{% set tag = static ? 'div' : (href ? 'a' : 'button') %}
+<{{ tag }} class="rm-mnb-row{{ danger ? ' rm-mnb-row--danger' }}{{ static ? ' rm-mnb-row--static' }} {{ attributes.render('class') }}"
+    {%- if tag == 'a' %} href="{{ href }}"{% elseif tag == 'button' and attributes.has('type') == false %} type="button"{% endif %} {{ attributes }}>
+    {% block content %}
+        {% if icon %}
+            <span class="rm-mnb-chip rm-mnb-tone--{{ tone }}"><span class="rm-mnb-icon-slot">{% block icon %}<i class="{{ icon }}" aria-hidden="true"></i>{% endblock %}</span></span>
+        {% endif %}
+        <span class="rm-mnb-row__label">{{ label }}</span>
+    {% endblock %}
+    {% if value is not null %}
+        <span class="rm-mnb-row__value"{{ this.valueAttributes|raw }}>{{ value }}</span>
+    {% endif %}
+    {% if badge %}
+        <span class="rm-mnb-badge">{{ badge }}</span>
+    {% endif %}
+    {% if switch %}
+        <span class="rm-mnb-switch" aria-hidden="true"></span>
+    {% endif %}
+    {% if checked %}
+        <span class="rm-mnb-icon rm-mnb-icon--check rm-mnb-row__check" aria-hidden="true"></span>
+    {% endif %}
+    {% if chevron %}
+        <span class="rm-mnb-icon rm-mnb-icon--chevron rm-mnb-row__chevron" aria-hidden="true"></span>
+    {% endif %}
+</{{ tag }}>

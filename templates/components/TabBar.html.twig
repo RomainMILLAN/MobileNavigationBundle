@@ -1,0 +1,51 @@
+{#
+    iOS 26 tab bar: a glass pill, a sliding lens, a detached "+". Icon blocks: tab_icon
+    (variable: tab), more_icon (more), fab_icon (fab). Props: see the TabBar class.
+#}
+<div class="rm-mnb-tab-bar-layer {{ attributes.render('class') }}"
+     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('tab-bar'))) }}>
+    <nav class="rm-mnb-tab-bar" aria-label="{{ label }}" {{ stimulus_target(rm_mnb_controller('tab-bar'), 'pill') }}>
+        <span class="rm-mnb-tab-bar__lens" aria-hidden="true" {{ stimulus_target(rm_mnb_controller('tab-bar'), 'lens') }}></span>
+
+        {# draggable="false": without it, dragging from a link starts the native link drag
+           and the browser cancels the pointer (pointercancel) instead of letting the lens follow. #}
+        {% for tab in tabs %}
+            <a href="{{ tab.href }}" class="rm-mnb-tab-bar__tab" draggable="false"
+               {% if tab.current %}aria-current="page"{% endif %}
+               {{ stimulus_target(rm_mnb_controller('tab-bar'), 'tab') }}>
+                <span class="rm-mnb-icon-slot">{% block tab_icon %}<i class="{{ tab.icon }}" aria-hidden="true"></i>{% endblock %}</span>
+                <span class="rm-mnb-tab-bar__label">{{ tab.label }}</span>
+            </a>
+        {% endfor %}
+
+        {% if more %}
+            <button type="button" class="rm-mnb-tab-bar__tab"
+                    aria-controls="{{ more.sheet }}" aria-haspopup="dialog" aria-expanded="false"
+                    {{ stimulus_controller(rm_mnb_controller('emit-event'), { name: more.sheet ~ ':toggle' })|stimulus_action(rm_mnb_controller('emit-event'), 'emit')|stimulus_target(rm_mnb_controller('tab-bar'), 'tab') }}>
+                <span class="rm-mnb-icon-slot">{% block more_icon %}<i class="{{ more.icon }}" aria-hidden="true"></i>{% endblock %}</span>
+                <span class="rm-mnb-tab-bar__label">{{ more.label }}</span>
+            </button>
+        {% endif %}
+    </nav>
+
+    {% if fab.href %}
+        <a href="{{ fab.href }}" class="rm-mnb-tab-bar-fab" aria-label="{{ fab.label }}" {{ fabAttributes ? fabAttributes|raw }}>
+            <span class="rm-mnb-icon-slot">{% block fab_icon %}<i class="{{ fab.icon }}" aria-hidden="true"></i>{% endblock %}</span>
+        </a>
+    {% elseif fab.sheet %}
+        {# The app gestures and the sheet toggle share a single data-controller. #}
+        {% set fabAttributes = fabAttributes
+            ? fabAttributes|stimulus_controller(rm_mnb_controller('emit-event'), { name: fab.sheet ~ ':toggle' })
+            : stimulus_controller(rm_mnb_controller('emit-event'), { name: fab.sheet ~ ':toggle' }) %}
+        {% set fabAttributes = fabAttributes|stimulus_action(rm_mnb_controller('emit-event'), 'emit', 'click') %}
+        <button type="button" class="rm-mnb-tab-bar-fab" aria-label="{{ fab.label }}"
+                aria-controls="{{ fab.sheet }}" aria-haspopup="dialog" aria-expanded="false"
+                {{ fabAttributes|raw }}>
+            <span class="rm-mnb-icon-slot">{{ block('fab_icon') }}</span>
+        </button>
+    {% else %}
+        <button type="button" class="rm-mnb-tab-bar-fab" disabled aria-label="{{ fab.label }}">
+            <span class="rm-mnb-icon-slot">{{ block('fab_icon') }}</span>
+        </button>
+    {% endif %}
+</div>

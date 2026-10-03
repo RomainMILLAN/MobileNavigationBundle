@@ -1,0 +1,13 @@
+// Entry point of the romainmillan/mobile-navigation-bundle styles.
+// An app imports it once, then maps the --rm-mnb-* variables to its theme.
+@forward 'tokens';
+@forward 'glass';
+@forward 'base' show light-defaults, dark-defaults;
+
+@use 'base';
+@use 'icons';
+@use 'tab-bar';
+@use 'sheet';
+@use 'large-title';
+@use 'list';
+@use 'swipe-back';

@@ -1,0 +1,42 @@
+// ===========================
+// rm-mnb: module measurements (Sass, configurable via @use … with (…))
+// ===========================
+// When a measurement falls short (contrast, radius, height), change it here, never
+// as a value copied into a partial. Colors, on the other hand, are CSS variables
+// --rm-mnb-* (see _base.scss) that each app maps to its theme.
+
+$rm-mnb-mobile-max: 767.98px !default;
+
+$rm-mnb-tab-bar-height: 62px !default;
+$rm-mnb-tab-bar-gap: 10px !default;
+$rm-mnb-tab-bar-inset: 16px !default;
+$rm-mnb-fab-size: 62px !default;
+$rm-mnb-control-size: 44px !default;
+$rm-mnb-large-title-size: 34px !default;
+// Distance between the status bar and the top control row (large title and compact
+// bar). Enough to clear the edge effect iOS 26 paints under the status bar.
+$rm-mnb-top-row-offset: 16px !default;
+$rm-mnb-row-min-height: 56px !default;
+
+$rm-mnb-radius-pill: 31px !default;
+$rm-mnb-radius-sheet: 28px !default;
+$rm-mnb-radius-group: 12px !default;
+$rm-mnb-radius-chip: 8px !default;
+
+$rm-mnb-glass-blur: 20px !default;
+
+// z-index scale: the ORDER is the invariant, not the numbers.
+// bar / "+" / compact bar < sheets < app modals < lock screen.
+$rm-mnb-z-chrome: 1030 !default;
+$rm-mnb-z-sheet: 1050 !default;
+$rm-mnb-z-swipe: 1 !default;
+
+// Motion grammar: one curve per role, nothing else moves.
+$rm-mnb-ease-lens: cubic-bezier(0.34, 1.56, 0.64, 1) !default;
+$rm-mnb-duration-lens: 0.35s !default;
+$rm-mnb-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1) !default;
+$rm-mnb-duration-sheet: 0.45s !default;
+$rm-mnb-duration-fade: 0.2s !default;
+
+// The six tones of the closed list: a name → a badge color and an ink.
+$rm-mnb-tones: accent, positive, negative, info, warning, neutral;

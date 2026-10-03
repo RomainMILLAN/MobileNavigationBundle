@@ -1,0 +1,22 @@
+{#
+    iOS 26 compact bar: a blurred gradient at the top of the screen, and glass controls on
+    top of it (back, title pill, the app's trailing block). It shows when the large title
+    leaves the screen (large-title controller, set by the app on an ancestor). Collapsed,
+    it is inert and hidden from screen readers; its title is always aria-hidden, the page
+    <h1> staying the only title. Props: see the CompactBar class.
+#}
+{% set extra_class = attributes.render('class') %}
+{# The blurred veil is a sibling placed before the bar, never one of its children (see _large-title.scss). #}
+<div class="rm-mnb-compact-bar-veil {{ extra_class }}" aria-hidden="true"></div>
+<div class="rm-mnb-compact-bar {{ extra_class }}" aria-hidden="true" inert
+     {{ attributes.defaults(stimulus_target(rm_mnb_controller('large-title'), 'bar')) }}>
+    <div class="rm-mnb-compact-bar__leading">
+        {% if back %}
+            {{ component('MobileNavigation:BackButton', { href: back.href, label: back.label }) }}
+        {% endif %}
+    </div>
+    <span class="rm-mnb-compact-bar__title" aria-hidden="true">{{ title }}</span>
+    <div class="rm-mnb-compact-bar__trailing">
+        {% block trailing %}{% endblock %}
+    </div>
+</div>

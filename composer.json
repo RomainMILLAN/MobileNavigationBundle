@@ -1,0 +1,74 @@
+{
+    "name": "romainmillan/mobile-navigation-bundle",
+    "description": "iOS 26 \"liquid glass\" mobile navigation for Symfony: tab bar, sheets, large title, grouped lists with swipe actions, as Twig components and Stimulus controllers.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "homepage": "https://github.com/RomainMILLAN/MobileNavigationBundle",
+    "support": {
+        "issues": "https://github.com/RomainMILLAN/MobileNavigationBundle/issues",
+        "source": "https://github.com/RomainMILLAN/MobileNavigationBundle",
+        "docs": "https://github.com/RomainMILLAN/MobileNavigationBundle/tree/main/docs"
+    },
+    "keywords": [
+        "symfony",
+        "symfony-bundle",
+        "symfony-ux",
+        "twig-component",
+        "stimulus",
+        "mobile",
+        "navigation",
+        "ios",
+        "pwa"
+    ],
+    "authors": [
+        {
+            "name": "Romain MILLAN"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "symfony/config": "^6.4 || ^7.0 || ^8.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+        "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+        "symfony/options-resolver": "^6.4 || ^7.0 || ^8.0",
+        "symfony/stimulus-bundle": "^2.20 || ^3.0",
+        "symfony/string": "^6.4 || ^7.0 || ^8.0",
+        "symfony/translation-contracts": "^2.5 || ^3.0",
+        "symfony/ux-twig-component": "^2.25.2 || ^3.0",
+        "twig/twig": "^3.10"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "^6.4 || ^7.0 || ^8.0",
+        "symfony/css-selector": "^6.4 || ^7.0 || ^8.0",
+        "symfony/dom-crawler": "^6.4 || ^7.0 || ^8.0",
+        "symfony/framework-bundle": "^6.4.24 || ^7.0 || ^8.0",
+        "symfony/runtime": "^6.4.24 || ^7.0 || ^8.0",
+        "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+        "symfony/twig-bridge": "^6.4.24 || ^7.0 || ^8.0",
+        "symfony/twig-bundle": "^6.4.24 || ^7.0 || ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "RomainMillan\\MobileNavigation\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RomainMillan\\MobileNavigation\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "symfony/runtime": false
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

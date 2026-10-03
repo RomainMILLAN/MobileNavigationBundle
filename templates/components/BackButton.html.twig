@@ -1,0 +1,9 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    iOS 26 back button: a glass disc and a chevron. The parent name is not shown, it is
+    spoken to screen readers. Props: see the BackButton class.
+#}
+<a href="{{ href }}" class="rm-mnb-glass-disc rm-mnb-back {{ attributes.render('class') }}"
+   aria-label="{{ 'back.to'|trans({'%label%': label}) }}" {{ attributes }}>
+    <span class="rm-mnb-icon rm-mnb-icon--back" aria-hidden="true"></span>
+</a>

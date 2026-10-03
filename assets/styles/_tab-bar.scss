@@ -1,0 +1,202 @@
+@use 'tokens' as *;
+@use 'glass' as *;
+
+// ===========================
+// Tab bar: glass pill, lens, detached "+"
+// ===========================
+
+// The layer captures nothing itself: only the pill and the "+" receive taps.
+.rm-mnb-tab-bar-layer {
+    position: fixed;
+    left: $rm-mnb-tab-bar-inset;
+    right: $rm-mnb-tab-bar-inset;
+    // max(): when Safari collapses its bar, the inset can drop; the pill keeps 8px.
+    bottom: calc(max(env(safe-area-inset-bottom, 0px), 8px) - var(--rm-mnb-viewport-gap));
+    z-index: $rm-mnb-z-chrome;
+    display: flex;
+    align-items: center;
+    gap: $rm-mnb-tab-bar-gap;
+    pointer-events: none;
+    // As on iOS, a sheet covers the bar: it fades out instead of showing through.
+    transition: opacity $rm-mnb-duration-fade ease;
+
+    > * {
+        pointer-events: auto;
+    }
+
+    html.rm-mnb-has-open-sheet & {
+        opacity: 0;
+        pointer-events: none;
+
+        > * {
+            pointer-events: none;
+        }
+    }
+
+    @media (min-width: $rm-mnb-mobile-max + 0.02px) {
+        display: none;
+    }
+}
+
+.rm-mnb-tab-bar {
+    @include glass;
+
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    height: $rm-mnb-tab-bar-height;
+    padding: 4px;
+    border-radius: $rm-mnb-radius-pill;
+    // Horizontal dragging belongs to the lens, not to the browser.
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.rm-mnb-tab-bar__lens {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    border-radius: $rm-mnb-radius-pill - 4px;
+    background-color: var(--rm-mnb-lens);
+    transform: translate3d(var(--lens-x, 0px), 0, 0);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform $rm-mnb-duration-lens $rm-mnb-ease-lens,
+        opacity $rm-mnb-duration-fade ease,
+        background-color $rm-mnb-duration-fade ease,
+        box-shadow $rm-mnb-duration-fade ease;
+
+    &.is-visible {
+        opacity: 1;
+    }
+
+    &.is-instant {
+        transition: opacity $rm-mnb-duration-fade ease;
+    }
+}
+
+// Under the finger, the lens becomes a glass bubble that grows and follows 1:1.
+.rm-mnb-tab-bar.is-dragging .rm-mnb-tab-bar__lens {
+    transform: translate3d(var(--lens-x, 0px), 0, 0) scale(1.15);
+    background-color: var(--rm-mnb-lens-dragging);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.5),
+        0 6px 18px rgba(15, 23, 42, 0.18);
+    transition:
+        opacity $rm-mnb-duration-fade ease,
+        background-color $rm-mnb-duration-fade ease,
+        box-shadow $rm-mnb-duration-fade ease;
+    will-change: transform;
+}
+
+.rm-mnb-tab-bar__tab {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 2px;
+    border: 0;
+    border-radius: $rm-mnb-radius-pill - 4px;
+    background: none;
+    color: var(--rm-mnb-ink);
+    // 10px: a label such as "Dashboard" fits whole in a third of the pill at 375px.
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-drag: none;
+    transition: color $rm-mnb-duration-fade ease;
+
+    .rm-mnb-icon-slot > * {
+        font-size: 24px;
+        line-height: 1;
+    }
+
+    &:hover {
+        color: var(--rm-mnb-ink);
+    }
+
+    &[aria-current="page"],
+    &.is-targeted {
+        @include accent-ink;
+    }
+
+    &:focus-visible {
+        @include focus-ring(-2px);
+    }
+}
+
+// During the drag, only the target carries the accent.
+.rm-mnb-tab-bar.is-dragging .rm-mnb-tab-bar__tab[aria-current="page"]:not(.is-targeted) {
+    color: var(--rm-mnb-ink);
+}
+
+.rm-mnb-tab-bar__label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// "+": the primary action, the only solid color fill of the layer.
+.rm-mnb-tab-bar-fab {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: $rm-mnb-fab-size;
+    height: $rm-mnb-fab-size;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--rm-mnb-accent-fill);
+    color: var(--rm-mnb-on-accent);
+    font-size: 28px;
+    text-decoration: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 1px 3px rgba(15, 23, 42, 0.12),
+        0 10px 24px rgba(15, 23, 42, 0.22);
+    // The "+" carries its own gestures (swipe up, long press): without this, the
+    // browser turns the swipe into a scroll and fires touchcancel instead of touchend.
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+
+    &:hover,
+    &:focus {
+        color: var(--rm-mnb-on-accent);
+    }
+
+    &:focus-visible {
+        @include focus-ring(3px);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rm-mnb-tab-bar__lens,
+    .rm-mnb-tab-bar.is-dragging .rm-mnb-tab-bar__lens {
+        transform: translate3d(var(--lens-x, 0px), 0, 0);
+        transition: opacity $rm-mnb-duration-fade ease;
+    }
+}

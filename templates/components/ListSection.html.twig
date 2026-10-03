@@ -1,0 +1,16 @@
+{#
+    Section of a grouped list: a header (sentence case) and a block of rows. Two
+    consecutive sections with the same title (a page loaded by "Load more" that continues
+    the same month) show a single header: the list controller hides the second. Props:
+    see the ListSection class.
+#}
+<section class="rm-mnb-list-section {{ attributes.render('class') }}"{% if title %} aria-label="{{ title }}"{% endif %}
+         {{ attributes.defaults(stimulus_target(rm_mnb_controller('list'), 'section')) }}>
+    {% if title %}
+        <h3 class="rm-mnb-list-section__header">{{ title }}</h3>
+    {% endif %}
+    <div class="rm-mnb-group">
+        {% for row in rows %}{{ row }}{% endfor %}
+        {% block content %}{% endblock %}
+    </div>
+</section>

@@ -1,0 +1,26 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    Mobile filter bar: a search field and a button that opens the sheet of the other
+    filters. The field is a "proxy" without name: it copies its input into the real field
+    of the app form, whose auto-submit takes over. Props: see the FilterBar class.
+#}
+<div class="rm-mnb-filter-bar {{ attributes.render('class') }}"
+     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('filter-bar'), { form: form, field: field ?? '' })) }}>
+    {% if field %}
+        <label class="rm-mnb-filter-bar__field">
+            <span class="rm-mnb-icon rm-mnb-icon--search" aria-hidden="true"></span>
+            <input type="search" class="rm-mnb-filter-bar__input" autocomplete="off" enterkeyhint="search"
+                   placeholder="{{ placeholder ?? 'filters.search'|trans }}" aria-label="{{ placeholder ?? 'filters.search'|trans }}"
+                   {{ stimulus_target(rm_mnb_controller('filter-bar'), 'proxy')|stimulus_action(rm_mnb_controller('filter-bar'), 'mirror', 'input') }}>
+        </label>
+    {% endif %}
+    <button type="button" class="rm-mnb-glass-disc rm-mnb-filter-bar__button"
+            aria-controls="{{ sheet }}" aria-haspopup="dialog" aria-expanded="false"
+            aria-label="{{ activeCount > 0 ? 'filters.label_active'|trans({'%count%': activeCount}) : 'filters.label'|trans }}"
+            {{ stimulus_controller(rm_mnb_controller('emit-event'), { name: sheet ~ ':toggle' })|stimulus_action(rm_mnb_controller('emit-event'), 'emit') }}>
+        <span class="rm-mnb-icon rm-mnb-icon--filters" aria-hidden="true"></span>
+        {% if activeCount > 0 %}
+            <span class="rm-mnb-filter-bar__count" aria-hidden="true">{{ activeCount }}</span>
+        {% endif %}
+    </button>
+</div>

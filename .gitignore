@@ -1,0 +1,9 @@
+/vendor/
+/composer.lock
+/var/
+/.phpunit.cache/
+/assets/node_modules/
+/assets/.yarn/*
+!/assets/.yarn/releases
+/tests/Integration/App/var/
+/.deptrac.cache

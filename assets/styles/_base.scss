@@ -1,0 +1,154 @@
+@use 'tokens' as *;
+
+// ===========================
+// Module CSS variables: neutral defaults, with no theme at all
+// ===========================
+// An app maps them to its theme in ONE file. Dark mode goes through
+// [data-rm-mnb-theme="dark"], or through the app selector that includes dark-defaults().
+
+@mixin light-defaults {
+    // Side margin of the app content (large title edge).
+    --rm-mnb-page-inset: 16px;
+    --rm-mnb-page-bg: #f2f2f7;
+    --rm-mnb-page-bg-rgb: 242, 242, 247;
+    --rm-mnb-surface: #fff;
+    --rm-mnb-surface-rgb: 255, 255, 255;
+    --rm-mnb-ink: #1c1c1e;
+    --rm-mnb-ink-rgb: 28, 28, 30;
+    --rm-mnb-accent: #007aff;
+    --rm-mnb-accent-ink: #0060c7;
+    --rm-mnb-accent-fill: #007aff;
+    --rm-mnb-on-accent: #fff;
+    --rm-mnb-danger: #ff3b30;
+    --rm-mnb-danger-ink: #c4271e;
+    --rm-mnb-border: rgba(60, 60, 67, 0.18);
+    --rm-mnb-backdrop: rgba(15, 18, 25, 0.32);
+
+    // Glass opacity floor: 4.5:1 guaranteed for labels on the worst background.
+    --rm-mnb-glass-floor: 0.85;
+    --rm-mnb-glass-floor-strong: 0.95;
+    --rm-mnb-glass-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.4),
+        0 1px 3px rgba(15, 23, 42, 0.08),
+        0 10px 28px rgba(15, 23, 42, 0.12);
+    --rm-mnb-lens: rgba(28, 28, 30, 0.1);
+    --rm-mnb-lens-dragging: rgba(255, 255, 255, 0.5);
+
+    // Badges (fill) and inks (text) of each tone.
+    --rm-mnb-tone-accent: var(--rm-mnb-accent-fill);
+    --rm-mnb-tone-accent-ink: var(--rm-mnb-accent-ink);
+    --rm-mnb-tone-positive: #34c759;
+    --rm-mnb-tone-positive-ink: #1f7a37;
+    --rm-mnb-tone-negative: #ff3b30;
+    --rm-mnb-tone-negative-ink: #c4271e;
+    --rm-mnb-tone-info: #32ade6;
+    --rm-mnb-tone-info-ink: #19688c;
+    --rm-mnb-tone-warning: #ff9500;
+    --rm-mnb-tone-warning-ink: #8a5300;
+    --rm-mnb-tone-neutral: #8e8e93;
+    --rm-mnb-tone-neutral-ink: var(--rm-mnb-ink);
+
+    // Solid fills under a white label (swipe buttons): 4.5:1 minimum.
+    --rm-mnb-on-tone: #fff;
+    --rm-mnb-tone-accent-solid: var(--rm-mnb-accent-ink);
+    --rm-mnb-tone-positive-solid: #1f7a37;
+    --rm-mnb-tone-negative-solid: #c4271e;
+    --rm-mnb-tone-info-solid: #19688c;
+    --rm-mnb-tone-warning-solid: #8a5300;
+    --rm-mnb-tone-neutral-solid: #636366;
+}
+
+@mixin dark-defaults {
+    --rm-mnb-page-bg: #000;
+    --rm-mnb-page-bg-rgb: 0, 0, 0;
+    --rm-mnb-surface: #1c1c1e;
+    --rm-mnb-surface-rgb: 28, 28, 30;
+    --rm-mnb-ink: #f2f2f7;
+    --rm-mnb-ink-rgb: 242, 242, 247;
+    --rm-mnb-accent: #0a84ff;
+    --rm-mnb-accent-ink: #0a84ff;
+    --rm-mnb-accent-fill: #0a84ff;
+    --rm-mnb-danger: #ff453a;
+    --rm-mnb-danger-ink: #ff453a;
+    --rm-mnb-border: rgba(255, 255, 255, 0.12);
+    --rm-mnb-glass-floor: 0.9;
+    --rm-mnb-glass-floor-strong: 0.98;
+    --rm-mnb-glass-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        0 10px 28px rgba(0, 0, 0, 0.35);
+    --rm-mnb-lens: rgba(242, 242, 247, 0.16);
+    --rm-mnb-lens-dragging: rgba(28, 28, 30, 0.5);
+    --rm-mnb-tone-positive-ink: #30d158;
+    --rm-mnb-tone-negative-ink: #ff453a;
+    --rm-mnb-tone-info-ink: #64d2ff;
+    --rm-mnb-tone-warning-ink: #ff9f0a;
+    --rm-mnb-tone-accent-solid: #0060c7;
+    --rm-mnb-tone-positive-solid: #248a3d;
+    --rm-mnb-tone-negative-solid: #d70015;
+    --rm-mnb-tone-info-solid: #0071a4;
+    --rm-mnb-tone-warning-solid: #a05a00;
+    --rm-mnb-tone-neutral-solid: #48484a;
+}
+
+:root {
+    @include light-defaults;
+}
+
+[data-rm-mnb-theme="dark"] {
+    @include dark-defaults;
+}
+
+// Height WebKit wrongly subtracts from the viewport of an iOS 26 PWA with a translucent
+// status bar (black-translucent): the page starts under the status bar but its
+// height still deducts it, and that space stays empty at the bottom of the screen. Only 100lvh
+// gives the real height. It is 0 everywhere else, and on the day WebKit gets fixed.
+:root {
+    --rm-mnb-viewport-gap: 0px;
+}
+
+@media (display-mode: standalone) {
+    :root {
+        --rm-mnb-viewport-gap: max(0px, calc(100lvh - 100dvh));
+    }
+}
+
+// A single class per tone, shared by badges, values and swipe.
+@each $tone in $rm-mnb-tones {
+    .rm-mnb-tone--#{$tone} {
+        --rm-mnb-tone: var(--rm-mnb-tone-#{$tone});
+        --rm-mnb-tone-ink-current: var(--rm-mnb-tone-#{$tone}-ink);
+        --rm-mnb-tone-solid-current: var(--rm-mnb-tone-#{$tone}-solid);
+    }
+}
+
+// Hooks set by the app on its own page structure.
+@media (max-width: $rm-mnb-mobile-max) {
+    // The last content never ends up under the pill, in the browser as well as in
+    // a PWA where this container is the only one that scrolls.
+    .rm-mnb-scroller {
+        padding-bottom: calc(#{$rm-mnb-tab-bar-height} + max(env(safe-area-inset-bottom, 0px), 8px) + 16px);
+    }
+}
+
+// Scroll lock while a sheet is open, in both modes (document or container).
+html.rm-mnb-has-open-sheet,
+html.rm-mnb-has-open-sheet body,
+html.rm-mnb-has-open-sheet .rm-mnb-scroller {
+    overflow: hidden;
+}
+
+// Screen-reader-only text (titles of sheets without a visible title).
+.rm-mnb-visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}

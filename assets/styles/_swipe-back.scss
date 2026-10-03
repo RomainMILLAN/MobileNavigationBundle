@@ -1,0 +1,70 @@
+@use 'tokens' as *;
+
+// ===========================
+// Swipe back: the page follows the finger, the previous one appears underneath
+// ===========================
+
+// During a back navigation, the restored scroll applies at once, never animated.
+html.rm-mnb-restoring,
+html.rm-mnb-restoring .rm-mnb-scroller {
+    scroll-behavior: auto !important;
+}
+
+// The current page must be opaque and carry its edge shadow during the gesture.
+.rm-mnb-back-swipe--moving {
+    position: relative;
+    background-color: var(--rm-mnb-page-bg);
+    box-shadow: -10px 0 28px rgba(15, 23, 42, 0.16);
+    will-change: transform;
+}
+
+.rm-mnb-back-swipe--settling {
+    transition: transform $rm-mnb-duration-sheet * 0.7 $rm-mnb-ease-sheet;
+}
+
+// The previous page (inert copy of the Turbo snapshot), offset in parallax and veiled
+// until the finger has gone all the way.
+.rm-mnb-back-underlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(0px - var(--rm-mnb-viewport-gap));
+    overflow: hidden;
+    background-color: var(--rm-mnb-page-bg);
+    pointer-events: none;
+    will-change: transform;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.12);
+        opacity: calc(1 - var(--rm-mnb-back-progress, 0));
+    }
+
+    &.is-settling {
+        transition: transform $rm-mnb-duration-sheet * 0.7 $rm-mnb-ease-sheet;
+
+        &::after {
+            transition: opacity $rm-mnb-duration-sheet * 0.7 $rm-mnb-ease-sheet;
+        }
+    }
+
+    // End of gesture: the copy moves in front of the real page, under the tab bar, for
+    // as long as Turbo takes to show the same page.
+    &.is-front {
+        z-index: $rm-mnb-z-chrome - 1;
+    }
+}
+
+.rm-mnb-back-underlay__page {
+    overflow: hidden !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rm-mnb-back-swipe--settling,
+    .rm-mnb-back-underlay.is-settling {
+        transition-duration: 0.01ms;
+    }
+}

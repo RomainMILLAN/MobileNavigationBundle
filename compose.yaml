@@ -1,0 +1,25 @@
+# No published port: the containers only run tests and builds.
+services:
+    php:
+        build: .docker/php
+        user: '${UID:-1000}:${GID:-1000}'
+        working_dir: /app
+        volumes:
+            - .:/app
+            - composer-cache:/tmp/composer
+        command: ['sleep', 'infinity']
+
+    node:
+        # Keep in sync with .nvmrc.
+        image: node:22.20.0-alpine
+        user: '${UID:-1000}:${GID:-1000}'
+        working_dir: /app/assets
+        environment:
+            HOME: /tmp
+            COREPACK_HOME: /tmp/corepack
+        volumes:
+            - .:/app
+        command: ['sleep', 'infinity']
+
+volumes:
+    composer-cache:

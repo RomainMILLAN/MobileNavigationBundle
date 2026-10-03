@@ -1,0 +1,47 @@
+// ===========================
+// Module icons: drawn with a mask, in the text color
+// ===========================
+// The module depends on no icon font: domain icons are classes
+// passed by the app, those of the navigation itself (chevrons, checkmark) are here.
+
+@function svg($path) {
+    @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='#{$path}'/%3E%3C/svg%3E");
+}
+
+// The wrapper of every icon block of the components: invisible to layout, so the icon
+// keeps its place (e.g. in the flex column of a tab). An app that replaces a block with
+// an image or a sprite sizes it itself.
+.rm-mnb-icon-slot {
+    display: contents;
+}
+
+.rm-mnb-icon {
+    display: inline-block;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor;
+    -webkit-mask: var(--rm-mnb-icon) center / contain no-repeat;
+    mask: var(--rm-mnb-icon) center / contain no-repeat;
+    vertical-align: -0.125em;
+}
+
+.rm-mnb-icon--chevron {
+    --rm-mnb-icon: #{svg('M9 6l6 6l-6 6')};
+}
+
+.rm-mnb-icon--back {
+    --rm-mnb-icon: #{svg('M15 6l-6 6l6 6')};
+}
+
+.rm-mnb-icon--check {
+    --rm-mnb-icon: #{svg('M5 12l5 5l10 -10')};
+}
+
+.rm-mnb-icon--search {
+    --rm-mnb-icon: #{svg('M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6 -6')};
+}
+
+.rm-mnb-icon--filters {
+    --rm-mnb-icon: #{svg('M4 6h16M7 12h10M10 18h4')};
+}

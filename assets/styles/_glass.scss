@@ -1,0 +1,45 @@
+@use 'tokens' as *;
+
+// Neutral glass: it takes on the tint of whatever passes beneath it, it carries none.
+// Background in rgba(var(--rm-mnb-surface-rgb), floor) rather than color-mix(): same
+// color, and nothing that depends on a function unknown to old Safari versions.
+@mixin glass($strength: regular) {
+    @if $strength == strong {
+        background-color: rgba(var(--rm-mnb-surface-rgb), var(--rm-mnb-glass-floor-strong));
+    } @else {
+        background-color: rgba(var(--rm-mnb-surface-rgb), var(--rm-mnb-glass-floor));
+    }
+
+    -webkit-backdrop-filter: blur($rm-mnb-glass-blur) saturate(180%);
+    backdrop-filter: blur($rm-mnb-glass-blur) saturate(180%);
+    box-shadow: var(--rm-mnb-glass-shadow);
+
+    // Opaque fallbacks: no blur available, or reduced transparency / increased
+    // contrast requested by the user. The glass becomes a solid surface.
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        background-color: var(--rm-mnb-surface);
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+        background-color: var(--rm-mnb-surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    @media (prefers-contrast: more) {
+        background-color: var(--rm-mnb-surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        outline: 1px solid var(--rm-mnb-border);
+    }
+}
+
+// Accent ink: readable at 4.5:1 on the glass, even over an extreme background.
+@mixin accent-ink {
+    color: var(--rm-mnb-accent-ink);
+}
+
+@mixin focus-ring($offset: 2px) {
+    outline: 2px solid var(--rm-mnb-accent);
+    outline-offset: $offset;
+}

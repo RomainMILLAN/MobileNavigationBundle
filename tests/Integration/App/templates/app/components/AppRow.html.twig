@@ -1,0 +1,10 @@
+<div class="app-row">
+    {{ component('MobileNavigation:ListRow', {
+        title: title,
+        href: '/items/1',
+        leading: {icon: 'icon-cart', tone: this.tone},
+        value: {text: '12.00', tone: this.tone},
+        valueAttributes: this.valueAttributes,
+        swipe: this.swipe,
+    }) }}
+</div>

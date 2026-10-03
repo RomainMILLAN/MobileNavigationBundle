@@ -1,0 +1,57 @@
+# The dependency rule, enforced: the model knows only translation contracts and
+# symfony/string; components and the Twig integration sit on top of it; the bundle
+# class wires everything.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Model
+      collectors:
+        - type: directory
+          value: src/Model/.*
+    - name: Component
+      collectors:
+        - type: directory
+          value: src/Twig/Component/.*
+    # Named TwigIntegration not to be mistaken for the vendor Twig layer.
+    - name: TwigIntegration
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/Twig/.*
+          must_not:
+            - type: directory
+              value: src/Twig/Component/.*
+    - name: Bundle
+      collectors:
+        - type: classNameRegex
+          value: '#^RomainMillan\\MobileNavigation\\MobileNavigationBundle$#'
+    - name: TranslationContracts
+      collectors:
+        - type: classNameRegex
+          value: '#^Symfony\\Contracts\\Translation\\#'
+    - name: StringComponent
+      collectors:
+        - type: classNameRegex
+          value: '#^Symfony\\Component\\String\\#'
+        - type: functionName
+          value: '^Symfony\\Component\\String\\(u|b)$'
+    - name: Symfony
+      collectors:
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^Symfony\\#'
+          must_not:
+            - type: classNameRegex
+              value: '#^Symfony\\(Component\\String|Contracts\\Translation)\\#'
+    - name: Twig
+      collectors:
+        - type: classNameRegex
+          value: '#^Twig\\#'
+  ruleset:
+    Model: [TranslationContracts, StringComponent]
+    Component: [Model, TwigIntegration, Symfony, Twig, TranslationContracts, StringComponent]
+    TwigIntegration: [Model, Symfony, Twig, TranslationContracts, StringComponent]
+    Bundle: [Model, Component, TwigIntegration, Symfony, Twig, TranslationContracts, StringComponent]

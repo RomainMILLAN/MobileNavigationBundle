@@ -1,0 +1,25 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    Confirmation sheet of the destructive swipe actions. One per page: it receives the
+    rm-mnb-confirm:request events and fills its text with textContent. The red button
+    carries the action label; the way out is "Close", never "Cancel" (the action itself
+    may be called "Cancel"). Props: see the ConfirmSheet class.
+#}
+<div class="rm-mnb-sheet {{ attributes.render('class') }}" id="{{ id }}" role="alertdialog" aria-modal="true"
+     aria-labelledby="{{ id }}-title" aria-describedby="{{ id }}-message"
+     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents })|stimulus_controller(rm_mnb_controller('confirm-sheet'), { sheet: id })) }}>
+    {# A <div> has no default event for Stimulus: click is explicit. #}
+    <div class="rm-mnb-sheet__backdrop" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss', 'click') }}></div>
+    <div class="rm-mnb-sheet__panel" tabindex="-1" {{ stimulus_target(rm_mnb_controller('sheet'), 'panel') }}>
+        <button type="button" class="rm-mnb-sheet__handle" aria-label="{{ 'sheet.close'|trans }}" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss') }}></button>
+        <h2 class="rm-mnb-sheet__title" id="{{ id }}-title" {{ stimulus_target(rm_mnb_controller('confirm-sheet'), 'title') }}></h2>
+        <p class="rm-mnb-sheet__message" id="{{ id }}-message" {{ stimulus_target(rm_mnb_controller('confirm-sheet'), 'message') }}></p>
+        <div class="rm-mnb-confirm__actions">
+            <button type="button" class="rm-mnb-confirm__button rm-mnb-confirm__button--destructive"
+                    {{ stimulus_target(rm_mnb_controller('confirm-sheet'), 'confirm')|stimulus_action(rm_mnb_controller('confirm-sheet'), 'confirm') }}></button>
+            <button type="button" class="rm-mnb-confirm__button" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss') }}>
+                {{ 'sheet.close'|trans }}
+            </button>
+        </div>
+    </div>
+</div>
