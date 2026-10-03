@@ -163,6 +163,21 @@ describe('bundle isolation', () => {
         expect(names.length, names.join(', ')).toBe(new Set(names).size);
     });
 
+    it('exports the file of every Symfony UX controller', () => {
+        // stimulus-bridge and AssetMapper import "<package>/<main>": the exports field must
+        // let that path through, or the build fails on every controller.
+        const manifest = JSON.parse(read(join(BUNDLE_ROOT, 'assets/package.json'))) as {
+            exports: Record<string, unknown>;
+            symfony: { controllers: Record<string, { main: string }> };
+        };
+        const patterns = Object.keys(manifest.exports).filter((key) => key.endsWith('/*')).map((key) => key.slice(2, -1));
+
+        Object.values(manifest.symfony.controllers).forEach(({ main }) => {
+            expect(patterns.some((prefix) => main.startsWith(prefix)), main).toBe(true);
+            expect(statSync(join(BUNDLE_ROOT, 'assets', main)).isFile(), main).toBe(true);
+        });
+    });
+
     it('runs no install script', () => {
         const manifest = JSON.parse(read(join(BUNDLE_ROOT, 'assets/package.json'))) as { scripts?: Record<string, string> };
 

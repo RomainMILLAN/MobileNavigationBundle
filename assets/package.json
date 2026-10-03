@@ -29,7 +29,8 @@
     },
     "./styles/*": "./styles/*",
     "./dist/mobile-navigation.css": "./dist/mobile-navigation.css",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./dist/*": "./dist/*"
   },
   "files": [
     "dist",
