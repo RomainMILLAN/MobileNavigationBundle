@@ -45,3 +45,14 @@
 .rm-mnb-icon--filters {
     --rm-mnb-icon: #{svg('M4 6h16M7 12h10M10 18h4')};
 }
+
+.rm-mnb-icon--grip {
+    --rm-mnb-icon: #{svg('M4 8h16M4 12h16M4 16h16')};
+}
+
+// Three solid dots: a mask of discs, a stroked path would make them too thin.
+.rm-mnb-icon--more {
+    --rm-mnb-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='5' cy='12' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Ccircle cx='19' cy='12' r='2'/%3E%3C/svg%3E");
+
+    font-size: 22px;
+}

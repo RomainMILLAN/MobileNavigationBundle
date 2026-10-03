@@ -1,0 +1,16 @@
+{#
+    Frame of a compact chart: a title, a caption, a fixed-height area. The bundle knows no
+    chart library: the app renders its chart in the content block, and puts its controller
+    on the root (attributes). Props: see the ChartFrame class.
+#}
+<figure class="rm-mnb-chart {{ attributes.render('class') }}" {{ attributes }}>
+    {% if title or caption %}
+        <figcaption class="rm-mnb-chart__header">
+            {% if title %}<span class="rm-mnb-chart__title">{{ title }}</span>{% endif %}
+            {% if caption %}<span class="rm-mnb-chart__caption">{{ caption }}</span>{% endif %}
+        </figcaption>
+    {% endif %}
+    <div class="rm-mnb-chart__canvas">
+        {% block content %}{% endblock %}
+    </div>
+</figure>

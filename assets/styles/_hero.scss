@@ -1,0 +1,77 @@
+@use 'tokens' as *;
+
+// ===========================
+// A page's headline figure: its name, a large number, a caption, a gauge
+// ===========================
+// Sits on the page background, without a card: it is the page's numeric title, not a block.
+
+.rm-mnb-hero {
+    margin: 4px 0 18px;
+    padding: 0 4px;
+}
+
+.rm-mnb-hero__label {
+    margin: 0 0 2px;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.rm-mnb-hero__value {
+    margin: 0;
+    color: var(--rm-mnb-ink);
+    font-size: $rm-mnb-large-title-size;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+
+    // Only strong meanings color the figure; other tones stay in ink.
+    &--positive {
+        color: var(--rm-mnb-tone-positive-ink);
+    }
+
+    &--negative {
+        color: var(--rm-mnb-tone-negative-ink);
+    }
+
+    &--warning {
+        color: var(--rm-mnb-tone-warning-ink);
+    }
+}
+
+.rm-mnb-hero__caption {
+    margin: 4px 0 0;
+    color: var(--rm-mnb-tone-ink-current, rgba(var(--rm-mnb-ink-rgb), 0.8));
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+
+    &.rm-mnb-tone--neutral {
+        color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    }
+}
+
+.rm-mnb-hero__progress {
+    height: 6px;
+    margin-top: 12px;
+    overflow: hidden;
+    border-radius: 3px;
+    background-color: rgba(var(--rm-mnb-ink-rgb), 0.08);
+}
+
+// The fill takes the gauge's tone color (positive by default). Width in
+// 5% steps: a class, never an inline style.
+.rm-mnb-hero__progress-bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background-color: var(--rm-mnb-tone, var(--rm-mnb-tone-positive));
+
+    @for $step from 0 through 20 {
+        &--#{$step * 5} {
+            width: $step * 5%;
+        }
+    }
+}

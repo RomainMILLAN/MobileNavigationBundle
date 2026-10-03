@@ -104,6 +104,63 @@ describe('list controller', () => {
         expect(document.documentElement.classList.contains('rm-mnb-list-selecting')).toBe(false);
     });
 
+    it('in "Edit" mode, a tap neither navigates nor checks anything', () => {
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+        const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+        query<HTMLAnchorElement>('#link-1').dispatchEvent(click);
+
+        expect(click.defaultPrevented).toBe(true);
+        expect(query<HTMLInputElement>('input[value="1"]').checked).toBe(false);
+        expect(query('[data-controller="list"]').classList.contains('is-editing')).toBe(true);
+        expect(document.documentElement.classList.contains('rm-mnb-list-editing')).toBe(true);
+    });
+
+    it('dispatches editing-changed when entering and leaving "Edit" mode', () => {
+        const notifications: boolean[] = [];
+        const listener = (event: Event): void => {
+            notifications.push((event as CustomEvent<{ editing: boolean }>).detail.editing);
+        };
+        window.addEventListener('rm-mnb-list:editing-changed', listener);
+
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+        window.removeEventListener('rm-mnb-list:editing-changed', listener);
+
+        expect(notifications).toEqual([true, false]);
+        expect(document.documentElement.classList.contains('rm-mnb-list-editing')).toBe(false);
+    });
+
+    it('keeps the modes exclusive: editing clears and leaves selection, and the other way round', () => {
+        query<HTMLButtonElement>('#toggle').click();
+        query<HTMLAnchorElement>('#link-2').click();
+
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+
+        const list = query('[data-controller="list"]');
+        expect(list.classList.contains('is-selecting')).toBe(false);
+        expect(list.classList.contains('is-editing')).toBe(true);
+        expect(document.documentElement.classList.contains('rm-mnb-list-selecting')).toBe(false);
+        expect(document.querySelectorAll('input:checked')).toHaveLength(0);
+
+        query<HTMLButtonElement>('#toggle').click();
+
+        expect(list.classList.contains('is-editing')).toBe(false);
+        expect(list.classList.contains('is-selecting')).toBe(true);
+        expect(document.documentElement.classList.contains('rm-mnb-list-editing')).toBe(false);
+    });
+
+    it('stops listening to the window commands once disconnected', async () => {
+        document.body.innerHTML = '';
+        await tick();
+
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-selecting'));
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+
+        expect(document.documentElement.classList.contains('rm-mnb-list-selecting')).toBe(false);
+        expect(document.documentElement.classList.contains('rm-mnb-list-editing')).toBe(false);
+    });
+
     it('clears the selection when leaving selection mode', () => {
         query<HTMLButtonElement>('#toggle').click();
         query<HTMLAnchorElement>('#link-1').click();

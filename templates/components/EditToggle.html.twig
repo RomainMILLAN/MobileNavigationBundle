@@ -1,0 +1,11 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    "Edit / Done" button: toggles the edit (reorder) mode of the page list. The twin of
+    SelectToggle: it drives the list through the rm-mnb-list:toggle-editing window event,
+    and its label follows the rm-mnb-list-editing class the list sets on <html>.
+#}
+<button type="button" class="rm-mnb-glass-pill rm-mnb-edit-toggle {{ attributes.render('class') }}"
+        {{ attributes.defaults(stimulus_controller(rm_mnb_controller('emit-event'), { name: 'rm-mnb-list:toggle-editing' })|stimulus_action(rm_mnb_controller('emit-event'), 'emit')) }}>
+    <span class="rm-mnb-edit-toggle__start">{{ 'list.edit'|trans }}</span>
+    <span class="rm-mnb-edit-toggle__done">{{ 'list.done'|trans }}</span>
+</button>

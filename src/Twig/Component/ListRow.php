@@ -8,6 +8,7 @@ use RomainMillan\MobileNavigation\Model\SwipeActions;
 use RomainMillan\MobileNavigation\Model\ValueAttributes;
 use RomainMillan\MobileNavigation\Twig\Component\Option\BadgeOptions;
 use RomainMillan\MobileNavigation\Twig\Component\Option\LeadingOptions;
+use RomainMillan\MobileNavigation\Twig\Component\Option\ReorderOptions;
 use RomainMillan\MobileNavigation\Twig\Component\Option\SelectableOptions;
 use RomainMillan\MobileNavigation\Twig\Component\Option\StructuredProp;
 use RomainMillan\MobileNavigation\Twig\Component\Option\SwipeOptions;
@@ -62,6 +63,9 @@ final class ListRow
     /** Turbo target of the link (the row may live in a "Load more" frame). */
     public string $turboFrame = '_top';
 
+    /** @var array{label: string|\Stringable, attributes: ?StimulusAttributes}|null Drag handle shown in "Edit" mode, or null. */
+    public ?array $reorder = null;
+
     public function __construct(
         private readonly SwipeControllerAttributes $swipeControllerAttributes,
     ) {
@@ -77,7 +81,7 @@ final class ListRow
     {
         RequiredProps::createForComponent(self::class, 'title')->assertPresentIn($data);
 
-        foreach (['leading' => new LeadingOptions(), 'value' => new ValueOptions(), 'badge' => new BadgeOptions(), 'selectable' => new SelectableOptions()] as $prop => $propOptions) {
+        foreach (['leading' => new LeadingOptions(), 'value' => new ValueOptions(), 'badge' => new BadgeOptions(), 'selectable' => new SelectableOptions(), 'reorder' => new ReorderOptions()] as $prop => $propOptions) {
             if (null !== ($data[$prop] ?? null)) {
                 $data[$prop] = StructuredProp::createForComponent(self::class, $prop, $propOptions)->resolve($data[$prop]);
             }

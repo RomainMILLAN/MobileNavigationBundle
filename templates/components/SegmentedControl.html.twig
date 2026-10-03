@@ -1,0 +1,15 @@
+{#
+    iOS segmented control. Every segment is a link to a route (not an ARIA tab): the
+    current segment carries aria-current="page". Props: see the SegmentedControl class.
+#}
+<nav class="rm-mnb-segmented {{ attributes.render('class') }}"{% if label %} aria-label="{{ label }}"{% endif %} {{ attributes }}>
+    {% for item in items %}
+        <a href="{{ item.href }}" class="rm-mnb-segmented__item{{ item.current ? ' is-current' }}"
+           {%- if item.current %} aria-current="page"{% endif %}>
+            <span class="rm-mnb-segmented__label">{{ item.label }}</span>
+            {% if item.count is not null %}
+                <span class="rm-mnb-segmented__count">{{ item.count }}</span>
+            {% endif %}
+        </a>
+    {% endfor %}
+</nav>

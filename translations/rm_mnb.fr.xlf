@@ -34,6 +34,14 @@
                 <source>filters.search</source>
                 <target>Rechercher</target>
             </trans-unit>
+            <trans-unit id="list.edit" resname="list.edit">
+                <source>list.edit</source>
+                <target>Modifier</target>
+            </trans-unit>
+            <trans-unit id="actions.more" resname="actions.more">
+                <source>actions.more</source>
+                <target>Plus d'actions</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -1,6 +1,7 @@
 import type { Application, ControllerConstructor } from '@hotwired/stimulus';
 
 import ConfirmSheetController from './controllers/confirm_sheet_controller';
+import ConfirmSubmitController from './controllers/confirm_submit_controller';
 import EmitEventController from './controllers/emit_event_controller';
 import FilterBarController from './controllers/filter_bar_controller';
 import GestureController from './controllers/gesture_controller';
@@ -23,6 +24,7 @@ export const IDENTIFIER_PREFIX = 'romainmillan--mobile-navigation-bundle--';
 
 export const controllers: Readonly<Record<string, ControllerConstructor>> = {
     'confirm-sheet': ConfirmSheetController,
+    'confirm-submit': ConfirmSubmitController,
     'emit-event': EmitEventController,
     'filter-bar': FilterBarController,
     gesture: GestureController,
@@ -41,4 +43,6 @@ export function registerMobileNavigation(application: Application): void {
     });
 }
 
+export { CONFIRM_REQUEST_EVENT, confirmSheetAvailable, type ConfirmRequestDetail } from './confirm_contract';
+export { EDITING_CHANGED_EVENT, TOGGLE_EDITING_EVENT, TOGGLE_SELECTING_EVENT } from './controllers/list_controller';
 export { haptic } from './utils/haptic';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RomainMillan\MobileNavigation\Tests\Integration;
 
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use RomainMillan\MobileNavigation\Model\Tone;
 use RomainMillan\MobileNavigation\Twig\MobileNavigationExtension;
@@ -53,12 +54,14 @@ final class NamingConsistencyTest extends TestCase
     }
 
     #[Test]
-    public function it_should_emit_the_event_the_list_controller_listens_to(): void
+    #[TestWith(['TOGGLE_SELECTING_EVENT', 'SelectToggle'])]
+    #[TestWith(['TOGGLE_EDITING_EVENT', 'EditToggle'])]
+    public function it_should_emit_the_event_the_list_controller_listens_to(string $constant, string $component): void
     {
-        $event = u($this->read('assets/src/controllers/list_controller.ts'))->match("/export const TOGGLE_SELECTING_EVENT = '([^']+)';/")[1] ?? null;
+        $event = u($this->read('assets/src/controllers/list_controller.ts'))->match(\sprintf("/export const %s = '([^']+)';/", $constant))[1] ?? null;
 
         self::assertIsString($event);
-        self::assertTrue(u($this->read('templates/components/SelectToggle.html.twig'))->containsAny("{ name: '".$event."' }"));
+        self::assertTrue(u($this->read(\sprintf('templates/components/%s.html.twig', $component)))->containsAny("{ name: '".$event."' }"));
     }
 
     private function read(string $path): string

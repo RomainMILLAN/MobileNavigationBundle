@@ -79,6 +79,24 @@ final class BundleTest extends IntegrationTestCase
     }
 
     #[Test]
+    public function it_should_let_the_app_override_the_actions_disc_and_empty_state_icon_blocks(): void
+    {
+        $crawler = new Crawler($this->renderTemplate(<<<'TWIG'
+            {% component 'MobileNavigation:ActionsDisc' with {sheet: 'actions'} %}
+                {% block icon %}<svg class="app-dots"></svg>{% endblock %}
+            {% endcomponent %}
+            {% component 'MobileNavigation:EmptyState' with {title: 'Nothing', icon: 'icon-empty'} %}
+                {% block icon %}<svg class="app-empty" data-icon="{{ icon }}"></svg>{% endblock %}
+            {% endcomponent %}
+            TWIG));
+
+        self::assertCount(1, $crawler->filter('button.rm-mnb-glass-disc .rm-mnb-icon-slot > svg.app-dots'));
+        self::assertCount(0, $crawler->filter('.rm-mnb-icon--more'));
+        self::assertSame('icon-empty', $crawler->filter('.rm-mnb-empty-state__icon .rm-mnb-icon-slot > svg.app-empty')->attr('data-icon'));
+        self::assertCount(0, $crawler->filter('i'));
+    }
+
+    #[Test]
     public function it_should_let_an_app_component_compose_a_bundle_component_with_built_values(): void
     {
         $crawler = new Crawler($this->renderTemplate("{{ component('AppRow') }}"));

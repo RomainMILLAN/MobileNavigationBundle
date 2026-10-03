@@ -19,4 +19,7 @@ final class SheetGroup
 
     /** A tap on a row of the group closes the sheet that contains it. */
     public bool $closesSheet = false;
+
+    /** Note under the group (help, explanation; already translated), or null. */
+    public string|\Stringable|null $footer = null;
 }

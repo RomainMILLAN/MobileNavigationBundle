@@ -1,248 +1,11 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/utils/haptic.ts
-function haptic(style = "light") {
-	if (!navigator.vibrate) return;
-	navigator.vibrate({
-		light: 10,
-		medium: 20,
-		heavy: 30
-	}[style]);
-}
-//#endregion
-//#region src/utils/same_origin.ts
-/**
-* The URL resolved against the current page, when it is an http(s) URL of the same
-* origin; null otherwise (malformed, javascript:, data:, another host).
-*/
-function sameOriginUrl(url) {
-	let target;
-	try {
-		target = new URL(url, window.location.href);
-	} catch {
-		return null;
-	}
-	if (target.protocol !== "http:" && target.protocol !== "https:") return null;
-	return target.origin === window.location.origin ? target : null;
-}
-//#endregion
-//#region src/utils/tones.ts
-/**
-* The module's tones: a closed list. Any unknown value falls back to `neutral`, so
-* that no data coming from the app can inject an arbitrary class or color.
-*/
-var TONES = [
-	"accent",
-	"positive",
-	"negative",
-	"info",
-	"warning",
-	"neutral"
-];
-function toTone(value) {
-	return typeof value === "string" && TONES.includes(value) ? value : "neutral";
-}
-//#endregion
-//#region src/controllers/swipe_actions_controller.ts
+//#region src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
-var BUTTON_WIDTH = 72;
-var MIN_SWIPE = 10;
-/**
-* Swiping a row to the left reveals its actions, each with its label. A
-* destructive action is not sent directly: it goes through the confirmation sheet.
-* The panel lives in <body> (it must stay under the sliding row) and is removed
-* before every Turbo snapshot.
-*/
-var swipe_actions_controller_default = class extends Controller {
-	static values = {
-		actions: Array,
-		csrfToken: String
-	};
-	/** Only the actions that target the current origin: any other is ignored. */
-	get actions() {
-		return this.actionsValue.filter((action) => sameOriginUrl(action.url) !== null);
-	}
-	startX = 0;
-	startY = 0;
-	currentX = 0;
-	swiping = false;
-	opened = false;
-	panel = null;
-	panelWidth = 0;
-	panelLeft = 0;
-	panelTop = 0;
-	onTouchStart = (event) => this.touchStart(event);
-	onTouchMove = (event) => this.touchMove(event);
-	onTouchEnd = () => this.touchEnd();
-	onDocumentTouch = (event) => {
-		const target = event.target;
-		if (this.opened && !this.element.contains(target) && !this.panel?.contains(target)) this.close();
-	};
-	onBeforeCache = () => this.reset();
-	connect() {
-		if (this.actions.length === 0) return;
-		this.panelWidth = this.actions.length * BUTTON_WIDTH;
-		this.element.addEventListener("touchstart", this.onTouchStart, { passive: true });
-		this.element.addEventListener("touchmove", this.onTouchMove, { passive: false });
-		this.element.addEventListener("touchend", this.onTouchEnd, { passive: true });
-		document.addEventListener("turbo:before-cache", this.onBeforeCache);
-		this.buildPanel();
-	}
-	disconnect() {
-		this.element.removeEventListener("touchstart", this.onTouchStart);
-		this.element.removeEventListener("touchmove", this.onTouchMove);
-		this.element.removeEventListener("touchend", this.onTouchEnd);
-		document.removeEventListener("touchstart", this.onDocumentTouch, true);
-		document.removeEventListener("turbo:before-cache", this.onBeforeCache);
-		this.reset();
-	}
-	reset() {
-		this.panel?.remove();
-		this.panel = null;
-		this.opened = false;
-		this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-		this.element.style.removeProperty("transform");
-	}
-	buildPanel() {
-		this.panel = document.createElement("div");
-		this.panel.className = "rm-mnb-swipe-actions";
-		this.panel.setAttribute("data-turbo-temporary", "");
-		this.panel.style.setProperty("width", `${this.panelWidth}px`);
-		this.actions.forEach((action) => this.panel?.appendChild(this.createButton(action)));
-		document.body.appendChild(this.panel);
-	}
-	createContent(action, button) {
-		const icon = document.createElement("i");
-		icon.className = action.icon;
-		icon.setAttribute("aria-hidden", "true");
-		const label = document.createElement("span");
-		label.className = "rm-mnb-swipe-actions__label";
-		label.textContent = action.label;
-		button.append(icon, label);
-		button.setAttribute("aria-label", action.label);
-		button.className = `rm-mnb-swipe-actions__button rm-mnb-tone--${toTone(action.tone)}`;
-	}
-	hiddenInput(name, value) {
-		const input = document.createElement("input");
-		input.type = "hidden";
-		input.name = name;
-		input.value = value;
-		return input;
-	}
-	createButton(action) {
-		if (action.method === void 0 || action.method.toUpperCase() === "GET") {
-			const link = document.createElement("a");
-			link.href = action.url;
-			this.createContent(action, link);
-			return link;
-		}
-		const form = document.createElement("form");
-		form.method = "POST";
-		form.action = action.url;
-		form.className = "rm-mnb-swipe-actions__form";
-		form.appendChild(this.hiddenInput("_token", this.csrfTokenValue));
-		const redirect = this.hiddenInput("_redirect", "");
-		form.appendChild(redirect);
-		const submit = () => {
-			redirect.value = window.location.pathname + window.location.search;
-			form.submit();
-		};
-		form.addEventListener("submit", (event) => {
-			event.preventDefault();
-			if (action.confirm === void 0) {
-				submit();
-				return;
-			}
-			this.close();
-			window.dispatchEvent(new CustomEvent(CONFIRM_REQUEST_EVENT, { detail: {
-				title: action.label,
-				message: action.confirm,
-				confirmLabel: action.label,
-				onConfirm: submit
-			} }));
-		});
-		const button = document.createElement("button");
-		button.type = "submit";
-		this.createContent(action, button);
-		form.appendChild(button);
-		return form;
-	}
-	positionPanel() {
-		if (this.panel === null) return;
-		if (!this.opened) {
-			const rect = this.element.getBoundingClientRect();
-			this.panelLeft = rect.right - this.panelWidth;
-			this.panelTop = rect.top;
-			this.panel.style.setProperty("height", `${rect.height}px`);
-		}
-		this.panel.style.setProperty("top", `${this.panelTop}px`);
-		this.panel.style.setProperty("left", `${this.panelLeft}px`);
-		this.panel.classList.add("is-visible");
-	}
-	touchStart(event) {
-		const touch = event.touches[0];
-		if (touch === void 0) return;
-		this.startX = touch.clientX;
-		this.startY = touch.clientY;
-		this.currentX = this.startX;
-		this.swiping = false;
-		document.addEventListener("touchstart", this.onDocumentTouch, {
-			once: true,
-			capture: true
-		});
-	}
-	touchMove(event) {
-		if (this.element.closest(".is-selecting") !== null) return;
-		const touch = event.touches[0];
-		if (touch === void 0) return;
-		this.currentX = touch.clientX;
-		const deltaX = this.startX - this.currentX;
-		const deltaY = Math.abs(touch.clientY - this.startY);
-		if (!this.swiping && (Math.abs(deltaX) < MIN_SWIPE || deltaY > Math.abs(deltaX))) return;
-		if (!this.swiping && !this.opened && deltaX < 0) return;
-		if (!this.swiping) {
-			if (this.panel === null || !this.panel.isConnected) this.buildPanel();
-			this.positionPanel();
-		}
-		this.swiping = true;
-		event.preventDefault();
-		let offset;
-		if (this.opened) offset = Math.max(Math.min(-this.panelWidth + deltaX, 0), -this.panelWidth);
-		else {
-			if (deltaX <= 0) return;
-			offset = Math.max(-deltaX, -this.panelWidth);
-		}
-		this.element.classList.add("rm-mnb-swipe--moving");
-		this.element.classList.remove("rm-mnb-swipe--settling");
-		this.element.style.setProperty("transform", `translateX(${offset}px)`);
-		this.panel?.style.setProperty("clip-path", `inset(0 0 0 ${this.panelWidth - Math.abs(offset)}px)`);
-		if (Math.abs(offset) >= this.panelWidth) haptic("light");
-	}
-	touchEnd() {
-		if (!this.swiping) return;
-		this.swiping = false;
-		const deltaX = this.startX - this.currentX;
-		if (this.opened ? deltaX < -this.panelWidth * .3 : deltaX <= this.panelWidth * .4) this.close();
-		else this.open();
-	}
-	open() {
-		this.opened = true;
-		this.element.classList.add("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-		this.element.style.setProperty("transform", `translateX(${-this.panelWidth}px)`);
-		this.panel?.style.setProperty("clip-path", "inset(0)");
-	}
-	close() {
-		this.opened = false;
-		this.element.classList.add("rm-mnb-swipe--settling");
-		this.element.style.removeProperty("transform");
-		window.setTimeout(() => {
-			if (!this.opened) {
-				this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-				this.panel?.classList.remove("is-visible");
-				this.panel?.style.removeProperty("clip-path");
-			}
-		}, 300);
-	}
-};
+/** Is the confirmation sheet present and displayable (mobile)? Otherwise: confirm(). */
+function confirmSheetAvailable(id = "rm-mnb-confirm") {
+	const sheet = document.getElementById(id);
+	return sheet !== null && sheet.getClientRects().length > 0;
+}
 //#endregion
 //#region src/controllers/confirm_sheet_controller.ts
 /**
@@ -286,6 +49,58 @@ var confirm_sheet_controller_default = class extends Controller {
 		this.pending = null;
 		window.dispatchEvent(new CustomEvent(`${this.sheetValue}:close`));
 		action?.();
+	}
+};
+//#endregion
+//#region src/controllers/confirm_submit_controller.ts
+/**
+* POST form that asks for confirmation before submitting (SheetFormRow). The first
+* submit is held back and goes through the page's ConfirmSheet (otherwise confirm()). Once
+* confirmed, the form is resubmitted via requestSubmit() (hence via Turbo, like the
+* desktop form) and that submission is the only one let through: a double tap does
+* not trigger a second POST.
+*/
+var confirm_submit_controller_default = class extends Controller {
+	static values = {
+		title: String,
+		message: String,
+		confirmLabel: String
+	};
+	confirmed = false;
+	sent = false;
+	onSubmit = (event) => {
+		if (this.sent) {
+			event.preventDefault();
+			return;
+		}
+		if (this.confirmed) {
+			this.sent = true;
+			return;
+		}
+		event.preventDefault();
+		this.requestConfirmation();
+	};
+	connect() {
+		this.element.addEventListener("submit", this.onSubmit);
+	}
+	disconnect() {
+		this.element.removeEventListener("submit", this.onSubmit);
+	}
+	requestConfirmation() {
+		const proceed = () => {
+			this.confirmed = true;
+			this.element.requestSubmit();
+		};
+		if (!confirmSheetAvailable()) {
+			if (window.confirm(this.messageValue)) proceed();
+			return;
+		}
+		window.dispatchEvent(new CustomEvent(CONFIRM_REQUEST_EVENT, { detail: {
+			title: this.titleValue,
+			message: this.messageValue,
+			confirmLabel: this.confirmLabelValue,
+			onConfirm: proceed
+		} }));
 	}
 };
 //#endregion
@@ -334,6 +149,16 @@ var filter_bar_controller_default = class extends Controller {
 		return field instanceof HTMLInputElement ? field : null;
 	}
 };
+//#endregion
+//#region src/utils/haptic.ts
+function haptic(style = "light") {
+	if (!navigator.vibrate) return;
+	navigator.vibrate({
+		light: 10,
+		medium: 20,
+		heavy: 30
+	}[style]);
+}
 //#endregion
 //#region src/controllers/gesture_controller.ts
 var EVENT_PREFIX = "rm-mnb-gesture";
@@ -502,18 +327,40 @@ function dedupeSectionHeaders(keys) {
 //#endregion
 //#region src/controllers/list_controller.ts
 var TOGGLE_SELECTING_EVENT = "rm-mnb-list:toggle-selecting";
-var SELECTING_CLASS = "rm-mnb-list-selecting";
+var TOGGLE_EDITING_EVENT = "rm-mnb-list:toggle-editing";
+/** Notification dispatched on every entry into or exit from the "Edit" mode (detail.editing). */
+var EDITING_CHANGED_EVENT = "rm-mnb-list:editing-changed";
+var MODE_CLASSES = {
+	selecting: {
+		list: "is-selecting",
+		root: "rm-mnb-list-selecting"
+	},
+	editing: {
+		list: "is-editing",
+		root: "rm-mnb-list-editing"
+	}
+};
 /**
-* iOS grouped list: section headers deduplicated after "Load more", and "Select"
-* mode. While selecting, a tap checks the row instead of opening it: the row
-* is an <a>, so the click is intercepted. The checkboxes belong to the app (its
-* StimulusAttributes); the module only checks them and dispatches `change`.
+* iOS grouped list: section headers deduplicated after "Load more", and two exclusive
+* modes, "Select" and "Edit", held by a single state.
+* While selecting, a tap checks the row instead of opening it: the row is an <a>, so the
+* click is intercepted. The checkboxes belong to the app (its StimulusAttributes); the
+* bundle only checks them and dispatches `change`.
+* While editing, a tap no longer navigates (the drag handles belong to the app, which
+* listens to the rm-mnb-list:editing-changed notification).
+* The window commands target every list of the page: a page has a single selectable or
+* editable list.
 */
 var list_controller_default = class extends Controller {
 	static targets = ["section"];
+	mode = "idle";
 	onClick = (event) => {
-		if (!this.element.classList.contains("is-selecting")) return;
+		if (this.mode === "idle") return;
 		const target = event.target;
+		if (this.mode === "editing") {
+			if (target?.closest("a") && this.element.contains(target)) event.preventDefault();
+			return;
+		}
 		const row = target?.closest(".rm-mnb-list-row");
 		if (row === null || row === void 0 || !this.element.contains(row) || target?.closest(".rm-mnb-list-row__select")) return;
 		event.preventDefault();
@@ -525,22 +372,40 @@ var list_controller_default = class extends Controller {
 	};
 	onFrameLoad = () => this.dedupeSections();
 	onToggleCommand = () => this.toggleSelecting();
+	onToggleEditingCommand = () => this.toggleEditing();
 	connect() {
 		this.element.addEventListener("click", this.onClick, true);
 		this.element.addEventListener("turbo:frame-load", this.onFrameLoad);
 		window.addEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
+		window.addEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
 		this.dedupeSections();
 	}
 	disconnect() {
 		this.element.removeEventListener("click", this.onClick, true);
 		this.element.removeEventListener("turbo:frame-load", this.onFrameLoad);
 		window.removeEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
-		document.documentElement.classList.remove(SELECTING_CLASS);
+		window.removeEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
+		this.setMode("idle");
 	}
 	toggleSelecting() {
-		const selecting = this.element.classList.toggle("is-selecting");
-		document.documentElement.classList.toggle(SELECTING_CLASS, selecting);
-		if (!selecting) this.element.querySelectorAll(".rm-mnb-list-row__select input[type=\"checkbox\"]:checked").forEach((checkbox) => {
+		this.setMode(this.mode === "selecting" ? "idle" : "selecting");
+	}
+	toggleEditing() {
+		this.setMode(this.mode === "editing" ? "idle" : "editing");
+	}
+	setMode(next) {
+		const previous = this.mode;
+		if (previous === next) return;
+		if (previous === "selecting") this.clearSelection();
+		this.mode = next;
+		Object.keys(MODE_CLASSES).forEach((mode) => {
+			this.element.classList.toggle(MODE_CLASSES[mode].list, mode === next);
+			document.documentElement.classList.toggle(MODE_CLASSES[mode].root, mode === next);
+		});
+		if (previous === "editing" || next === "editing") window.dispatchEvent(new CustomEvent(EDITING_CHANGED_EVENT, { detail: { editing: next === "editing" } }));
+	}
+	clearSelection() {
+		this.element.querySelectorAll(".rm-mnb-list-row__select input[type=\"checkbox\"]:checked").forEach((checkbox) => {
 			checkbox.checked = false;
 			checkbox.dispatchEvent(new Event("change", { bubbles: true }));
 		});
@@ -551,6 +416,22 @@ var list_controller_default = class extends Controller {
 		dedupeSectionHeaders(keys).forEach((index) => this.sectionTargets[index]?.classList.add("is-continuation"));
 	}
 };
+//#endregion
+//#region src/utils/same_origin.ts
+/**
+* The URL resolved against the current page, when it is an http(s) URL of the same
+* origin; null otherwise (malformed, javascript:, data:, another host).
+*/
+function sameOriginUrl(url) {
+	let target;
+	try {
+		target = new URL(url, window.location.href);
+	} catch {
+		return null;
+	}
+	if (target.protocol !== "http:" && target.protocol !== "https:") return null;
+	return target.origin === window.location.origin ? target : null;
+}
 //#endregion
 //#region src/controllers/navigate_controller.ts
 /**
@@ -863,6 +744,224 @@ var sheet_controller_default = class extends Controller {
 		if (!this.isOpen) return false;
 		const scroller = this.hasScrollTarget ? this.scrollTarget : this.panelTarget;
 		return !(target instanceof Node && scroller.contains(target)) || scroller.scrollTop <= 0;
+	}
+};
+//#endregion
+//#region src/utils/tones.ts
+/**
+* The module's tones: a closed list. Any unknown value falls back to `neutral`, so
+* that no data coming from the app can inject an arbitrary class or color.
+*/
+var TONES = [
+	"accent",
+	"positive",
+	"negative",
+	"info",
+	"warning",
+	"neutral"
+];
+function toTone(value) {
+	return typeof value === "string" && TONES.includes(value) ? value : "neutral";
+}
+//#endregion
+//#region src/controllers/swipe_actions_controller.ts
+var BUTTON_WIDTH = 72;
+var MIN_SWIPE = 10;
+/**
+* Swiping a row to the left reveals its actions, each with its label. A
+* destructive action is not sent directly: it goes through the confirmation sheet.
+* The panel lives in <body> (it must stay under the sliding row) and is removed
+* before every Turbo snapshot.
+*/
+var swipe_actions_controller_default = class extends Controller {
+	static values = {
+		actions: Array,
+		csrfToken: String
+	};
+	/** Only the actions that target the current origin: any other is ignored. */
+	get actions() {
+		return this.actionsValue.filter((action) => sameOriginUrl(action.url) !== null);
+	}
+	startX = 0;
+	startY = 0;
+	currentX = 0;
+	swiping = false;
+	opened = false;
+	panel = null;
+	panelWidth = 0;
+	panelLeft = 0;
+	panelTop = 0;
+	onTouchStart = (event) => this.touchStart(event);
+	onTouchMove = (event) => this.touchMove(event);
+	onTouchEnd = () => this.touchEnd();
+	onDocumentTouch = (event) => {
+		const target = event.target;
+		if (this.opened && !this.element.contains(target) && !this.panel?.contains(target)) this.close();
+	};
+	onBeforeCache = () => this.reset();
+	connect() {
+		if (this.actions.length === 0) return;
+		this.panelWidth = this.actions.length * BUTTON_WIDTH;
+		this.element.addEventListener("touchstart", this.onTouchStart, { passive: true });
+		this.element.addEventListener("touchmove", this.onTouchMove, { passive: false });
+		this.element.addEventListener("touchend", this.onTouchEnd, { passive: true });
+		document.addEventListener("turbo:before-cache", this.onBeforeCache);
+		this.buildPanel();
+	}
+	disconnect() {
+		this.element.removeEventListener("touchstart", this.onTouchStart);
+		this.element.removeEventListener("touchmove", this.onTouchMove);
+		this.element.removeEventListener("touchend", this.onTouchEnd);
+		document.removeEventListener("touchstart", this.onDocumentTouch, true);
+		document.removeEventListener("turbo:before-cache", this.onBeforeCache);
+		this.reset();
+	}
+	reset() {
+		this.panel?.remove();
+		this.panel = null;
+		this.opened = false;
+		this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
+		this.element.style.removeProperty("transform");
+	}
+	buildPanel() {
+		this.panel = document.createElement("div");
+		this.panel.className = "rm-mnb-swipe-actions";
+		this.panel.setAttribute("data-turbo-temporary", "");
+		this.panel.style.setProperty("width", `${this.panelWidth}px`);
+		this.actions.forEach((action) => this.panel?.appendChild(this.createButton(action)));
+		document.body.appendChild(this.panel);
+	}
+	createContent(action, button) {
+		const icon = document.createElement("i");
+		icon.className = action.icon;
+		icon.setAttribute("aria-hidden", "true");
+		const label = document.createElement("span");
+		label.className = "rm-mnb-swipe-actions__label";
+		label.textContent = action.label;
+		button.append(icon, label);
+		button.setAttribute("aria-label", action.label);
+		button.className = `rm-mnb-swipe-actions__button rm-mnb-tone--${toTone(action.tone)}`;
+	}
+	hiddenInput(name, value) {
+		const input = document.createElement("input");
+		input.type = "hidden";
+		input.name = name;
+		input.value = value;
+		return input;
+	}
+	createButton(action) {
+		if (action.method === void 0 || action.method.toUpperCase() === "GET") {
+			const link = document.createElement("a");
+			link.href = action.url;
+			this.createContent(action, link);
+			return link;
+		}
+		const form = document.createElement("form");
+		form.method = "POST";
+		form.action = action.url;
+		form.className = "rm-mnb-swipe-actions__form";
+		form.appendChild(this.hiddenInput("_token", this.csrfTokenValue));
+		const redirect = this.hiddenInput("_redirect", "");
+		form.appendChild(redirect);
+		const submit = () => {
+			redirect.value = window.location.pathname + window.location.search;
+			form.submit();
+		};
+		form.addEventListener("submit", (event) => {
+			event.preventDefault();
+			if (action.confirm === void 0) {
+				submit();
+				return;
+			}
+			this.close();
+			window.dispatchEvent(new CustomEvent(CONFIRM_REQUEST_EVENT, { detail: {
+				title: action.label,
+				message: action.confirm,
+				confirmLabel: action.label,
+				onConfirm: submit
+			} }));
+		});
+		const button = document.createElement("button");
+		button.type = "submit";
+		this.createContent(action, button);
+		form.appendChild(button);
+		return form;
+	}
+	positionPanel() {
+		if (this.panel === null) return;
+		if (!this.opened) {
+			const rect = this.element.getBoundingClientRect();
+			this.panelLeft = rect.right - this.panelWidth;
+			this.panelTop = rect.top;
+			this.panel.style.setProperty("height", `${rect.height}px`);
+		}
+		this.panel.style.setProperty("top", `${this.panelTop}px`);
+		this.panel.style.setProperty("left", `${this.panelLeft}px`);
+		this.panel.classList.add("is-visible");
+	}
+	touchStart(event) {
+		const touch = event.touches[0];
+		if (touch === void 0) return;
+		this.startX = touch.clientX;
+		this.startY = touch.clientY;
+		this.currentX = this.startX;
+		this.swiping = false;
+		document.addEventListener("touchstart", this.onDocumentTouch, {
+			once: true,
+			capture: true
+		});
+	}
+	touchMove(event) {
+		if (this.element.closest(".is-selecting, .is-editing") !== null) return;
+		const touch = event.touches[0];
+		if (touch === void 0) return;
+		this.currentX = touch.clientX;
+		const deltaX = this.startX - this.currentX;
+		const deltaY = Math.abs(touch.clientY - this.startY);
+		if (!this.swiping && (Math.abs(deltaX) < MIN_SWIPE || deltaY > Math.abs(deltaX))) return;
+		if (!this.swiping && !this.opened && deltaX < 0) return;
+		if (!this.swiping) {
+			if (this.panel === null || !this.panel.isConnected) this.buildPanel();
+			this.positionPanel();
+		}
+		this.swiping = true;
+		event.preventDefault();
+		let offset;
+		if (this.opened) offset = Math.max(Math.min(-this.panelWidth + deltaX, 0), -this.panelWidth);
+		else {
+			if (deltaX <= 0) return;
+			offset = Math.max(-deltaX, -this.panelWidth);
+		}
+		this.element.classList.add("rm-mnb-swipe--moving");
+		this.element.classList.remove("rm-mnb-swipe--settling");
+		this.element.style.setProperty("transform", `translateX(${offset}px)`);
+		this.panel?.style.setProperty("clip-path", `inset(0 0 0 ${this.panelWidth - Math.abs(offset)}px)`);
+		if (Math.abs(offset) >= this.panelWidth) haptic("light");
+	}
+	touchEnd() {
+		if (!this.swiping) return;
+		this.swiping = false;
+		const deltaX = this.startX - this.currentX;
+		if (this.opened ? deltaX < -this.panelWidth * .3 : deltaX <= this.panelWidth * .4) this.close();
+		else this.open();
+	}
+	open() {
+		this.opened = true;
+		this.element.classList.add("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
+		this.element.style.setProperty("transform", `translateX(${-this.panelWidth}px)`);
+		this.panel?.style.setProperty("clip-path", "inset(0)");
+	}
+	close() {
+		this.opened = false;
+		this.element.classList.add("rm-mnb-swipe--settling");
+		this.element.style.removeProperty("transform");
+		window.setTimeout(() => {
+			if (!this.opened) {
+				this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
+				this.panel?.classList.remove("is-visible");
+				this.panel?.style.removeProperty("clip-path");
+			}
+		}, 300);
 	}
 };
 //#endregion
@@ -1363,6 +1462,7 @@ var tab_bar_controller_default = class extends Controller {
 var IDENTIFIER_PREFIX = "romainmillan--mobile-navigation-bundle--";
 var controllers = {
 	"confirm-sheet": confirm_sheet_controller_default,
+	"confirm-submit": confirm_submit_controller_default,
 	"emit-event": emit_event_controller_default,
 	"filter-bar": filter_bar_controller_default,
 	gesture: gesture_controller_default,
@@ -1380,4 +1480,4 @@ function registerMobileNavigation(application) {
 	});
 }
 //#endregion
-export { IDENTIFIER_PREFIX, controllers, haptic, registerMobileNavigation };
+export { CONFIRM_REQUEST_EVENT, EDITING_CHANGED_EVENT, IDENTIFIER_PREFIX, TOGGLE_EDITING_EVENT, TOGGLE_SELECTING_EVENT, confirmSheetAvailable, controllers, haptic, registerMobileNavigation };

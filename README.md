@@ -64,7 +64,7 @@ then enable its controllers in `assets/controllers.json`:
 }
 ```
 
-(one entry per controller: `confirm-sheet`, `emit-event`, `filter-bar`, `gesture`,
+(one entry per controller: `confirm-sheet`, `confirm-submit`, `emit-event`, `filter-bar`, `gesture`,
 `large-title`, `list`, `navigate`, `sheet`, `swipe-actions`, `swipe-back`, `tab-bar`). You
 can also register them all by hand: see [docs/frontend.md](docs/frontend.md).
 
@@ -100,7 +100,13 @@ Then map the `--rm-mnb-*` CSS variables to your theme, in a single file. See
 | `BackButton` | back disc; the parent name is spoken, not shown |
 | `CompactBar` | floating compact bar (`title`, `back`, `trailing` block) |
 | `ListSection`, `ListRow` | compact list: sections, rows (tap = view, swipe = actions) |
-| `SelectToggle` | "Select / Done" button |
+| `SelectToggle`, `EditToggle` | "Select / Done" and "Edit / Done" buttons (list modes) |
+| `ActionsDisc` | "…" glass disc that opens the action sheet of the page |
+| `SheetFormRow` | sheet row that sends a POST, optionally confirmed |
+| `Hero` | main figure of a page, with caption and gauge |
+| `SegmentedControl` | segmented control of links |
+| `EmptyState` | empty state outside a list |
+| `ChartFrame` | frame of a compact chart rendered by the app |
 | `LoadMore` | "Load more" inside a `<turbo-frame>` (requires Turbo) |
 | `FilterBar` | proxy search field and filter button |
 | `ConfirmSheet` | confirmation of the destructive swipe actions (one per page) |

@@ -1,7 +1,8 @@
 {#
     iOS grouped list row: tap = view, swipe = actions, selection in "Select" mode. Texts
     arrive translated, URLs generated server side. The leading_icon block replaces the
-    <i> of the chip (variable: leading). Props: see the ListRow class.
+    <i> of the chip (variable: leading). With reorder, a drag handle shows in "Edit" mode;
+    the app sets its drag target on it. Props: see the ListRow class.
 #}
 <div class="rm-mnb-list-row {{ attributes.render('class') }}"
      {{ attributes.defaults(this.swipeAttributes) }}>
@@ -41,4 +42,10 @@
             <span class="rm-mnb-icon rm-mnb-icon--chevron rm-mnb-list-row__chevron" aria-hidden="true"></span>
         {% endif %}
     {% if href %}</a>{% else %}</div>{% endif %}
+    {% if reorder %}
+        <span class="rm-mnb-list-row__reorder" role="button" tabindex="-1" aria-label="{{ reorder.label }}"
+              {{ reorder.attributes ? reorder.attributes|raw }}>
+            <span class="rm-mnb-icon rm-mnb-icon--grip" aria-hidden="true"></span>
+        </span>
+    {% endif %}
 </div>

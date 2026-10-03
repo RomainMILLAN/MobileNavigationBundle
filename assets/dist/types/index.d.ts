@@ -9,4 +9,6 @@ import type { Application, ControllerConstructor } from '@hotwired/stimulus';
 export declare const IDENTIFIER_PREFIX = "romainmillan--mobile-navigation-bundle--";
 export declare const controllers: Readonly<Record<string, ControllerConstructor>>;
 export declare function registerMobileNavigation(application: Application): void;
+export { CONFIRM_REQUEST_EVENT, confirmSheetAvailable, type ConfirmRequestDetail } from './confirm_contract';
+export { EDITING_CHANGED_EVENT, TOGGLE_EDITING_EVENT, TOGGLE_SELECTING_EVENT } from './controllers/list_controller';
 export { haptic } from './utils/haptic';

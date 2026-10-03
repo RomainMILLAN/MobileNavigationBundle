@@ -7,9 +7,9 @@ namespace RomainMillan\MobileNavigation\Twig\Component\Option;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * CompactBar "back": {href, label}.
+ * A link: CompactBar "back", EmptyState "action": {href, label}.
  */
-final readonly class BackOptions implements PropOptions
+final readonly class LinkOptions implements PropOptions
 {
     public function configure(OptionsResolver $resolver): void
     {

@@ -43,7 +43,10 @@ final class TestKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return __DIR__.'/var/cache/'.$this->environment;
+        // Infection runs several PHPUnit processes at once, each with its own TEST_TOKEN.
+        $process = getenv('TEST_TOKEN');
+
+        return __DIR__.'/var/cache/'.$this->environment.(false === $process ? '' : '-'.$process);
     }
 
     public function getLogDir(): string

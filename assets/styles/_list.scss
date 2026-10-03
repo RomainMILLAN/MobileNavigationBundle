@@ -5,25 +5,30 @@
 // iOS compact lists: sections, rows, selection, "Load more", swipe
 // ===========================
 
-.rm-mnb-select-toggle {
-    @include accent-ink;
+// Top-row buttons that drive a list mode: their label follows the class the list sets
+// on <html> ("Select" / "Edit" <-> "Done").
+@each $toggle, $mode in (select: selecting, edit: editing) {
+    .rm-mnb-#{$toggle}-toggle {
+        @include accent-ink;
 
-    .rm-mnb-select-toggle__done {
-        display: none;
-    }
-
-    html.rm-mnb-list-selecting & {
-        .rm-mnb-select-toggle__start {
+        .rm-mnb-#{$toggle}-toggle__done {
             display: none;
         }
 
-        .rm-mnb-select-toggle__done {
-            display: inline;
-        }
-    }
+        html.rm-mnb-list-#{$mode} & {
+            .rm-mnb-#{$toggle}-toggle__start {
+                display: none;
+            }
 
-    &:hover {
-        @include accent-ink;
+            .rm-mnb-#{$toggle}-toggle__done {
+                display: inline;
+                font-weight: 600;
+            }
+        }
+
+        &:hover {
+            @include accent-ink;
+        }
     }
 }
 
@@ -211,8 +216,33 @@
     }
 }
 
-.is-selecting .rm-mnb-list-row__chevron {
+.is-selecting .rm-mnb-list-row__chevron,
+.is-editing .rm-mnb-list-row__chevron {
     display: none;
+}
+
+// Drag handle: it only exists in "Edit" mode. The app sets its drag target on it
+// (Sortable…); the bundle only shows it.
+.rm-mnb-list-row__reorder {
+    display: none;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: $rm-mnb-control-size;
+    align-self: stretch;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.45);
+    font-size: 20px;
+    cursor: grab;
+    touch-action: none;
+
+    .is-editing & {
+        display: inline-flex;
+    }
+}
+
+// While editing, the row no longer reads as a link.
+.is-editing .rm-mnb-list-row__main {
+    cursor: default;
 }
 
 .rm-mnb-load-more {

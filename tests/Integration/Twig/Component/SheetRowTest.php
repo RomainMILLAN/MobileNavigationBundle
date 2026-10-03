@@ -113,6 +113,31 @@ final class SheetRowTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_put_the_value_under_the_label_when_multiline(): void
+    {
+        $row = $this->renderComponent('SheetRow', ['label' => 'IBAN', 'value' => 'FR76 3000', 'multiline' => true, 'static' => true, 'valueAttributes' => ['data-maskable' => true]])->filter('.rm-mnb-row');
+
+        self::assertStringContainsString('rm-mnb-row--multiline', (string) $row->attr('class'));
+        self::assertSame('IBAN', $row->filter('.rm-mnb-row__stack > .rm-mnb-row__label')->text());
+        $value = $row->filter('.rm-mnb-row__stack > .rm-mnb-row__value--multiline');
+        self::assertSame('FR76 3000', $value->text());
+        self::assertSame('', $value->attr('data-maskable'));
+        self::assertCount(1, $row->filter('.rm-mnb-row__value'));
+    }
+
+    #[Test]
+    public function it_should_ink_the_value_with_its_tone(): void
+    {
+        $toned = $this->renderComponent('SheetRow', ['label' => 'Income', 'value' => '+ 12', 'valueTone' => 'positive'])->filter('.rm-mnb-row__value');
+        self::assertStringContainsString('rm-mnb-row__value--toned rm-mnb-tone--positive', (string) $toned->attr('class'));
+
+        foreach (['neutral', 'xyz', null] as $valueTone) {
+            $plain = $this->renderComponent('SheetRow', ['label' => 'Income', 'value' => '+ 12', 'valueTone' => $valueTone])->filter('.rm-mnb-row__value');
+            self::assertSame('rm-mnb-row__value', $plain->attr('class'));
+        }
+    }
+
+    #[Test]
     public function it_should_put_free_html_attributes_on_the_root(): void
     {
         $row = $this->renderComponent('SheetRow', ['label' => 'Theme', 'role' => 'switch', 'aria-checked' => 'false', 'data-foo' => 'bar'])->filter('.rm-mnb-row');

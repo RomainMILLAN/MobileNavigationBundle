@@ -28,6 +28,15 @@ final class SheetGroupTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_render_its_footer_note(): void
+    {
+        $crawler = $this->renderComponent('SheetGroup', ['footer' => 'Only you can see this.']);
+
+        self::assertSame('Only you can see this.', $crawler->filter('div.rm-mnb-group + p.rm-mnb-group__footer')->text());
+        self::assertCount(0, $this->renderComponent('SheetGroup')->filter('.rm-mnb-group__footer'));
+    }
+
+    #[Test]
     public function it_should_put_free_html_attributes_on_the_root(): void
     {
         $root = $this->renderComponent('SheetGroup', [...[], 'role' => 'note', 'data-foo' => 'bar'])->filter('div.rm-mnb-group')->first();

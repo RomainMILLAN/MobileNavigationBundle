@@ -158,6 +158,23 @@ final class ListRowTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_render_the_reorder_handle_with_the_app_attributes(): void
+    {
+        $attributes = $this->stimulusAttributes();
+        $attributes->addTarget('app--sortable', 'handle');
+
+        $html = $this->renderTwigComponent('MobileNavigation:ListRow', ['title' => 'Groceries', 'reorder' => ['label' => 'Move Groceries', 'attributes' => $attributes]])->toString();
+        $handle = $this->renderComponent('ListRow', ['title' => 'Groceries', 'reorder' => ['label' => 'Move Groceries']])->filter('.rm-mnb-list-row__reorder');
+
+        self::assertSame('Move Groceries', $handle->attr('aria-label'));
+        self::assertSame('button', $handle->attr('role'));
+        self::assertCount(1, $handle->filter('.rm-mnb-icon--grip'));
+        self::assertStringContainsString('data-app--sortable-target="handle"', $html);
+        self::assertCount(0, $this->renderComponent('ListRow', ['title' => 'Groceries'])->filter('.rm-mnb-list-row__reorder'));
+        $this->assertMountFails('ListRow', ['title' => 'Groceries', 'reorder' => ['label' => 'Move', 'icon' => 'x']], 'Cannot mount the "reorder" prop');
+    }
+
+    #[Test]
     public function it_should_require_title(): void
     {
         $this->assertMountFails('ListRow', [], 'There is no "title" prop for the MobileNavigation:ListRow component.');

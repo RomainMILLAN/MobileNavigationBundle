@@ -13,9 +13,9 @@ const BUNDLE_ROOT = resolve(__dirname, '../..');
 const RUNTIME_PACKAGES = ['@hotwired/stimulus'];
 const TOOLING_PACKAGES = ['vite', 'vitest', 'vitest/config', 'node:fs', 'node:path'];
 const PACKAGE_NAME = '@romainmillan/mobile-navigation-bundle/';
-// The three types guaranteed escaped: StimulusAttributes (fabAttributes,
-// selectable.attributes) and ValueAttributes (this.valueAttributes).
-const RAW_ALLOWED = ['fabAttributes', 'selectable.attributes', 'this.valueAttributes'];
+// Only types guaranteed escaped: StimulusAttributes (fabAttributes, selectable.attributes,
+// reorder.attributes) and ValueAttributes (this.valueAttributes, this.captionAttributes).
+const RAW_ALLOWED = ['fabAttributes', 'selectable.attributes', 'reorder.attributes', 'this.valueAttributes', 'this.captionAttributes'];
 // Classes of the apps that used to live in the bundle: never again.
 const APP_CLASSES = ['maskable', 'rm-mnb-bulk-bar', 'rm-mnb-avatar', 'rm-mnb-identity', 'rm-mnb-row--action', 'rm-mnb-list-host', 'rm-mnb-filter-reset-label'];
 const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare'];

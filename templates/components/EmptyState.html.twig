@@ -1,0 +1,16 @@
+{#
+    Empty state outside a list: a discreet icon, a sentence, an optional action. The icon
+    block replaces the <i> (variable: icon). Props: see the EmptyState class.
+#}
+<div class="rm-mnb-empty-state {{ attributes.render('class') }}" {{ attributes }}>
+    {% if icon %}
+        <span class="rm-mnb-empty-state__icon"><span class="rm-mnb-icon-slot">{% block icon %}<i class="{{ icon }}" aria-hidden="true"></i>{% endblock %}</span></span>
+    {% endif %}
+    <p class="rm-mnb-empty-state__title">{{ title }}</p>
+    {% if message %}
+        <p class="rm-mnb-empty-state__message">{{ message }}</p>
+    {% endif %}
+    {% if action %}
+        <a href="{{ action.href }}" class="rm-mnb-empty-state__action">{{ action.label }}</a>
+    {% endif %}
+</div>

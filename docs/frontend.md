@@ -11,9 +11,10 @@ Composer package. It ships prebuilt ESM files (`dist/`), one per controller, wit
 | `tab-bar` | lens that follows the finger, haptics |
 | `emit-event` | dispatches a window event on click (sheet toggles) |
 | `sheet` | sheet: open/close commands, focus trap, drag to dismiss |
-| `confirm-sheet` | confirmation of destructive swipe actions |
+| `confirm-sheet` | the confirmation sheet (answers `rm-mnb-confirm:request`) |
+| `confirm-submit` | a POST form confirmed first (`SheetFormRow`), submitted once |
 | `large-title` | shows the compact bar when the `<h1>` scrolls out |
-| `list` | section headers deduplicated after "Load more", selection mode |
+| `list` | section headers deduplicated after "Load more", "Select" and "Edit" modes |
 | `swipe-actions` | actions revealed by swiping a row to the left |
 | `swipe-back` | swipe from the left edge to go back (installed PWA) |
 | `filter-bar` | mirrors the proxy search field into the app form |

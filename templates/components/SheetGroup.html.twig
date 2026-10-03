@@ -1,6 +1,6 @@
 {#
-    iOS grouped list: a rounded block of rows, with an optional heading. Props: see the
-    SheetGroup class.
+    iOS grouped list: a rounded block of rows, with an optional heading and an optional
+    footer note. Props: see the SheetGroup class.
 #}
 {% if heading %}
     <h3 class="rm-mnb-group__heading">{{ heading }}</h3>
@@ -9,3 +9,6 @@
      {{ closesSheet ? attributes.defaults(stimulus_target(rm_mnb_controller('sheet'), 'closeZone')) : attributes }}>
     {% block content %}{% endblock %}
 </div>
+{% if footer %}
+    <p class="rm-mnb-group__footer">{{ footer }}</p>
+{% endif %}

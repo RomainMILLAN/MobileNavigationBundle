@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/controllers/swipe_actions_controller.ts
+//#region src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
 //#endregion
 //#region src/controllers/confirm_sheet_controller.ts

@@ -52,6 +52,7 @@ Sizes, radii, curves and z-indexes are `!default` Sass variables (`_tokens.scss`
 `$rm-mnb-mobile-max`, `$rm-mnb-tab-bar-height`, `$rm-mnb-tab-bar-gap`,
 `$rm-mnb-tab-bar-inset`, `$rm-mnb-fab-size`, `$rm-mnb-control-size`,
 `$rm-mnb-large-title-size`, `$rm-mnb-top-row-offset`, `$rm-mnb-row-min-height`,
+`$rm-mnb-field-min-height`, `$rm-mnb-chart-height`,
 `$rm-mnb-radius-*`, `$rm-mnb-glass-blur`, `$rm-mnb-z-*`, `$rm-mnb-ease-*`,
 `$rm-mnb-duration-*`. `$rm-mnb-tones` is the closed list of tones (not configurable). The
 mixins `glass`, `accent-ink` and `focus-ring` are forwarded too.
@@ -74,6 +75,7 @@ Every class is prefixed `rm-mnb-`. They fall into three categories.
    | `rm-mnb-list` | the grouped list (host of the `list` controller) |
    | `rm-mnb-empty` | empty state of a list |
    | `rm-mnb-tone--{tone}` | sets `--rm-mnb-tone` from a tone |
+   | `rm-mnb-form`, `rm-mnb-form-group`, `rm-mnb-form-heading`, `rm-mnb-field*`, `rm-mnb-form__actions` | the iOS form, see below |
 
 3. **Double use**: emitted by a component **and** usable by hand: `rm-mnb-chip`,
    `rm-mnb-row`, `rm-mnb-row__label`, `rm-mnb-row__value`, `rm-mnb-group`,
@@ -81,10 +83,31 @@ Every class is prefixed `rm-mnb-`. They fall into three categories.
    `rm-mnb-visually-hidden`. Their icon rules use a generic descendant selector
    (`:where(i, svg)`), so a raw `<i>` or `<svg>` works as well as the components' markup.
 
+## iOS form
+
+`_form.scss` turns an app form into iOS grouped rows, **only** inside a
+`<form class="rm-mnb-form">` and **only** below 768 px: elsewhere the classes are inert,
+so the app can put them in its form theme everywhere.
+
+| Class | Where |
+|---|---|
+| `rm-mnb-form` | the `<form>` |
+| `rm-mnb-form-group` | a rounded group of fields |
+| `rm-mnb-form-heading` | the heading above a group |
+| `rm-mnb-field` | a short field row: the `<label>` first on the left, the native control on the right |
+| `rm-mnb-field--stacked` | a long field: label above, full-width control |
+| `rm-mnb-field--switch` | a checkbox drawn as an iOS switch |
+| `rm-mnb-field__error`, `rm-mnb-field__help` | error / help under the row |
+| `rm-mnb-form__actions` | the glass action bar |
+
+The bundle only styles native elements (`input`, `select`, `textarea`, `label`); the app
+rewires its own widgets (input groups, enhanced selects) in its adapter.
+
 ## Icons
 
 The bundle depends on no icon font. Its own icons (chevrons, check, search, filters) are
-CSS masks (`rm-mnb-icon rm-mnb-icon--*`), painted in the text color.
+CSS masks (`rm-mnb-icon rm-mnb-icon--*`: `chevron`, `back`, `check`, `search`, `filters`,
+`grip`, `more`), painted in the text color.
 
 Domain icons come from the app: by default the components render
 `<i class="{{ icon }}" aria-hidden="true"></i>` inside a `<span class="rm-mnb-icon-slot">`.

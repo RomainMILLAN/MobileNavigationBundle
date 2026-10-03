@@ -36,6 +36,12 @@ final class SheetRow
     /** Attributes of the value element (e.g. data-maskable). */
     public ValueAttributes $valueAttributes;
 
+    /** Tone of the value ink (income, expense), or null for the body ink; neutral = body ink. */
+    public ?string $valueTone = null;
+
+    /** The value goes under the label, on several lines (description, IBAN, keywords). */
+    public bool $multiline = false;
+
     /** Badge on the right, or null. */
     public string|\Stringable|null $badge = null;
 
@@ -64,6 +70,9 @@ final class SheetRow
         $tone = $data['tone'] ?? null;
         $data['tone'] = Tone::createFromLooseValue($tone instanceof Tone || \is_string($tone) ? $tone : null)->value;
         $data['valueAttributes'] = ValueAttributes::createFromLooseValue($data['valueAttributes'] ?? null);
+
+        $valueTone = $data['valueTone'] ?? null;
+        $data['valueTone'] = null === $valueTone ? null : Tone::createFromLooseValue($valueTone instanceof Tone || \is_string($valueTone) ? $valueTone : null)->value;
 
         return $data;
     }

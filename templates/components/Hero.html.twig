@@ -1,0 +1,21 @@
+{#
+    The main figure of a page (balance, amount left, available): its name, a large tabular
+    number, a caption and, when needed, a gauge. Props: see the Hero class.
+#}
+<section class="rm-mnb-hero {{ attributes.render('class') }}" {{ attributes }}>
+    {% if label %}
+        <p class="rm-mnb-hero__label">{{ label }}</p>
+    {% endif %}
+    <p class="rm-mnb-hero__value rm-mnb-hero__value--{{ tone }}"{{ this.valueAttributes|raw }}>{{ value }}</p>
+    {% if caption %}
+        <p class="rm-mnb-hero__caption rm-mnb-tone--{{ captionTone }}"{{ this.captionAttributes|raw }}>{{ caption }}</p>
+    {% endif %}
+    {% if progress is not null %}
+        {% set clamped = max(0, min(100, progress)) %}
+        <div class="rm-mnb-hero__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             aria-valuenow="{{ clamped|round }}"{% if progressLabel %} aria-label="{{ progressLabel }}"{% endif %}>
+            <span class="rm-mnb-hero__progress-bar rm-mnb-hero__progress-bar--{{ ((clamped / 5)|round) * 5 }} rm-mnb-tone--{{ progressTone }}"></span>
+        </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</section>

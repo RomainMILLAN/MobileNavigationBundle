@@ -2,19 +2,29 @@
     Row of a grouped list: a link with href, a button otherwise, a static row with static.
     Other attributes (role, aria-*, Stimulus actions by spread) go on the row. The content
     block replaces the chip and the label when the app must put its targets there; the
-    icon block replaces the <i> of the chip. Props: see the SheetRow class.
+    icon block replaces the <i> of the chip. With multiline, the value goes under the
+    label, on several lines. Props: see the SheetRow class.
 #}
 {% set tag = static ? 'div' : (href ? 'a' : 'button') %}
-<{{ tag }} class="rm-mnb-row{{ danger ? ' rm-mnb-row--danger' }}{{ static ? ' rm-mnb-row--static' }} {{ attributes.render('class') }}"
+<{{ tag }} class="rm-mnb-row{{ danger ? ' rm-mnb-row--danger' }}{{ static ? ' rm-mnb-row--static' }}{{ multiline ? ' rm-mnb-row--multiline' }} {{ attributes.render('class') }}"
     {%- if tag == 'a' %} href="{{ href }}"{% elseif tag == 'button' and attributes.has('type') == false %} type="button"{% endif %} {{ attributes }}>
     {% block content %}
         {% if icon %}
             <span class="rm-mnb-chip rm-mnb-tone--{{ tone }}"><span class="rm-mnb-icon-slot">{% block icon %}<i class="{{ icon }}" aria-hidden="true"></i>{% endblock %}</span></span>
         {% endif %}
-        <span class="rm-mnb-row__label">{{ label }}</span>
+        {% if multiline %}
+            <span class="rm-mnb-row__stack">
+                <span class="rm-mnb-row__label">{{ label }}</span>
+                {% if value is not null %}
+                    <span class="rm-mnb-row__value rm-mnb-row__value--multiline"{{ this.valueAttributes|raw }}>{{ value }}</span>
+                {% endif %}
+            </span>
+        {% else %}
+            <span class="rm-mnb-row__label">{{ label }}</span>
+        {% endif %}
     {% endblock %}
-    {% if value is not null %}
-        <span class="rm-mnb-row__value"{{ this.valueAttributes|raw }}>{{ value }}</span>
+    {% if value is not null and not multiline %}
+        <span class="rm-mnb-row__value{{ valueTone and valueTone != 'neutral' ? ' rm-mnb-row__value--toned rm-mnb-tone--' ~ valueTone }}"{{ this.valueAttributes|raw }}>{{ value }}</span>
     {% endif %}
     {% if badge %}
         <span class="rm-mnb-badge">{{ badge }}</span>

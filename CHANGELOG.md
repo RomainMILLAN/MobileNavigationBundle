@@ -6,24 +6,28 @@ All notable changes to this project are documented in this file. The format is b
 
 ## 0.1.0 - Unreleased
 
-Extracted from Finance @6ec62d3e.
+Extracted from Finance @2920cb74.
 
 ### Added
 
-- Twig components `TabBar`, `Sheet`, `SheetGroup`, `SheetRow`, `BackButton`,
-  `CompactBar`, `ListSection`, `ListRow`, `SelectToggle`, `LoadMore`, `FilterBar`,
-  `ConfirmSheet`, as classes with typed props validated at mount time.
+- Twig components `TabBar`, `Sheet`, `SheetGroup`, `SheetRow`, `SheetFormRow`,
+  `BackButton`, `CompactBar`, `ListSection`, `ListRow`, `SelectToggle`, `EditToggle`,
+  `ActionsDisc`, `Hero`, `SegmentedControl`, `EmptyState`, `ChartFrame`, `LoadMore`,
+  `FilterBar`, `ConfirmSheet`, as classes with typed props validated at mount time.
+- "Select" and "Edit" list modes, exclusive, driven by window events.
 - `SwipeAction` / `SwipeActions` value objects, `ValueAttributes`, `Tone`, `LocalPath`.
 - Twig functions `rm_mnb_controller()` and `rm_mnb_swipe_controller()`.
 - Overridable icon blocks: `tab_icon`, `more_icon`, `fab_icon`, `leading_icon`, `icon`.
-- Eleven Stimulus controllers, prebuilt in `assets/dist`, for Webpack Encore and
+- iOS form styles (`rm-mnb-form`, `rm-mnb-field*`), opt-in and mobile only.
+- Twelve Stimulus controllers, prebuilt in `assets/dist`, for Webpack Encore and
   AssetMapper.
 - Sass sources and a precompiled `dist/mobile-navigation.css`.
 - English and French translations (`rm_mnb` domain).
 
 ### Changed (compared to the in-app module)
 
-- `maskable` is replaced by the generic `valueAttributes` prop.
+- `maskable` is replaced by the generic `valueAttributes` prop; `Hero` no longer masks
+  its value by default (`valueAttributes` and `captionAttributes`, empty by default).
 - Turbo is optional: never imported, read from `window.Turbo`.
 - `navigate` and `swipe-actions` only follow same-origin http(s) URLs.
 - App-specific classes (`rm-mnb-bulk-bar`, `rm-mnb-avatar`, `rm-mnb-identity*`,

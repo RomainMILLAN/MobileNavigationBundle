@@ -48,6 +48,12 @@
         "fetch": "eager",
         "enabled": true
       },
+      "confirm-submit": {
+        "main": "dist/controllers/confirm_submit_controller.js",
+        "webpackMode": "eager",
+        "fetch": "eager",
+        "enabled": true
+      },
       "emit-event": {
         "main": "dist/controllers/emit_event_controller.js",
         "webpackMode": "eager",

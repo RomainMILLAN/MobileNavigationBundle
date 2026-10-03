@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace RomainMillan\MobileNavigation\Twig\Component;
 
-use RomainMillan\MobileNavigation\Twig\Component\Option\BackOptions;
+use RomainMillan\MobileNavigation\Twig\Component\Option\LinkOptions;
 use RomainMillan\MobileNavigation\Twig\Component\Option\StructuredProp;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PreMount;
@@ -36,7 +36,7 @@ final class CompactBar
         RequiredProps::createForComponent(self::class, 'title')->assertPresentIn($data);
 
         if (null !== ($data['back'] ?? null)) {
-            $data['back'] = StructuredProp::createForComponent(self::class, 'back', new BackOptions())->resolve($data['back']);
+            $data['back'] = StructuredProp::createForComponent(self::class, 'back', new LinkOptions())->resolve($data['back']);
         }
 
         return $data;

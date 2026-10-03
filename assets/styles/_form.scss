@@ -1,0 +1,227 @@
+@use 'tokens' as *;
+@use 'glass' as *;
+
+// ===========================
+// iOS form: rounded groups of "label → value" rows
+// ===========================
+// Class-based contract, all inert outside a .rm-mnb-form container and above
+// 768 px: the app can apply them anywhere (its own form theme); only a form
+// that opted into .rm-mnb-form changes appearance, and only on mobile.
+//   .rm-mnb-form          container (the <form>)
+//   .rm-mnb-form-group    rounded group of fields
+//   .rm-mnb-form-heading  heading above a group
+//   .rm-mnb-field         short field row: label on the left, value on the right
+//   .rm-mnb-field--stacked  long field: label above, full-width control
+//   .rm-mnb-field--switch   checkbox drawn as an iOS switch
+//   .rm-mnb-field__error  error below the row
+//   .rm-mnb-form__actions glass action bar
+// The bundle only knows native elements; the app rewires its own widgets
+// (input groups, enhanced selects) in its adapter.
+
+$control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]), select, textarea';
+
+@media (max-width: $rm-mnb-mobile-max) {
+    .rm-mnb-form {
+        .rm-mnb-form-group {
+            margin: 0 0 14px;
+            overflow: hidden;
+            border-radius: $rm-mnb-radius-group;
+            background-color: var(--rm-mnb-surface);
+            box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
+        }
+
+        .rm-mnb-form-heading {
+            margin: 18px 8px 6px;
+            padding: 0;
+            border: 0;
+            color: var(--rm-mnb-ink);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: normal;
+            text-transform: none;
+        }
+
+        .rm-mnb-field {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            column-gap: 12px;
+            min-height: $rm-mnb-field-min-height;
+            // Rows overlap by one pixel: the hairline of a group's first field
+            // sticks out of the group and hides under its rounded corner; on the others it separates.
+            margin: -1px 0 0;
+            padding: 4px 14px;
+
+            // iOS separator: a hairline starting at the label's edge.
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 14px;
+                right: 0;
+                height: 1px;
+                background: var(--rm-mnb-border);
+                pointer-events: none;
+            }
+
+            // The label takes the room it needs (up to 62%), the value keeps
+            // at least 6rem: a short label no longer wraps onto three lines.
+            > label:first-child {
+                flex: 0 1 auto;
+                max-width: 62%;
+                margin: 0;
+                padding: 10px 0;
+                color: var(--rm-mnb-ink);
+                font-size: 16px;
+                font-weight: 400;
+                letter-spacing: normal;
+                text-transform: none;
+            }
+
+            #{$control} {
+                flex: 1 1 6rem;
+                min-width: 6rem;
+                min-height: 42px;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background-color: transparent;
+                box-shadow: none;
+                color: var(--rm-mnb-ink);
+                font-size: 16px;
+                text-align: right;
+                text-align-last: right;
+
+                &:focus {
+                    outline: none;
+                    box-shadow: none;
+                }
+
+                &::placeholder {
+                    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+                }
+            }
+
+            // iOS's native date picker centers its value: align it right.
+            input::-webkit-date-and-time-value {
+                text-align: right;
+            }
+
+            // Visible focus on the whole row: the control itself no longer has a border.
+            &:focus-within {
+                box-shadow: inset 0 0 0 2px var(--rm-mnb-accent);
+            }
+        }
+
+        .rm-mnb-field__error,
+        .rm-mnb-field > .rm-mnb-field__help {
+            flex: 0 0 100%;
+            margin: 0 0 8px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .rm-mnb-field__error {
+            color: var(--rm-mnb-danger-ink);
+        }
+
+        .rm-mnb-field__help {
+            color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+        }
+
+        .rm-mnb-field--stacked {
+            flex-direction: column;
+            align-items: stretch;
+            padding-bottom: 10px;
+
+            > label:first-child {
+                max-width: none;
+                padding: 10px 0 4px;
+                color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+                font-size: 13px;
+            }
+
+            #{$control} {
+                flex: none;
+                width: 100%;
+                text-align: left;
+                text-align-last: auto;
+            }
+
+            textarea {
+                min-height: 88px;
+                line-height: 1.4;
+            }
+        }
+
+        .rm-mnb-field--switch {
+            label {
+                flex: 1 1 auto;
+                margin: 0;
+                color: var(--rm-mnb-ink);
+                font-size: 16px;
+                font-weight: 400;
+            }
+
+            input[type="checkbox"] {
+                position: relative;
+                flex: none;
+                order: 2;
+                width: 51px;
+                height: 31px;
+                margin: 0 0 0 auto;
+                border: 0;
+                border-radius: 16px;
+                background-color: rgba(var(--rm-mnb-ink-rgb), 0.2);
+                background-image: none;
+                -webkit-appearance: none;
+                appearance: none;
+                cursor: pointer;
+                transition: background-color $rm-mnb-duration-fade ease;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    top: 2px;
+                    left: 2px;
+                    width: 27px;
+                    height: 27px;
+                    border-radius: 50%;
+                    background-color: #fff;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                    transition: transform $rm-mnb-duration-fade ease;
+                }
+
+                &:checked {
+                    background-color: var(--rm-mnb-accent-fill);
+
+                    &::after {
+                        transform: translateX(20px);
+                    }
+                }
+
+                &:focus-visible {
+                    @include focus-ring(2px);
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    &,
+                    &::after {
+                        transition: none;
+                    }
+                }
+            }
+        }
+
+        .rm-mnb-form__actions {
+            @include glass(strong);
+
+            display: flex;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: $rm-mnb-radius-sheet;
+        }
+    }
+}

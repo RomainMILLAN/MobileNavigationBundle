@@ -17,8 +17,10 @@ Prefer overriding a **block** when you only need to change a part.
 | `TabBar` | `fab_icon` (shared by the three "+" variants) | `fab` (`{label, icon, href, sheet}`) |
 | `ListRow` | `leading_icon` | `leading` (`{icon, tone}`) |
 | `SheetRow` | `icon` | `icon`, `tone` |
+| `ActionsDisc` | `icon` (replaces the three dots) | `icon` |
+| `EmptyState` | `icon` | `icon` |
 | `SheetRow` | `content` (chip and label) | all props |
-| `Sheet`, `SheetGroup`, `ListSection` | `content` | — |
+| `Sheet`, `SheetGroup`, `ListSection`, `Hero`, `ChartFrame` | `content` | — |
 | `CompactBar` | `trailing` | — |
 
 ```twig

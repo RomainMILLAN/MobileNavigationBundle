@@ -12,14 +12,6 @@ export interface SwipeAction {
     /** Present on every destructive action: the confirmation sheet's message. */
     confirm?: string;
 }
-/** Confirmation request, handled by the module's confirm-sheet controller. */
-export interface ConfirmRequestDetail {
-    title: string;
-    message: string;
-    confirmLabel: string;
-    onConfirm: () => void;
-}
-export declare const CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
 /**
  * Swiping a row to the left reveals its actions, each with its label. A
  * destructive action is not sent directly: it goes through the confirmation sheet.

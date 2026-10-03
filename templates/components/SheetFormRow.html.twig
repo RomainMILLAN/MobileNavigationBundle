@@ -1,0 +1,17 @@
+{#
+    Sheet row that sends a POST (finish, stop, delete…), optionally confirmed first by the
+    ConfirmSheet of the page. Without JavaScript, the form is sent directly: the server
+    stays the only judge. Props: see the SheetFormRow class.
+#}
+<form method="post" action="{{ action }}" class="rm-mnb-sheet-form {{ attributes.render('class') }}"
+      {{ confirm ? attributes.defaults(stimulus_controller(rm_mnb_controller('confirm-submit'), {
+          title: confirm.title,
+          message: confirm.message,
+          confirmLabel: confirm.confirmLabel ?? label,
+      })) : attributes }}>
+    <input type="hidden" name="_token" value="{{ token }}">
+    {% for name, value in fields %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    {{ component('MobileNavigation:SheetRow', {label: label, icon: icon, tone: tone, danger: danger, type: 'submit'}) }}
+</form>

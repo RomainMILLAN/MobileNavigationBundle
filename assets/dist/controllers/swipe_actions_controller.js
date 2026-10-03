@@ -1,4 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
+//#region src/confirm_contract.ts
+var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
+//#endregion
 //#region src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
@@ -43,7 +46,6 @@ function toTone(value) {
 }
 //#endregion
 //#region src/controllers/swipe_actions_controller.ts
-var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
 var BUTTON_WIDTH = 72;
 var MIN_SWIPE = 10;
 /**
@@ -191,7 +193,7 @@ var swipe_actions_controller_default = class extends Controller {
 		});
 	}
 	touchMove(event) {
-		if (this.element.closest(".is-selecting") !== null) return;
+		if (this.element.closest(".is-selecting, .is-editing") !== null) return;
 		const touch = event.touches[0];
 		if (touch === void 0) return;
 		this.currentX = touch.clientX;
@@ -244,4 +246,4 @@ var swipe_actions_controller_default = class extends Controller {
 	}
 };
 //#endregion
-export { CONFIRM_REQUEST_EVENT, swipe_actions_controller_default as default };
+export { swipe_actions_controller_default as default };

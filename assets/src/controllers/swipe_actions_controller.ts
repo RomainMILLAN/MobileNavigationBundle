@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 
+import { CONFIRM_REQUEST_EVENT, type ConfirmRequestDetail } from '../confirm_contract';
 import { haptic } from '../utils/haptic';
 import { sameOriginUrl } from '../utils/same_origin';
 import { toTone } from '../utils/tones';
@@ -17,16 +18,6 @@ export interface SwipeAction {
     /** Present on every destructive action: the confirmation sheet's message. */
     confirm?: string;
 }
-
-/** Confirmation request, handled by the module's confirm-sheet controller. */
-export interface ConfirmRequestDetail {
-    title: string;
-    message: string;
-    confirmLabel: string;
-    onConfirm: () => void;
-}
-
-export const CONFIRM_REQUEST_EVENT = 'rm-mnb-confirm:request';
 
 const BUTTON_WIDTH = 72;
 const MIN_SWIPE = 10;
@@ -205,8 +196,8 @@ export default class extends Controller<HTMLElement> {
     }
 
     private touchMove(event: TouchEvent): void {
-        // In selection mode, the row gets checked: it does not slide.
-        if (this.element.closest('.is-selecting') !== null) {
+        // In selection mode the row gets checked, in edit mode it gets dragged: it does not slide.
+        if (this.element.closest('.is-selecting, .is-editing') !== null) {
             return;
         }
 

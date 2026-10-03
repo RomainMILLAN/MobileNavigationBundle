@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 
-import { CONFIRM_REQUEST_EVENT, type ConfirmRequestDetail } from './swipe_actions_controller';
+import { CONFIRM_REQUEST_EVENT, type ConfirmRequestDetail } from '../confirm_contract';
 
 /**
  * Confirmation sheet for destructive actions. Mounted on the same element as a

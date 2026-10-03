@@ -1,0 +1,67 @@
+@use 'tokens' as *;
+@use 'glass' as *;
+
+// ===========================
+// Empty state outside a list: a subtle icon, a sentence, an optional action
+// ===========================
+// Information, not an alert: no colored background, no "Oops".
+
+.rm-mnb-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.rm-mnb-empty-state__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background-color: rgba(var(--rm-mnb-ink-rgb), 0.08);
+    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    font-size: 24px;
+}
+
+.rm-mnb-empty-state__title {
+    margin: 0;
+    color: var(--rm-mnb-ink);
+    font-size: 17px;
+    font-weight: 600;
+    text-wrap: balance;
+}
+
+.rm-mnb-empty-state__message {
+    max-width: 32ch;
+    margin: 6px 0 0;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    font-size: 15px;
+    line-height: 1.4;
+    text-wrap: pretty;
+}
+
+.rm-mnb-empty-state__action {
+    @include accent-ink;
+
+    display: inline-flex;
+    align-items: center;
+    min-height: $rm-mnb-control-size;
+    margin-top: 8px;
+    padding: 0 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        @include accent-ink;
+    }
+
+    &:focus-visible {
+        @include focus-ring(2px);
+        border-radius: $rm-mnb-radius-group;
+    }
+}

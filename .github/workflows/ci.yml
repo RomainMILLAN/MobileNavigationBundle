@@ -39,7 +39,7 @@ jobs:
       - name: Pin the Symfony and UX versions of this job
         run: |
           composer require --no-update "symfony/ux-twig-component:${{ matrix.ux }}" "symfony/stimulus-bundle:${{ matrix.ux == '^3.0' && '^3.0' || '^2.20' }}"
-          for package in browser-kit css-selector dom-crawler framework-bundle runtime translation twig-bridge twig-bundle; do
+          for package in browser-kit css-selector dom-crawler filesystem framework-bundle runtime translation twig-bridge twig-bundle; do
             composer require --dev --no-update "symfony/$package:${{ matrix.symfony }}"
           done
       - name: Install dependencies (${{ matrix.dependencies }})

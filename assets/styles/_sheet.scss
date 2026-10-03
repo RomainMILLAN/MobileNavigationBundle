@@ -191,6 +191,14 @@
     }
 }
 
+// Note under a group: help, explanation. Stuck to the group it comments.
+.rm-mnb-group__footer {
+    margin: -8px 16px 14px;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
 .rm-mnb-group__heading {
     margin: 18px 8px 6px;
     color: var(--rm-mnb-ink);
@@ -272,6 +280,47 @@
     flex: none;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+}
+
+// Value with a marked meaning (income, expense): the measured ink of its tone.
+.rm-mnb-row__value--toned {
+    color: var(--rm-mnb-tone-ink-current);
+}
+
+// Multi-line detail row: the label small, the value below it, whole.
+.rm-mnb-row--multiline {
+    align-items: flex-start;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.rm-mnb-row__stack {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    .rm-mnb-row__label {
+        color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+        font-size: 13px;
+        font-weight: 400;
+        white-space: normal;
+    }
+}
+
+.rm-mnb-row__value--multiline {
+    flex: initial;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+// Sheet row that sends a POST: the form is only a carrier.
+.rm-mnb-sheet-form {
+    display: block;
+    margin: 0;
 }
 
 .rm-mnb-row__chevron {

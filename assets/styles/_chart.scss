@@ -1,0 +1,38 @@
+@use 'tokens' as *;
+
+// ===========================
+// Frame for a compact chart: a solid group, a title, a fixed-height area
+// ===========================
+// The bundle draws nothing: the app renders its chart into __canvas, which is never
+// zero high (a library that sizes itself to its parent never finds a zero height).
+
+.rm-mnb-chart {
+    margin: 0 0 14px;
+    padding: 14px;
+    border-radius: $rm-mnb-radius-group;
+    background-color: var(--rm-mnb-surface);
+    box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
+}
+
+.rm-mnb-chart__header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.rm-mnb-chart__title {
+    color: var(--rm-mnb-ink);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.rm-mnb-chart__caption {
+    color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    font-size: 13px;
+}
+
+.rm-mnb-chart__canvas {
+    position: relative;
+    height: $rm-mnb-chart-height;
+}
