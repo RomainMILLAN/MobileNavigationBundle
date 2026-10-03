@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+    # A tag is tested too: it is what Packagist distributes.
+    tags: ['v*']
   pull_request: {}
   workflow_dispatch: {}
 

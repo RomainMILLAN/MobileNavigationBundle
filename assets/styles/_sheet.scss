@@ -189,6 +189,11 @@
         display: block;
         margin: 0;
     }
+
+    // Row without chip (label -> value details): the hairline starts at the text edge.
+    > * + *:not(:has(.rm-mnb-chip))::before {
+        left: 14px;
+    }
 }
 
 // Note under a group: help, explanation. Stuck to the group it comments.

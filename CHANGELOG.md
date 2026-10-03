@@ -4,7 +4,21 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.1.0 - Unreleased
+## 0.1.1 - Unreleased
+
+Reported from Finance @8cbbbe43.
+
+### Added
+
+- `ListRow` `caption` (`{text, tone}`, a second value under the value) and
+  `captionAttributes`.
+
+### Changed
+
+- In a grouped list, the hairline of a row without chip starts at the text edge.
+- CI also runs on `v*` tags.
+
+## 0.1.0 - 2026-10-03
 
 Extracted from Finance @2920cb74.
 

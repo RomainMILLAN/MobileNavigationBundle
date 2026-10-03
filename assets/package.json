@@ -1,6 +1,6 @@
 {
   "name": "@romainmillan/mobile-navigation-bundle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "iOS 26 \"liquid glass\" mobile navigation: Stimulus controllers and styles of romainmillan/mobile-navigation-bundle",
   "license": "MIT",

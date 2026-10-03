@@ -1,7 +1,8 @@
 {#
     iOS grouped list row: tap = view, swipe = actions, selection in "Select" mode. Texts
     arrive translated, URLs generated server side. The leading_icon block replaces the
-    <i> of the chip (variable: leading). With reorder, a drag handle shows in "Edit" mode;
+    <i> of the chip (variable: leading). caption is a second value under the value (a
+    projected balance…). With reorder, a drag handle shows in "Edit" mode;
     the app sets its drag target on it. Props: see the ListRow class.
 #}
 <div class="rm-mnb-list-row {{ attributes.render('class') }}"
@@ -28,10 +29,13 @@
                 <span class="rm-mnb-list-row__subtitle">{{ subtitle }}</span>
             {% endif %}
         </span>
-        {% if value or badge %}
+        {% if value or caption or badge %}
             <span class="rm-mnb-list-row__trailing">
                 {% if value %}
                     <span class="rm-mnb-list-row__value rm-mnb-tone--{{ value.tone }}"{{ this.valueAttributes|raw }}>{{ value.text }}</span>
+                {% endif %}
+                {% if caption %}
+                    <span class="rm-mnb-list-row__caption rm-mnb-tone--{{ caption.tone }}"{{ this.captionAttributes|raw }}>{{ caption.text }}</span>
                 {% endif %}
                 {% if badge %}
                     <span class="rm-mnb-badge rm-mnb-tone--{{ badge.tone }}">{{ badge.label }}</span>

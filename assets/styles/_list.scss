@@ -175,6 +175,17 @@
     white-space: nowrap;
 }
 
+.rm-mnb-list-row__caption {
+    color: var(--rm-mnb-tone-ink-current, rgba(var(--rm-mnb-ink-rgb), 0.8));
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &.rm-mnb-tone--neutral {
+        color: rgba(var(--rm-mnb-ink-rgb), 0.8);
+    }
+}
+
 .rm-mnb-list-row__chevron {
     flex: none;
     color: rgba(var(--rm-mnb-ink-rgb), 0.45);

@@ -175,6 +175,27 @@ final class ListRowTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_render_the_caption_under_the_value(): void
+    {
+        $trailing = $this->renderComponent('ListRow', [
+            'title' => 'Checking',
+            'value' => ['text' => '1 250,00 €'],
+            'caption' => ['text' => '1 100,00 € projected', 'tone' => 'warning'],
+            'captionAttributes' => ['data-maskable' => true],
+        ])->filter('.rm-mnb-list-row__trailing');
+
+        $caption = $trailing->filter('.rm-mnb-list-row__value + .rm-mnb-list-row__caption');
+        self::assertSame('1 100,00 € projected', $caption->text());
+        self::assertStringContainsString('rm-mnb-tone--warning', (string) $caption->attr('class'));
+        self::assertSame('', $caption->attr('data-maskable'));
+        self::assertNull($trailing->filter('.rm-mnb-list-row__value')->attr('data-maskable'));
+
+        $alone = $this->renderComponent('ListRow', ['title' => 'Checking', 'caption' => ['text' => 'Closed', 'tone' => 'xyz']])->filter('.rm-mnb-list-row__trailing .rm-mnb-list-row__caption');
+        self::assertStringContainsString('rm-mnb-tone--neutral', (string) $alone->attr('class'));
+        $this->assertMountFails('ListRow', ['title' => 'Checking', 'caption' => ['text' => '1', 'maskable' => true]], 'Cannot mount the "caption" prop');
+    }
+
+    #[Test]
     public function it_should_require_title(): void
     {
         $this->assertMountFails('ListRow', [], 'There is no "title" prop for the MobileNavigation:ListRow component.');

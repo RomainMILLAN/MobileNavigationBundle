@@ -564,6 +564,9 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
   display: block;
   margin: 0;
 }
+.rm-mnb-group > * + *:not(:has(.rm-mnb-chip))::before {
+  left: 14px;
+}
 
 .rm-mnb-group__footer {
   margin: -8px 16px 14px;
@@ -1177,6 +1180,16 @@ html.rm-mnb-list-editing .rm-mnb-edit-toggle .rm-mnb-edit-toggle__done {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.rm-mnb-list-row__caption {
+  color: var(--rm-mnb-tone-ink-current, rgba(var(--rm-mnb-ink-rgb), 0.8));
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rm-mnb-list-row__caption.rm-mnb-tone--neutral {
+  color: rgba(var(--rm-mnb-ink-rgb), 0.8);
 }
 
 .rm-mnb-list-row__chevron {

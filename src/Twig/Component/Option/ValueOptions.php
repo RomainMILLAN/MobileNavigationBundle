@@ -9,7 +9,7 @@ use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * ListRow "value": {text, tone}.
+ * ListRow "value" and "caption": {text, tone}.
  */
 final readonly class ValueOptions implements PropOptions
 {

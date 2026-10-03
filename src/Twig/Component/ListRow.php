@@ -48,6 +48,12 @@ final class ListRow
     /** Attributes of the value element (e.g. data-maskable). */
     public ValueAttributes $valueAttributes;
 
+    /** @var array{text: string|\Stringable, tone: string}|null Second value under the value (a projected balance…), or null. */
+    public ?array $caption = null;
+
+    /** Attributes of the caption element (e.g. data-maskable). */
+    public ValueAttributes $captionAttributes;
+
     /** @var array{label: string|\Stringable, tone: string}|null Badge under the value, or null. */
     public ?array $badge = null;
 
@@ -81,13 +87,14 @@ final class ListRow
     {
         RequiredProps::createForComponent(self::class, 'title')->assertPresentIn($data);
 
-        foreach (['leading' => new LeadingOptions(), 'value' => new ValueOptions(), 'badge' => new BadgeOptions(), 'selectable' => new SelectableOptions(), 'reorder' => new ReorderOptions()] as $prop => $propOptions) {
+        foreach (['leading' => new LeadingOptions(), 'value' => new ValueOptions(), 'caption' => new ValueOptions(), 'badge' => new BadgeOptions(), 'selectable' => new SelectableOptions(), 'reorder' => new ReorderOptions()] as $prop => $propOptions) {
             if (null !== ($data[$prop] ?? null)) {
                 $data[$prop] = StructuredProp::createForComponent(self::class, $prop, $propOptions)->resolve($data[$prop]);
             }
         }
 
         $data['valueAttributes'] = ValueAttributes::createFromLooseValue($data['valueAttributes'] ?? null);
+        $data['captionAttributes'] = ValueAttributes::createFromLooseValue($data['captionAttributes'] ?? null);
         $data['swipe'] = $this->swipeActions($data['swipe'] ?? null);
 
         return $data;

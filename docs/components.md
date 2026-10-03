@@ -31,7 +31,7 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 | `BackButton` | `href` (required), `label` (required) | — | |
 | `CompactBar` | `title` (required), `back` (`null`, `{href, label}`) | `trailing` | target `large-title:bar` |
 | `ListSection` | `title` (`''`), `rows` (`[]`, rows already rendered) | `content` | target `list:section` |
-| `ListRow` | `title` (required), `href` (`null`), `titleStrike` (`false`), `subtitle` (`null`), `leading` (`null`, `{icon, tone}`), `value` (`null`, `{text, tone}`), `valueAttributes` (array, empty by default), `badge` (`null`, `{label, tone}`), `chevron` (`true`), `swipe` (`null`, `{actions: list<SwipeAction>, csrfToken}`), `selectable` (`null`, `{name, value, label, attributes: ?StimulusAttributes}`), `turboFrame` (`'_top'`), `reorder` (`null`, `{label, attributes: ?StimulusAttributes}`) | `leading_icon` (variable `leading`) | controller `swipe-actions` when there are actions; `reorder` adds a drag handle shown in "Edit" mode only, the app sets its drag target on it through `attributes` |
+| `ListRow` | `title` (required), `href` (`null`), `titleStrike` (`false`), `subtitle` (`null`), `leading` (`null`, `{icon, tone}`), `value` (`null`, `{text, tone}`), `valueAttributes` (array, empty by default), `caption` (`null`, `{text, tone}`, a second value under the value), `captionAttributes` (array, empty by default), `badge` (`null`, `{label, tone}`), `chevron` (`true`), `swipe` (`null`, `{actions: list<SwipeAction>, csrfToken}`), `selectable` (`null`, `{name, value, label, attributes: ?StimulusAttributes}`), `turboFrame` (`'_top'`), `reorder` (`null`, `{label, attributes: ?StimulusAttributes}`) | `leading_icon` (variable `leading`) | controller `swipe-actions` when there are actions; `reorder` adds a drag handle shown in "Edit" mode only, the app sets its drag target on it through `attributes` |
 | `SelectToggle` | — | — | a `rm-mnb-glass-pill` button that emits the window event `rm-mnb-list:toggle-selecting`; it can live outside the list; its label follows the `rm-mnb-list-selecting` class the `list` controller sets on `<html>` |
 | `EditToggle` | — | — | the twin of `SelectToggle` for the "Edit" (reorder) mode: emits `rm-mnb-list:toggle-editing`; its label follows `html.rm-mnb-list-editing` |
 | `ActionsDisc` | `sheet` (required), `label` (`null`: "More actions"), `icon` (`null`: three dots) | `icon` (variable `icon`) | a `rm-mnb-glass-disc` button that emits `<sheet>:toggle` |
@@ -43,7 +43,7 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 | `FilterBar` | `form` (required), `sheet` (required), `field` (`null`), `placeholder` (`null`), `activeCount` (`0`) | — | controller `filter-bar` |
 | `ConfirmSheet` | `id` (`'rm-mnb-confirm'`), `forceCloseEvents` (`['turbo:before-cache']`) | — | controllers `sheet` + `confirm-sheet`; answers `rm-mnb-confirm:request` |
 
-`valueAttributes` (and `captionAttributes` of `Hero`) puts `data-*` / `aria-*` attributes on the **value element**,
+`valueAttributes` (and `captionAttributes` of `Hero` and `ListRow`) puts `data-*` / `aria-*` attributes on the **value element**,
 e.g. `{'data-maskable': true}` for an amount the app hides on demand. `true` renders the
 bare name, `false` omits the attribute, a string renders `name="value"` (escaped). Wiring
 attributes are refused (see [security.md](security.md)).
