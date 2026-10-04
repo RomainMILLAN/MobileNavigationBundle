@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.2 - 2026-10-04
+
+Reported from Finance (transaction form on iPhone).
+
+### Changed
+
+- iOS form: labels are semibold (600), values stay regular, so a label no longer reads like
+  the value typed next to it.
+- iOS form: the focus ring is drawn above the hairlines with the group's radius, so no
+  hairline crosses it and it fits the group's corners.
+
+### Fixed
+
+- iOS form: a group no longer clips its content while one of its fields has the focus, so a
+  dropdown opened in a row (enhanced select, autocomplete) is shown whole.
+
 ## 0.1.1 - 2026-10-03
 
 Reported from Finance @8cbbbe43.

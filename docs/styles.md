@@ -103,6 +103,11 @@ so the app can put them in its form theme everywhere.
 The bundle only styles native elements (`input`, `select`, `textarea`, `label`); the app
 rewires its own widgets (input groups, enhanced selects) in its adapter.
 
+A group clips its rows (clean corners), **except while one of its fields has the focus**:
+a dropdown opened in a row is then shown whole. The focus ring is drawn above the hairlines
+with the group's radius, so it fits the group's corners whatever the markup between the
+group and the row. Labels are semibold, values regular.
+
 ## Icons
 
 The bundle depends on no icon font. Its own icons (chevrons, check, search, filters) are

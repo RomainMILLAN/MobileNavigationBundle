@@ -1759,6 +1759,12 @@ html.rm-mnb-restoring .rm-mnb-scroller {
     background-color: var(--rm-mnb-surface);
     box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
   }
+  .rm-mnb-form .rm-mnb-form-group:focus-within {
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+    clip-path: inset(-0.5px -0.5px -100vh -0.5px round 12.5px);
+  }
   .rm-mnb-form .rm-mnb-form-heading {
     margin: 18px 8px 6px;
     padding: 0;
@@ -1796,7 +1802,7 @@ html.rm-mnb-restoring .rm-mnb-scroller {
     padding: 10px 0;
     color: var(--rm-mnb-ink);
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: normal;
     text-transform: none;
   }
@@ -1824,8 +1830,14 @@ html.rm-mnb-restoring .rm-mnb-scroller {
   .rm-mnb-form .rm-mnb-field input::-webkit-date-and-time-value {
     text-align: right;
   }
-  .rm-mnb-form .rm-mnb-field:focus-within {
+  .rm-mnb-form .rm-mnb-field:focus-within::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 12px;
     box-shadow: inset 0 0 0 2px var(--rm-mnb-accent);
+    pointer-events: none;
   }
   .rm-mnb-form .rm-mnb-field__error,
   .rm-mnb-form .rm-mnb-field > .rm-mnb-field__help {
@@ -1850,6 +1862,7 @@ html.rm-mnb-restoring .rm-mnb-scroller {
     padding: 10px 0 4px;
     color: rgba(var(--rm-mnb-ink-rgb), 0.8);
     font-size: 13px;
+    font-weight: 600;
   }
   .rm-mnb-form .rm-mnb-field--stacked input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]), .rm-mnb-form .rm-mnb-field--stacked select, .rm-mnb-form .rm-mnb-field--stacked textarea {
     flex: none;
@@ -1866,7 +1879,7 @@ html.rm-mnb-restoring .rm-mnb-scroller {
     margin: 0;
     color: var(--rm-mnb-ink);
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 600;
   }
   .rm-mnb-form .rm-mnb-field--switch input[type=checkbox] {
     position: relative;

@@ -22,12 +22,26 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
 
 @media (max-width: $rm-mnb-mobile-max) {
     .rm-mnb-form {
+        // The group clips its rows (clean corners, the first row's hairline hidden
+        // under the rounded edge), EXCEPT downwards while one of its fields has the
+        // focus: an open dropdown (enhanced select, autocomplete) is then shown whole.
         .rm-mnb-form-group {
             margin: 0 0 14px;
             overflow: hidden;
             border-radius: $rm-mnb-radius-group;
             background-color: var(--rm-mnb-surface);
             box-shadow: 0 0 0 0.5px var(--rm-mnb-border);
+
+            // While focused, it still clips its top and sides (rounded, half a pixel out so
+            // its border shadow stays), but no longer its bottom: the dropdown opens downwards.
+            // `clip-path` makes the group a stacking context: it is raised above the
+            // groups that follow, or they would cover its dropdown.
+            &:focus-within {
+                position: relative;
+                z-index: 1;
+                overflow: visible;
+                clip-path: inset(-0.5px -0.5px -100vh -0.5px round #{$rm-mnb-radius-group + 0.5px});
+            }
         }
 
         .rm-mnb-form-heading {
@@ -67,6 +81,8 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
 
             // The label takes the room it needs (up to 62%), the value keeps
             // at least 6rem: a short label no longer wraps onto three lines.
+            // Semibold label, regular value: at the same size and ink, nothing told the
+            // label apart from what was typed next to it.
             > label:first-child {
                 flex: 0 1 auto;
                 max-width: 62%;
@@ -74,7 +90,7 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
                 padding: 10px 0;
                 color: var(--rm-mnb-ink);
                 font-size: 16px;
-                font-weight: 400;
+                font-weight: 600;
                 letter-spacing: normal;
                 text-transform: none;
             }
@@ -109,8 +125,17 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
             }
 
             // Visible focus on the whole row: the control itself no longer has a border.
-            &:focus-within {
+            // A rounded ring drawn above the hairlines (they would cross it), with the
+            // group's radius: it fits the group's corners on its first and last rows,
+            // whatever the markup between the group and the row.
+            &:focus-within::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                z-index: 1;
+                border-radius: $rm-mnb-radius-group;
                 box-shadow: inset 0 0 0 2px var(--rm-mnb-accent);
+                pointer-events: none;
             }
         }
 
@@ -140,6 +165,7 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
                 padding: 10px 0 4px;
                 color: rgba(var(--rm-mnb-ink-rgb), 0.8);
                 font-size: 13px;
+                font-weight: 600;
             }
 
             #{$control} {
@@ -161,7 +187,7 @@ $control: 'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])
                 margin: 0;
                 color: var(--rm-mnb-ink);
                 font-size: 16px;
-                font-weight: 400;
+                font-weight: 600;
             }
 
             input[type="checkbox"] {
