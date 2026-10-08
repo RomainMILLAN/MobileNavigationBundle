@@ -1,6 +1,6 @@
 {
   "name": "@romainmillan/mobile-navigation-bundle",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "description": "iOS 26 \"liquid glass\" mobile navigation: Stimulus controllers and styles of romainmillan/mobile-navigation-bundle",
   "license": "MIT",
@@ -30,11 +30,13 @@
     "./styles/*": "./styles/*",
     "./dist/mobile-navigation.css": "./dist/mobile-navigation.css",
     "./package.json": "./package.json",
-    "./dist/*": "./dist/*"
+    "./dist/*": "./dist/*",
+    "./contract.json": "./contract.json"
   },
   "files": [
     "dist",
-    "styles"
+    "styles",
+    "contract.json"
   ],
   "scripts": {
     "build": "node build.mjs && sass styles/index.scss dist/mobile-navigation.css --no-source-map && tsc -p tsconfig.build.json",

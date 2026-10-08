@@ -23,7 +23,7 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 
 | Component | Props (default) | Blocks | Notes |
 |---|---|---|---|
-| `TabBar` | `label` (required), `tabs` (required, list of `{href, label, icon, current = false}`), `fab` (required, `{label, icon, href?, sheet?}`), `more` (`null`, `{sheet, label, icon}`), `fabAttributes` (`null`, `?StimulusAttributes`) | `tab_icon` (variable `tab`), `more_icon` (`more`), `fab_icon` (`fab`) | controllers `tab-bar`, `emit-event` (`<sheet>:toggle`); the "+" is a link with `href`, a button that emits `<sheet>:toggle` with `sheet`, disabled otherwise; `fabAttributes` is chained to `emit-event` in a **single** `data-controller` |
+| `TabBar` | `label` (required), `tabs` (required, list of `{href, label, icon, current = false, badge = null}`, `badge` being a `TabBadge`), `fab` (`null`, `{label, icon, href?, sheet?}`), `more` (`null`, `{sheet, label, icon}`), `fabAttributes` (`null`, `?StimulusAttributes`) | `tab_icon` (variable `tab`), `more_icon` (`more`), `fab_icon` (`fab`) | controllers `tab-bar`, `emit-event` (`<sheet>:toggle`); without `fab` there is no "+" and the pill takes the whole width; the "+" is a link with `href`, a button that emits `<sheet>:toggle` with `sheet`, disabled otherwise; a tab `badge` is drawn on its icon (`TabBadge::createFromCount(int $count, Tone $tone = Tone::Negative, $accessibleLabel = null)`: never below 1, "99+" above 99; with an accessible label, the number is hidden from screen readers and the label read instead); `fabAttributes` is chained to `emit-event` in a **single** `data-controller` |
 | `Sheet` | `id` (required), `title` (required), `titleHidden` (`false`), `scrollable` (`true`), `forceCloseEvents` (`['turbo:before-cache']`), `mobileOnly` (`false`) | `content` | controller `sheet`; with `mobileOnly`, above 768 px the content renders in place |
 | `SheetGroup` | `heading` (`null`), `closesSheet` (`false`), `footer` (`null`, a note under the group) | `content` | target `sheet:closeZone` with `closesSheet` |
 | `SheetRow` | `label` (`null`), `href` (`null`), `icon` (`null`), `tone` (`'neutral'`), `value` (`null`, string), `valueAttributes` (array, empty by default), `badge` (`null`, string), `chevron` (`false`), `checked` (`false`), `danger` (`false`), `static` (`false`), `switch` (`false`), `multiline` (`false`), `valueTone` (`null`) | `content`, `icon` | renders an `a` with `href`, a `div` with `static`, a `button` otherwise; with `switch`, the state is `aria-checked`, held by the app; with `multiline`, the value goes under the label, on several lines; `valueTone` inks the value (`neutral` or unknown = body ink) |
@@ -54,6 +54,7 @@ attributes are refused (see [security.md](security.md)).
 `RomainMillan\MobileNavigation\Model\SwipeAction`:
 
 ```php
+use RomainMillan\MobileNavigation\Model\HttpMethod;
 use RomainMillan\MobileNavigation\Model\SwipeAction;
 use RomainMillan\MobileNavigation\Model\Tone;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -61,11 +62,15 @@ use Symfony\Component\Translation\TranslatableMessage;
 SwipeAction::link($this->urlGenerator->generate('item_edit', ['id' => $id]), 'icon-edit', Tone::Accent, new TranslatableMessage('item.edit'));
 SwipeAction::post($validateUrl, 'icon-check', Tone::Positive, new TranslatableMessage('item.validate'));
 SwipeAction::destructive($deleteUrl, 'icon-trash', new TranslatableMessage('item.delete'), new TranslatableMessage('item.delete_confirm'));
+SwipeAction::destructive($deleteUrl, 'icon-trash', new TranslatableMessage('item.delete'), new TranslatableMessage('item.delete_confirm'), HttpMethod::Delete);
 ```
 
-A destructive action is always a POST, always negative, always confirmed in the
-`ConfirmSheet` first. Every URL must be a local path. A POST action is submitted in a form
-with `_token` (the CSRF token) and `_redirect` (the current path and query).
+A destructive action always writes, is always negative and always confirmed in the
+`ConfirmSheet` first. Every URL must be a local path. A writing action is submitted in a
+POST form with `_token` (the CSRF token) and `_redirect` (the current path and query). When
+its `HttpMethod` is `Put`, `Patch` or `Delete`, the form also carries `_method`, which
+Symfony reads with `framework.http_method_override: true` and Laravel natively; the
+controller emits that field for these three values only.
 
 To mount the controller on markup the app renders itself:
 `<div {{ rm_mnb_swipe_controller(actions, csrf_token('item')) }}>` (no `|raw` needed). Without

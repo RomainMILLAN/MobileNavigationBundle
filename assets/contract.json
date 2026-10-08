@@ -1,0 +1,14 @@
+{
+    "identifierPrefix": "romainmillan--mobile-navigation-bundle--",
+    "spoofedMethods": ["PUT", "PATCH", "DELETE"],
+    "swipeActions": {
+        "link": {"url": "/items/1/edit", "icon": "icon-edit", "tone": "accent", "label": "Edit"},
+        "post": {"url": "/items/1/ack?from=list", "icon": "icon-check", "tone": "positive", "label": "Acknowledge", "method": "POST"},
+        "destructive": {"url": "/items/1", "icon": "icon-trash", "tone": "negative", "label": "Delete", "method": "DELETE", "confirm": "This cannot be undone."}
+    },
+    "tabBadge": {
+        "text": {"1": "1", "99": "99", "100": "99+", "1000": "99+"},
+        "rejectedCounts": [0, -1],
+        "defaultTone": "negative"
+    }
+}

@@ -336,6 +336,24 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
   white-space: nowrap;
 }
 
+.rm-mnb-tab-bar__badge {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background-color: var(--rm-mnb-tone-solid-current, var(--rm-mnb-tone-negative-solid));
+  color: var(--rm-mnb-on-tone);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .rm-mnb-tab-bar-fab {
   flex: none;
   display: inline-flex;

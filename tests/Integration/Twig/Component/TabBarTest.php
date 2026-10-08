@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace RomainMillan\MobileNavigation\Tests\Integration\Twig\Component;
 
 use PHPUnit\Framework\Attributes\Test;
+use RomainMillan\MobileNavigation\Model\TabBadge;
+use RomainMillan\MobileNavigation\Model\Tone;
 use Symfony\UX\StimulusBundle\Dto\StimulusAttributes;
 
 use function Symfony\Component\String\u;
@@ -120,9 +122,64 @@ final class TabBarTest extends ComponentTestCase
     #[Test]
     public function it_should_refuse_an_unknown_key_in_a_tab(): void
     {
-        $props = [...$this->props(), 'tabs' => [['href' => '/', 'label' => 'Home', 'icon' => 'icon-home'], ['href' => '/x', 'label' => 'X', 'icon' => 'icon-x', 'badge' => 3]]];
+        $props = [...$this->props(), 'tabs' => [['href' => '/', 'label' => 'Home', 'icon' => 'icon-home'], ['href' => '/x', 'label' => 'X', 'icon' => 'icon-x', 'count' => 3]]];
 
         $this->assertMountFails('TabBar', $props, 'Cannot mount the "tabs" prop of the MobileNavigation:TabBar component');
+    }
+
+    #[Test]
+    public function it_should_refuse_a_bare_number_as_badge(): void
+    {
+        $props = [...$this->props(), 'tabs' => [['href' => '/', 'label' => 'Home', 'icon' => 'icon-home', 'badge' => 3]]];
+
+        $this->assertMountFails('TabBar', $props, 'Cannot mount the "tabs" prop of the MobileNavigation:TabBar component');
+    }
+
+    #[Test]
+    public function it_should_render_a_capped_badge_read_with_the_tab(): void
+    {
+        $props = [...$this->props(), 'tabs' => [['href' => '/alerts', 'label' => 'Alerts', 'icon' => 'icon-bell', 'badge' => TabBadge::createFromCount(120)]]];
+        $tab = $this->renderComponent('TabBar', $props)->filter('a.rm-mnb-tab-bar__tab');
+
+        $badge = $tab->filter('.rm-mnb-tab-bar__badge');
+        self::assertSame('99+', $badge->text());
+        self::assertStringContainsString('rm-mnb-tone--negative', (string) $badge->attr('class'));
+        // Without an accessible label, the number is read with the tab: "Alerts 99+".
+        self::assertNull($badge->attr('aria-hidden'));
+        self::assertCount(0, $tab->filter('.rm-mnb-visually-hidden'));
+    }
+
+    #[Test]
+    public function it_should_read_the_accessible_label_instead_of_the_number(): void
+    {
+        $badge = TabBadge::createFromCount(3, Tone::Accent, '3 notifications <need> your attention');
+        $props = [...$this->props(), 'tabs' => [['href' => '/n', 'label' => 'Notifications', 'icon' => 'icon-inbox', 'badge' => $badge]]];
+        $html = $this->renderTwigComponent('MobileNavigation:TabBar', $props)->toString();
+        $tab = $this->renderComponent('TabBar', $props)->filter('a.rm-mnb-tab-bar__tab');
+
+        self::assertSame('true', $tab->filter('.rm-mnb-tab-bar__badge')->attr('aria-hidden'));
+        self::assertStringContainsString('rm-mnb-tone--accent', (string) $tab->filter('.rm-mnb-tab-bar__badge')->attr('class'));
+        self::assertSame('3 notifications <need> your attention', $tab->filter('.rm-mnb-visually-hidden')->text());
+        self::assertStringContainsString('&lt;need&gt;', $html);
+    }
+
+    #[Test]
+    public function it_should_render_no_badge_by_default(): void
+    {
+        self::assertCount(0, $this->renderComponent('TabBar', $this->props())->filter('.rm-mnb-tab-bar__badge'));
+    }
+
+    #[Test]
+    public function it_should_render_a_bar_without_fab(): void
+    {
+        $props = $this->props();
+        unset($props['fab']);
+
+        $crawler = $this->renderComponent('TabBar', $props);
+
+        self::assertCount(2, $crawler->filter('a.rm-mnb-tab-bar__tab'));
+        self::assertCount(0, $crawler->filter('.rm-mnb-tab-bar-fab'));
+        self::assertCount(0, $this->renderComponent('TabBar', [...$props, 'fab' => null])->filter('.rm-mnb-tab-bar-fab'));
     }
 
     #[Test]
@@ -133,9 +190,9 @@ final class TabBarTest extends ComponentTestCase
     }
 
     #[Test]
-    public function it_should_require_label_tabs_and_fab(): void
+    public function it_should_require_label_and_tabs(): void
     {
-        foreach (['label', 'tabs', 'fab'] as $prop) {
+        foreach (['label', 'tabs'] as $prop) {
             $props = $this->props();
             unset($props[$prop]);
             $this->assertMountFails('TabBar', $props, \sprintf('There is no "%s" prop for the MobileNavigation:TabBar component.', $prop));

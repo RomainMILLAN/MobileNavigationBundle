@@ -6,6 +6,7 @@ namespace RomainMillan\MobileNavigation\Tests\Unit\Model;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RomainMillan\MobileNavigation\Model\HttpMethod;
 use RomainMillan\MobileNavigation\Model\SwipeAction;
 use RomainMillan\MobileNavigation\Model\Tone;
 use RomainMillan\MobileNavigation\Tests\Support\TestTranslator;
@@ -50,6 +51,23 @@ final class SwipeActionTest extends TestCase
         self::assertTrue($action->isDestructive());
         self::assertSame('POST', $action->getMethod());
         self::assertSame($label, $action->getLabel());
+    }
+
+    #[Test]
+    public function it_should_carry_the_method_a_destructive_action_writes_with(): void
+    {
+        $action = SwipeAction::destructive('/items/1', 'icon-trash', new TranslatableMessage('item.cancel', domain: 'app'), new TranslatableMessage('item.cancel_confirm', domain: 'app'), HttpMethod::Delete);
+
+        self::assertSame([
+            'url' => '/items/1',
+            'icon' => 'icon-trash',
+            'tone' => 'negative',
+            'label' => 'Cancel',
+            'method' => 'DELETE',
+            'confirm' => 'It will no longer count.',
+        ], $action->payload(TestTranslator::create()));
+        self::assertTrue($action->isDestructive());
+        self::assertSame('DELETE', $action->getMethod());
     }
 
     #[Test]

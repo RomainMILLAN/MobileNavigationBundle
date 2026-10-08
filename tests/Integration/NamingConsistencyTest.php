@@ -7,6 +7,7 @@ namespace RomainMillan\MobileNavigation\Tests\Integration;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use RomainMillan\MobileNavigation\Model\HttpMethod;
 use RomainMillan\MobileNavigation\Model\Tone;
 use RomainMillan\MobileNavigation\Twig\MobileNavigationExtension;
 use Symfony\Component\String\UnicodeString;
@@ -51,6 +52,21 @@ final class NamingConsistencyTest extends TestCase
         $tones = array_map(static fn (UnicodeString $tone): string => $tone->trim(" '")->toString(), u($list)->split(','));
 
         self::assertSame(array_map(static fn (Tone $tone): string => $tone->value, Tone::cases()), $tones);
+    }
+
+    #[Test]
+    public function it_should_spoof_exactly_the_non_post_http_methods(): void
+    {
+        $list = u($this->read('assets/src/controllers/swipe_actions_controller.ts'))->match('/const SPOOFED_METHODS: ReadonlySet<string> = new Set\\(\\[([^\\]]+)\\]\\);/')[1] ?? null;
+        self::assertIsString($list);
+        $methods = array_map(static fn (UnicodeString $method): string => $method->trim(" '")->toString(), u($list)->split(','));
+
+        $expected = array_values(array_map(
+            static fn (HttpMethod $method): string => $method->value,
+            array_filter(HttpMethod::cases(), static fn (HttpMethod $method): bool => HttpMethod::Post !== $method),
+        ));
+
+        self::assertSame($expected, $methods);
     }
 
     #[Test]

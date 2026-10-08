@@ -1,6 +1,6 @@
 {#
-    iOS 26 tab bar: a glass pill, a sliding lens, a detached "+". Icon blocks: tab_icon
-    (variable: tab), more_icon (more), fab_icon (fab). Props: see the TabBar class.
+    iOS 26 tab bar: a glass pill, a sliding lens, an optional detached "+". Icon blocks:
+    tab_icon (variable: tab), more_icon (more), fab_icon (fab). Props: see the TabBar class.
 #}
 <div class="rm-mnb-tab-bar-layer {{ attributes.render('class') }}"
      {{ attributes.defaults(stimulus_controller(rm_mnb_controller('tab-bar'))) }}>
@@ -15,6 +15,11 @@
                {{ stimulus_target(rm_mnb_controller('tab-bar'), 'tab') }}>
                 <span class="rm-mnb-icon-slot">{% block tab_icon %}<i class="{{ tab.icon }}" aria-hidden="true"></i>{% endblock %}</span>
                 <span class="rm-mnb-tab-bar__label">{{ tab.label }}</span>
+                {% if tab.badge %}
+                    {% set badgeLabel = tab.badge.accessibleLabel %}
+                    <span class="rm-mnb-tab-bar__badge rm-mnb-tone--{{ tab.badge.tone }}"{% if badgeLabel is not null %} aria-hidden="true"{% endif %}>{{ tab.badge.text }}</span>
+                    {% if badgeLabel is not null %}<span class="rm-mnb-visually-hidden">{{ badgeLabel }}</span>{% endif %}
+                {% endif %}
             </a>
         {% endfor %}
 
@@ -28,7 +33,9 @@
         {% endif %}
     </nav>
 
-    {% if fab.href %}
+    {% if fab is null %}
+        {# No "+": the pill takes the whole width. #}
+    {% elseif fab.href %}
         <a href="{{ fab.href }}" class="rm-mnb-tab-bar-fab" aria-label="{{ fab.label }}" {{ fabAttributes ? fabAttributes|raw }}>
             <span class="rm-mnb-icon-slot">{% block fab_icon %}<i class="{{ fab.icon }}" aria-hidden="true"></i>{% endblock %}</span>
         </a>

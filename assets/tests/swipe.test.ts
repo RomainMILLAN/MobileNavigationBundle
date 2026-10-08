@@ -15,6 +15,9 @@ const ACTIONS = [
     { url: '/edit', icon: 'icon-edit', tone: 'accent', label: 'Modifier' },
     { url: '/cancel', icon: 'icon-x', tone: 'negative', label: 'Annuler', method: 'POST', confirm: 'Elle ne comptera plus.' },
     { url: '/validate', icon: 'icon-ok', tone: '<img src=x>', label: '<b>Valider</b>', method: 'POST' },
+    { url: '/delete', icon: 'icon-trash', tone: 'negative', label: 'Supprimer', method: 'DELETE', confirm: 'Définitivement.' },
+    { url: '/patch', icon: 'icon-pen', tone: 'accent', label: 'Corriger', method: 'patch' },
+    { url: '/odd', icon: 'icon-x', tone: 'accent', label: 'Bizarre', method: 'TRACE' },
 ];
 
 // The ConfirmSheet.html.twig markup, with short Stimulus identifiers.
@@ -72,7 +75,7 @@ describe('swipe panel', () => {
     it('gives each button a visible and accessible label, set as text', () => {
         const buttons = panelButtons();
 
-        expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual(['Modifier', 'Annuler', '<b>Valider</b>']);
+        expect(buttons.slice(0, 3).map((button) => button.getAttribute('aria-label'))).toEqual(['Modifier', 'Annuler', '<b>Valider</b>']);
         expect(buttons[2]?.querySelector('b')).toBeNull();
         expect(buttons[2]?.textContent).toContain('<b>Valider</b>');
     });
@@ -120,5 +123,29 @@ describe('destructive action confirmation', () => {
         query<HTMLButtonElement>('#destroy').click();
 
         expect(submitted).toEqual([]);
+    });
+});
+
+describe('method spoofing', () => {
+    const methodField = (url: string): HTMLInputElement | null => query<HTMLFormElement>(`form[action="${url}"]`).querySelector('input[name="_method"]');
+
+    it('still submits a POST form, carrying the method in a _method field', () => {
+        expect(query<HTMLFormElement>('form[action="/delete"]').method.toUpperCase()).toBe('POST');
+        expect(methodField('/delete')?.value).toBe('DELETE');
+        expect(methodField('/patch')?.value).toBe('PATCH');
+    });
+
+    it('adds no _method field to a plain POST nor to a method outside the closed list', () => {
+        expect(methodField('/validate')).toBeNull();
+        expect(methodField('/odd')).toBeNull();
+    });
+
+    it('still confirms a destructive DELETE before sending it', () => {
+        submitAction('/delete');
+        expect(submitted).toEqual([]);
+
+        query<HTMLButtonElement>('#destroy').click();
+
+        expect(submitted).toEqual(['/delete']);
     });
 });
