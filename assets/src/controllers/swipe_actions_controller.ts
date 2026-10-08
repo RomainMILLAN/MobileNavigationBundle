@@ -19,6 +19,13 @@ export interface SwipeAction {
     confirm?: string;
 }
 
+/**
+ * Methods a browser cannot submit, sent as a POST with a "_method" field (Symfony's
+ * http_method_override, Laravel's method spoofing). Same list as the HttpMethod enum
+ * (PHP side); any other value gets no field, so a payload cannot inject one.
+ */
+const SPOOFED_METHODS: ReadonlySet<string> = new Set(['PUT', 'PATCH', 'DELETE']);
+
 const BUTTON_WIDTH = 72;
 const MIN_SWIPE = 10;
 
@@ -138,6 +145,10 @@ export default class extends Controller<HTMLElement> {
         form.action = action.url;
         form.className = 'rm-mnb-swipe-actions__form';
         form.appendChild(this.hiddenInput('_token', this.csrfTokenValue));
+        const method = action.method.toUpperCase();
+        if (SPOOFED_METHODS.has(method)) {
+            form.appendChild(this.hiddenInput('_method', method));
+        }
         // The panel survives Turbo navigations: the return URL is read at submit time.
         const redirect = this.hiddenInput('_redirect', '');
         form.appendChild(redirect);

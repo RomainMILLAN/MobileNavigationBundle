@@ -94,7 +94,7 @@ Then map the `--rm-mnb-*` CSS variables to your theme, in a single file. See
 
 | Component | Role |
 |---|---|
-| `TabBar` | glass tab pill, lens, detached "+" |
+| `TabBar` | glass tab pill, lens, tab badges, optional detached "+" |
 | `Sheet` | iOS sheet, driven by `<id>:open|close|toggle` window events |
 | `SheetGroup`, `SheetRow` | grouped list and its rows |
 | `BackButton` | back disc; the parent name is spoken, not shown |

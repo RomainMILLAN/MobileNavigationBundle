@@ -765,6 +765,16 @@ function toTone(value) {
 }
 //#endregion
 //#region src/controllers/swipe_actions_controller.ts
+/**
+* Methods a browser cannot submit, sent as a POST with a "_method" field (Symfony's
+* http_method_override, Laravel's method spoofing). Same list as the HttpMethod enum
+* (PHP side); any other value gets no field, so a payload cannot inject one.
+*/
+var SPOOFED_METHODS = /* @__PURE__ */ new Set([
+	"PUT",
+	"PATCH",
+	"DELETE"
+]);
 var BUTTON_WIDTH = 72;
 var MIN_SWIPE = 10;
 /**
@@ -861,6 +871,8 @@ var swipe_actions_controller_default = class extends Controller {
 		form.action = action.url;
 		form.className = "rm-mnb-swipe-actions__form";
 		form.appendChild(this.hiddenInput("_token", this.csrfTokenValue));
+		const method = action.method.toUpperCase();
+		if (SPOOFED_METHODS.has(method)) form.appendChild(this.hiddenInput("_method", method));
 		const redirect = this.hiddenInput("_redirect", "");
 		form.appendChild(redirect);
 		const submit = () => {

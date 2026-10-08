@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 - 2026-10-08
+
+Requested by a Laravel/Blade app (Notifier) porting the templates.
+
+### Added
+
+- `TabBar` tab `badge`: a `TabBadge` (count >= 1, displayed "99+" above 99, negative tone by
+  default, optional accessible label read instead of the number).
+- `HttpMethod` and `SwipeAction::destructive(..., HttpMethod $method = HttpMethod::Post)`:
+  a destructive swipe action can target a PUT, PATCH or DELETE route. The swipe-actions
+  controller sends it as a POST with a `_method` field, for these three values only.
+- `assets/contract.json`: the identifier prefix, the spoofed methods, reference swipe
+  payloads and the tab badge cases, for integrations outside Symfony. `ContractTest` keeps it
+  in sync with the PHP models.
+
+### Changed
+
+- `TabBar` `fab` is optional: without it, there is no "+" and the pill takes the whole width.
+
 ## 0.1.2 - 2026-10-04
 
 Reported from Finance (transaction form on iPhone).

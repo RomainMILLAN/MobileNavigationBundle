@@ -152,6 +152,26 @@
     white-space: nowrap;
 }
 
+// Counter on a tab: the iOS red dot with a number, pinned to the top-right of the icon.
+// Solid fill from the tone (negative by default), so it reads at a glance on the glass.
+.rm-mnb-tab-bar__badge {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 6px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: var(--rm-mnb-tone-solid-current, var(--rm-mnb-tone-negative-solid));
+    color: var(--rm-mnb-on-tone);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
 // "+": the primary action, the only solid color fill of the layer.
 .rm-mnb-tab-bar-fab {
     flex: none;

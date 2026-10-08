@@ -15,12 +15,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * GET included, targets the current origin.
  *
  * "Destructive" is carried by the type: a deletion or a cancellation is built with
- * destructive(), so it is always a POST, always negative and always confirmed first.
+ * destructive(), so it always writes, is always negative and always confirmed first. It
+ * writes with POST unless the route expects another HttpMethod (a DELETE route, say): the
+ * controller then sends a POST with a "_method" field.
  */
 final readonly class SwipeAction
 {
     private const GET = 'GET';
-    private const POST = 'POST';
 
     private function __construct(
         private LocalPath $url,
@@ -41,13 +42,13 @@ final readonly class SwipeAction
     /** A write that loses nothing (POST): validate. */
     public static function post(string $url, string $icon, Tone $tone, TranslatableInterface $label): self
     {
-        return new self(LocalPath::createFromString($url), $icon, $tone, $label, self::POST, null);
+        return new self(LocalPath::createFromString($url), $icon, $tone, $label, HttpMethod::Post->value, null);
     }
 
-    /** A write that destroys or cancels (POST, negative tone, mandatory confirmation). */
-    public static function destructive(string $url, string $icon, TranslatableInterface $label, TranslatableInterface $confirm): self
+    /** A write that destroys or cancels (negative tone, mandatory confirmation). */
+    public static function destructive(string $url, string $icon, TranslatableInterface $label, TranslatableInterface $confirm, HttpMethod $method = HttpMethod::Post): self
     {
-        return new self(LocalPath::createFromString($url), $icon, Tone::Negative, $label, self::POST, $confirm);
+        return new self(LocalPath::createFromString($url), $icon, Tone::Negative, $label, $method->value, $confirm);
     }
 
     /**

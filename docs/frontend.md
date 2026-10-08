@@ -33,6 +33,18 @@ registerMobileNavigation(application);
 The identifiers are the Symfony UX ones (`romainmillan--mobile-navigation-bundle--sheet`),
 so `stimulus_controller(rm_mnb_controller('sheet'))` works in both cases.
 
+## Outside Symfony
+
+An app that does not run Symfony (Laravel/Blade, for one) can still use the bundle: it
+consumes `styles/` (or `dist/mobile-navigation.css`) and `dist/` as they are, registers the
+controllers with `registerMobileNavigation()`, and ports the templates it needs.
+
+`assets/contract.json` is the contract such a port tests itself against: the Stimulus
+identifier prefix, the methods sent as `_method`, reference swipe payloads and the tab badge
+cases ("99+"). `ContractTest` rebuilds it from the PHP models, so it never drifts from what
+the Twig components render. When upgrading, diff `templates/components/` between the two
+tags and re-run the port's contract tests.
+
 ## Turbo is optional
 
 The bundle never imports `@hotwired/turbo`; it reads `window.Turbo` at run time.
