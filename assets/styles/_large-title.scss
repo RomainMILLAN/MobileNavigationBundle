@@ -81,8 +81,9 @@
         column-gap: 12px;
         row-gap: 10px;
         margin-bottom: 16px;
-        // Same height as the compact bar row: on collapse, nothing jumps.
-        padding-top: $rm-mnb-top-row-offset;
+        // Same height as the compact bar row: on collapse, nothing jumps. Below the
+        // status bar too: with viewport-fit=cover the page starts under it.
+        padding-top: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset});
     }
 
     // Back and controls share the same vertical center.

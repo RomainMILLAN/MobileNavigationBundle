@@ -896,7 +896,7 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
     column-gap: 12px;
     row-gap: 10px;
     margin-bottom: 16px;
-    padding-top: 16px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
   }
   .rm-mnb-large-title__back {
     grid-area: back;
