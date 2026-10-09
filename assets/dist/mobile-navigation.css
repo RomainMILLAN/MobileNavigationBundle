@@ -1036,12 +1036,11 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
     transition: none;
   }
 }
-@media (display-mode: standalone) {
-  .rm-mnb-compact-bar,
-  .rm-mnb-compact-bar-veil {
-    position: absolute;
-  }
+.rm-mnb-compact-bar.is-contained,
+.rm-mnb-compact-bar-veil:has(+ .rm-mnb-compact-bar.is-contained) {
+  position: absolute;
 }
+
 .rm-mnb-select-toggle {
   color: var(--rm-mnb-accent-ink);
 }

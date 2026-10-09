@@ -19,6 +19,7 @@ var large_title_controller_default = class extends Controller {
 		if (!this.hasBarTarget || !this.hasTitleTarget || !this.hasScrollerTarget) return;
 		const overflowY = getComputedStyle(this.scrollerTarget).overflowY;
 		const root = overflowY === "auto" || overflowY === "scroll" ? this.scrollerTarget : null;
+		this.barTarget.classList.toggle("is-contained", root !== null);
 		const barHeight = this.barTarget.offsetHeight;
 		const rootTop = root?.getBoundingClientRect().top ?? 0;
 		const titleBottom = this.titleTarget.getBoundingClientRect().bottom - rootTop + (root?.scrollTop ?? window.scrollY);

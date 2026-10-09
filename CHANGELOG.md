@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.2 - 2026-10-09
+
+Reported from Notifier (notification history in the iOS PWA).
+
+### Fixed
+
+- The compact bar and its veil scrolled away with the page in an installed PWA whose document
+  scrolls: they were held in absolute position on `display-mode: standalone`, which assumed
+  only `rm-mnb-scroller` scrolls. The `large-title` controller now marks the bar
+  `is-contained` when the scroller scrolls itself, and only then is it held in absolute
+  position; otherwise it stays fixed, in a browser and in a PWA alike.
+
 ## 0.2.1 - 2026-10-09
 
 Reported from Notifier (dashboard in the iOS PWA).

@@ -27,6 +27,9 @@ export default class extends Controller<HTMLElement> {
 
         const overflowY = getComputedStyle(this.scrollerTarget).overflowY;
         const root = overflowY === 'auto' || overflowY === 'scroll' ? this.scrollerTarget : null;
+        // The CSS cannot tell who scrolls, the controller can: only a scroller that scrolls
+        // itself may hold the bar in absolute position, otherwise it would scroll away.
+        this.barTarget.classList.toggle('is-contained', root !== null);
 
         // The title is "gone" as soon as it passes under the compact bar, not at the edge. Without
         // a back button, it already starts within the bar's height: the margin is then capped

@@ -226,13 +226,12 @@
     }
 }
 
-// PWA: in the installed app the document does not scroll (only .rm-mnb-scroller scrolls);
-// with absolute positioning, the bar and its veil stay at the same place on screen without being
-// fixed elements, which the iOS 26 edge effect seems to target first. The real
-// protection remains $rm-mnb-top-row-offset. In a browser, they stay fixed.
-@media (display-mode: standalone) {
-    .rm-mnb-compact-bar,
-    .rm-mnb-compact-bar-veil {
-        position: absolute;
-    }
+// Only when the scroller scrolls itself (the controller sets is-contained, browser or PWA):
+// with absolute positioning, the bar and its veil stay at the same place on screen without
+// being fixed elements, which the iOS 26 edge effect seems to target first. When the document
+// scrolls (an installed PWA too), absolute would scroll away with the page: they stay fixed.
+// The real protection remains $rm-mnb-top-row-offset.
+.rm-mnb-compact-bar.is-contained,
+.rm-mnb-compact-bar-veil:has(+ .rm-mnb-compact-bar.is-contained) {
+    position: absolute;
 }

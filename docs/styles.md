@@ -67,7 +67,7 @@ Every class is prefixed `rm-mnb-`. They fall into three categories.
 
    | Class | Where |
    |---|---|
-   | `rm-mnb-scroller` | the scrolling container (bottom margin under the tab bar) |
+   | `rm-mnb-scroller` | the scrolling container (bottom margin under the tab bar); when it scrolls itself (`overflow-y: auto`), the compact bar is held in it in absolute position, otherwise it stays fixed |
    | `rm-mnb-large-title` | the page title box (iOS grid), below the top safe area like the compact bar |
    | `rm-mnb-large-title__back` | the `BackButton` of the large title |
    | `rm-mnb-large-title__title` | the `<h1>` |
