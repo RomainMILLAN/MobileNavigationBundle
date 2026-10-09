@@ -77,6 +77,11 @@ Every class is prefixed `rm-mnb-`. They fall into three categories.
    | `rm-mnb-tone--{tone}` | sets `--rm-mnb-tone` from a tone |
    | `rm-mnb-form`, `rm-mnb-form-group`, `rm-mnb-form-heading`, `rm-mnb-field*`, `rm-mnb-form__actions` | the iOS form, see below |
 
+   **Large title placement.** `rm-mnb-large-title` reserves the top safe area and
+   `$rm-mnb-top-row-offset` itself, like the compact bar. Render it at the very top of the
+   scroller: the host adds no top padding above it, and keeps its horizontal margin equal to
+   `--rm-mnb-page-inset`, or its row will not line up with the compact bar on collapse.
+
 3. **Double use**: emitted by a component **and** usable by hand: `rm-mnb-chip`,
    `rm-mnb-row`, `rm-mnb-row__label`, `rm-mnb-row__value`, `rm-mnb-group`,
    `rm-mnb-sheet*`, `rm-mnb-glass-disc` and `rm-mnb-glass-pill` (44 px glass buttons),

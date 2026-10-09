@@ -13,6 +13,9 @@ Reported from Notifier (dashboard in the iOS PWA).
 - `rm-mnb-large-title` reserves `env(safe-area-inset-top)` like the compact bar: with
   `viewport-fit=cover` (iOS PWA, translucent status bar), the title was drawn under the status
   bar, and the compact bar row jumped on collapse.
+- `docs/styles.md` states the large title placement contract: at the very top of the
+  scroller, no host top padding above it, and a horizontal margin equal to
+  `--rm-mnb-page-inset`, or its row does not line up with the compact bar.
 
 ## 0.2.0 - 2026-10-08
 
