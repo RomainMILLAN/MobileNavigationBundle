@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/utils/list.ts
+// src/utils/list.ts
 /**
 * Indexes of the section headers to hide: those repeating the previous one. This happens
 * when "Load more" appends a page that continues the same month.
@@ -11,8 +11,7 @@ function dedupeSectionHeaders(keys) {
 	});
 	return duplicates;
 }
-//#endregion
-//#region src/controllers/list_controller.ts
+// src/controllers/list_controller.ts
 var TOGGLE_SELECTING_EVENT = "rm-mnb-list:toggle-selecting";
 var TOGGLE_EDITING_EVENT = "rm-mnb-list:toggle-editing";
 /** Notification dispatched on every entry into or exit from the "Edit" mode (detail.editing). */
@@ -106,5 +105,4 @@ var list_controller_default = class extends Controller {
 		dedupeSectionHeaders(keys).forEach((index) => this.sectionTargets[index]?.classList.add("is-continuation"));
 	}
 };
-//#endregion
 export { EDITING_CHANGED_EVENT, TOGGLE_EDITING_EVENT, TOGGLE_SELECTING_EVENT, list_controller_default as default };

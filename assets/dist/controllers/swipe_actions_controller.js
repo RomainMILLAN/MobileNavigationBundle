@@ -1,8 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/confirm_contract.ts
+// src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
-//#endregion
-//#region src/utils/haptic.ts
+// src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
 	navigator.vibrate({
@@ -11,8 +10,7 @@ function haptic(style = "light") {
 		heavy: 30
 	}[style]);
 }
-//#endregion
-//#region src/utils/same_origin.ts
+// src/utils/same_origin.ts
 /**
 * The URL resolved against the current page, when it is an http(s) URL of the same
 * origin; null otherwise (malformed, javascript:, data:, another host).
@@ -27,8 +25,7 @@ function sameOriginUrl(url) {
 	if (target.protocol !== "http:" && target.protocol !== "https:") return null;
 	return target.origin === window.location.origin ? target : null;
 }
-//#endregion
-//#region src/utils/tones.ts
+// src/utils/tones.ts
 /**
 * The module's tones: a closed list. Any unknown value falls back to `neutral`, so
 * that no data coming from the app can inject an arbitrary class or color.
@@ -44,8 +41,7 @@ var TONES = [
 function toTone(value) {
 	return typeof value === "string" && TONES.includes(value) ? value : "neutral";
 }
-//#endregion
-//#region src/controllers/swipe_actions_controller.ts
+// src/controllers/swipe_actions_controller.ts
 /**
 * Methods a browser cannot submit, sent as a POST with a "_method" field (Symfony's
 * http_method_override, Laravel's method spoofing). Same list as the HttpMethod enum
@@ -272,5 +268,4 @@ var swipe_actions_controller_default = class extends Controller {
 		}, 300);
 	}
 };
-//#endregion
 export { swipe_actions_controller_default as default };

@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/utils/haptic.ts
+// src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
 	navigator.vibrate({
@@ -8,8 +8,7 @@ function haptic(style = "light") {
 		heavy: 30
 	}[style]);
 }
-//#endregion
-//#region src/controllers/tab_bar_controller.ts
+// src/controllers/tab_bar_controller.ts
 /** Index of the tab closest to x (coordinate within the pill), -1 when there is no tab. */
 function tabIndexAt(x, bounds) {
 	let best = -1;
@@ -214,5 +213,4 @@ var tab_bar_controller_default = class extends Controller {
 		}
 	}
 };
-//#endregion
 export { RESIDUAL_CLICK_WINDOW_MS, tab_bar_controller_default as default, isResidualClick, rubberBand, tabIndexAt };

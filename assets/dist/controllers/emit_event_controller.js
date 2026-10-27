@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/controllers/emit_event_controller.ts
+// src/controllers/emit_event_controller.ts
 /**
 * Generic micro-controller: dispatches a window CustomEvent on click.
 * Lets FAB actions (outside the scope of a page controller)
@@ -11,5 +11,4 @@ var emit_event_controller_default = class extends Controller {
 		window.dispatchEvent(new CustomEvent(this.nameValue));
 	}
 };
-//#endregion
 export { emit_event_controller_default as default };

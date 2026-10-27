@@ -1,13 +1,12 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/confirm_contract.ts
+// src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
 /** Is the confirmation sheet present and displayable (mobile)? Otherwise: confirm(). */
 function confirmSheetAvailable(id = "rm-mnb-confirm") {
 	const sheet = document.getElementById(id);
 	return sheet !== null && sheet.getClientRects().length > 0;
 }
-//#endregion
-//#region src/controllers/confirm_submit_controller.ts
+// src/controllers/confirm_submit_controller.ts
 /**
 * POST form that asks for confirmation before submitting (SheetFormRow). The first
 * submit is held back and goes through the page's ConfirmSheet (otherwise confirm()). Once
@@ -58,5 +57,4 @@ var confirm_submit_controller_default = class extends Controller {
 		} }));
 	}
 };
-//#endregion
 export { confirm_submit_controller_default as default };

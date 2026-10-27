@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/utils/haptic.ts
+// src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
 	navigator.vibrate({
@@ -8,8 +8,7 @@ function haptic(style = "light") {
 		heavy: 30
 	}[style]);
 }
-//#endregion
-//#region src/utils/history_stack.ts
+// src/utils/history_stack.ts
 function applyVisit(stack, url, action) {
 	const entry = {
 		url,
@@ -43,8 +42,7 @@ function findLastIndex(stack, url) {
 	for (let index = stack.length - 1; index >= 0; index--) if (stack[index]?.url === url) return index;
 	return -1;
 }
-//#endregion
-//#region src/controllers/swipe_back_controller.ts
+// src/controllers/swipe_back_controller.ts
 /**
 * Swipe back from the left edge, as on iOS: the page follows the finger and
 * reveals the previous page, offset then brought back into place (parallax). On release,
@@ -289,5 +287,4 @@ var swipe_back_controller_default = class extends Controller {
 		this.element.style.removeProperty("transform");
 	}
 };
-//#endregion
 export { swipe_back_controller_default as default };

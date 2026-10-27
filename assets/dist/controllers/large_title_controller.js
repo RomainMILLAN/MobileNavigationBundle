@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/controllers/large_title_controller.ts
+// src/controllers/large_title_controller.ts
 /**
 * iOS large title: when the page's <h1> scrolls off screen, the compact bar
 * (centered title, back) appears at the top.
@@ -54,5 +54,4 @@ var large_title_controller_default = class extends Controller {
 		else this.barTarget.setAttribute("aria-hidden", "true");
 	}
 };
-//#endregion
 export { large_title_controller_default as default };

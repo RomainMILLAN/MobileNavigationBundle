@@ -130,8 +130,7 @@ function attachSheetDrag(panel, callbacks) {
 		document.removeEventListener("mouseup", onMouseUp);
 	};
 }
-//#endregion
-//#region src/controllers/sheet_controller.ts
+// src/controllers/sheet_controller.ts
 /**
 * Generic iOS-style bottom sheet. No route, no label: reusable.
 *
@@ -296,5 +295,4 @@ var sheet_controller_default = class extends Controller {
 		return !(target instanceof Node && scroller.contains(target)) || scroller.scrollTop <= 0;
 	}
 };
-//#endregion
 export { sheet_controller_default as default };

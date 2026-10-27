@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/utils/haptic.ts
+// src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
 	navigator.vibrate({
@@ -8,8 +8,7 @@ function haptic(style = "light") {
 		heavy: 30
 	}[style]);
 }
-//#endregion
-//#region src/controllers/gesture_controller.ts
+// src/controllers/gesture_controller.ts
 var EVENT_PREFIX = "rm-mnb-gesture";
 var gesture_controller_default = class extends Controller {
 	static values = {
@@ -117,5 +116,4 @@ var gesture_controller_default = class extends Controller {
 		}
 	}
 };
-//#endregion
 export { gesture_controller_default as default };

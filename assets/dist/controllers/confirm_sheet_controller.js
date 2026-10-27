@@ -1,8 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/confirm_contract.ts
+// src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
-//#endregion
-//#region src/controllers/confirm_sheet_controller.ts
+// src/controllers/confirm_sheet_controller.ts
 /**
 * Confirmation sheet for destructive actions. Mounted on the same element as a
 * `sheet` (its id is the `sheet` value), it receives
@@ -46,5 +45,4 @@ var confirm_sheet_controller_default = class extends Controller {
 		action?.();
 	}
 };
-//#endregion
 export { confirm_sheet_controller_default as default };

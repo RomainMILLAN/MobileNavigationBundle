@@ -14,6 +14,12 @@ All notable changes to this project are documented in this file. The format is b
   a confirmed action, from the confirmation sheet. The tests reproduce the browser rule
   that jsdom lacks.
 
+### Security
+
+- Development dependencies raised for the CI audit: `vite` 8.3.5 (GHSA-587h-7wmj-h5pm) and
+  `undici` 8.12.3 through `jsdom` (GHSA-xjj6-f33q-929c). The published `dist` only changes
+  by the bundler's region comments.
+
 ## 0.2.3 - 2026-10-27
 
 Reported from Finance (a swipe action sent the user back to the top of the list).

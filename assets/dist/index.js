@@ -1,13 +1,12 @@
 import { Controller } from "@hotwired/stimulus";
-//#region src/confirm_contract.ts
+// src/confirm_contract.ts
 var CONFIRM_REQUEST_EVENT = "rm-mnb-confirm:request";
 /** Is the confirmation sheet present and displayable (mobile)? Otherwise: confirm(). */
 function confirmSheetAvailable(id = "rm-mnb-confirm") {
 	const sheet = document.getElementById(id);
 	return sheet !== null && sheet.getClientRects().length > 0;
 }
-//#endregion
-//#region src/controllers/confirm_sheet_controller.ts
+// src/controllers/confirm_sheet_controller.ts
 /**
 * Confirmation sheet for destructive actions. Mounted on the same element as a
 * `sheet` (its id is the `sheet` value), it receives
@@ -51,8 +50,7 @@ var confirm_sheet_controller_default = class extends Controller {
 		action?.();
 	}
 };
-//#endregion
-//#region src/controllers/confirm_submit_controller.ts
+// src/controllers/confirm_submit_controller.ts
 /**
 * POST form that asks for confirmation before submitting (SheetFormRow). The first
 * submit is held back and goes through the page's ConfirmSheet (otherwise confirm()). Once
@@ -103,8 +101,7 @@ var confirm_submit_controller_default = class extends Controller {
 		} }));
 	}
 };
-//#endregion
-//#region src/controllers/emit_event_controller.ts
+// src/controllers/emit_event_controller.ts
 /**
 * Generic micro-controller: dispatches a window CustomEvent on click.
 * Lets FAB actions (outside the scope of a page controller)
@@ -116,8 +113,7 @@ var emit_event_controller_default = class extends Controller {
 		window.dispatchEvent(new CustomEvent(this.nameValue));
 	}
 };
-//#endregion
-//#region src/controllers/filter_bar_controller.ts
+// src/controllers/filter_bar_controller.ts
 /**
 * Mobile filter bar: a "proxy" search field that copies its input into the
 * real field of the app's form and fires `input` on it. The app's auto-submit takes
@@ -149,8 +145,7 @@ var filter_bar_controller_default = class extends Controller {
 		return field instanceof HTMLInputElement ? field : null;
 	}
 };
-//#endregion
-//#region src/utils/haptic.ts
+// src/utils/haptic.ts
 function haptic(style = "light") {
 	if (!navigator.vibrate) return;
 	navigator.vibrate({
@@ -159,8 +154,7 @@ function haptic(style = "light") {
 		heavy: 30
 	}[style]);
 }
-//#endregion
-//#region src/controllers/gesture_controller.ts
+// src/controllers/gesture_controller.ts
 var EVENT_PREFIX = "rm-mnb-gesture";
 var gesture_controller_default = class extends Controller {
 	static values = {
@@ -268,8 +262,7 @@ var gesture_controller_default = class extends Controller {
 		}
 	}
 };
-//#endregion
-//#region src/controllers/large_title_controller.ts
+// src/controllers/large_title_controller.ts
 /**
 * iOS large title: when the page's <h1> scrolls off screen, the compact bar
 * (centered title, back) appears at the top.
@@ -324,8 +317,7 @@ var large_title_controller_default = class extends Controller {
 		else this.barTarget.setAttribute("aria-hidden", "true");
 	}
 };
-//#endregion
-//#region src/utils/list.ts
+// src/utils/list.ts
 /**
 * Indexes of the section headers to hide: those repeating the previous one. This happens
 * when "Load more" appends a page that continues the same month.
@@ -337,8 +329,7 @@ function dedupeSectionHeaders(keys) {
 	});
 	return duplicates;
 }
-//#endregion
-//#region src/controllers/list_controller.ts
+// src/controllers/list_controller.ts
 var TOGGLE_SELECTING_EVENT = "rm-mnb-list:toggle-selecting";
 var TOGGLE_EDITING_EVENT = "rm-mnb-list:toggle-editing";
 /** Notification dispatched on every entry into or exit from the "Edit" mode (detail.editing). */
@@ -432,8 +423,7 @@ var list_controller_default = class extends Controller {
 		dedupeSectionHeaders(keys).forEach((index) => this.sectionTargets[index]?.classList.add("is-continuation"));
 	}
 };
-//#endregion
-//#region src/utils/same_origin.ts
+// src/utils/same_origin.ts
 /**
 * The URL resolved against the current page, when it is an http(s) URL of the same
 * origin; null otherwise (malformed, javascript:, data:, another host).
@@ -448,8 +438,7 @@ function sameOriginUrl(url) {
 	if (target.protocol !== "http:" && target.protocol !== "https:") return null;
 	return target.origin === window.location.origin ? target : null;
 }
-//#endregion
-//#region src/controllers/navigate_controller.ts
+// src/controllers/navigate_controller.ts
 /**
 * Navigates to `url`: with Turbo when the page has it, with a full page load otherwise.
 * Only same-origin http(s) URLs are followed.
@@ -596,8 +585,7 @@ function attachSheetDrag(panel, callbacks) {
 		document.removeEventListener("mouseup", onMouseUp);
 	};
 }
-//#endregion
-//#region src/controllers/sheet_controller.ts
+// src/controllers/sheet_controller.ts
 /**
 * Generic iOS-style bottom sheet. No route, no label: reusable.
 *
@@ -762,8 +750,7 @@ var sheet_controller_default = class extends Controller {
 		return !(target instanceof Node && scroller.contains(target)) || scroller.scrollTop <= 0;
 	}
 };
-//#endregion
-//#region src/utils/tones.ts
+// src/utils/tones.ts
 /**
 * The module's tones: a closed list. Any unknown value falls back to `neutral`, so
 * that no data coming from the app can inject an arbitrary class or color.
@@ -779,8 +766,7 @@ var TONES = [
 function toTone(value) {
 	return typeof value === "string" && TONES.includes(value) ? value : "neutral";
 }
-//#endregion
-//#region src/controllers/swipe_actions_controller.ts
+// src/controllers/swipe_actions_controller.ts
 /**
 * Methods a browser cannot submit, sent as a POST with a "_method" field (Symfony's
 * http_method_override, Laravel's method spoofing). Same list as the HttpMethod enum
@@ -1007,8 +993,7 @@ var swipe_actions_controller_default = class extends Controller {
 		}, 300);
 	}
 };
-//#endregion
-//#region src/utils/history_stack.ts
+// src/utils/history_stack.ts
 function applyVisit(stack, url, action) {
 	const entry = {
 		url,
@@ -1042,8 +1027,7 @@ function findLastIndex(stack, url) {
 	for (let index = stack.length - 1; index >= 0; index--) if (stack[index]?.url === url) return index;
 	return -1;
 }
-//#endregion
-//#region src/controllers/swipe_back_controller.ts
+// src/controllers/swipe_back_controller.ts
 /**
 * Swipe back from the left edge, as on iOS: the page follows the finger and
 * reveals the previous page, offset then brought back into place (parallax). On release,
@@ -1288,8 +1272,7 @@ var swipe_back_controller_default = class extends Controller {
 		this.element.style.removeProperty("transform");
 	}
 };
-//#endregion
-//#region src/controllers/tab_bar_controller.ts
+// src/controllers/tab_bar_controller.ts
 /** Index of the tab closest to x (coordinate within the pill), -1 when there is no tab. */
 function tabIndexAt(x, bounds) {
 	let best = -1;
@@ -1493,8 +1476,7 @@ var tab_bar_controller_default = class extends Controller {
 		}
 	}
 };
-//#endregion
-//#region src/index.ts
+// src/index.ts
 /**
 * Prefix of the Stimulus identifiers: the one produced by
 * stimulus_controller('@romainmillan/mobile-navigation-bundle/<name>'), i.e. by
@@ -1522,5 +1504,4 @@ function registerMobileNavigation(application) {
 		application.register(`${IDENTIFIER_PREFIX}${name}`, controller);
 	});
 }
-//#endregion
 export { CONFIRM_REQUEST_EVENT, EDITING_CHANGED_EVENT, IDENTIFIER_PREFIX, TOGGLE_EDITING_EVENT, TOGGLE_SELECTING_EVENT, confirmSheetAvailable, controllers, haptic, registerMobileNavigation };
