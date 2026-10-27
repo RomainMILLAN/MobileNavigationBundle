@@ -285,7 +285,19 @@ var large_title_controller_default = class extends Controller {
 		"scroller"
 	];
 	observer = null;
+	onMorph = () => {
+		this.unobserve();
+		this.observe();
+	};
 	connect() {
+		document.addEventListener("turbo:morph", this.onMorph);
+		this.observe();
+	}
+	disconnect() {
+		document.removeEventListener("turbo:morph", this.onMorph);
+		this.unobserve();
+	}
+	observe() {
 		if (!this.hasBarTarget || !this.hasTitleTarget || !this.hasScrollerTarget) return;
 		const overflowY = getComputedStyle(this.scrollerTarget).overflowY;
 		const root = overflowY === "auto" || overflowY === "scroll" ? this.scrollerTarget : null;
@@ -301,7 +313,7 @@ var large_title_controller_default = class extends Controller {
 		});
 		this.observer.observe(this.titleTarget);
 	}
-	disconnect() {
+	unobserve() {
 		this.observer?.disconnect();
 		this.observer = null;
 	}
@@ -374,9 +386,11 @@ var list_controller_default = class extends Controller {
 	onFrameLoad = () => this.dedupeSections();
 	onToggleCommand = () => this.toggleSelecting();
 	onToggleEditingCommand = () => this.toggleEditing();
+	onMorph = () => this.setMode("idle");
 	connect() {
 		this.element.addEventListener("click", this.onClick, true);
 		this.element.addEventListener("turbo:frame-load", this.onFrameLoad);
+		document.addEventListener("turbo:morph", this.onMorph);
 		window.addEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
 		window.addEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
 		this.dedupeSections();
@@ -384,6 +398,7 @@ var list_controller_default = class extends Controller {
 	disconnect() {
 		this.element.removeEventListener("click", this.onClick, true);
 		this.element.removeEventListener("turbo:frame-load", this.onFrameLoad);
+		document.removeEventListener("turbo:morph", this.onMorph);
 		window.removeEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
 		window.removeEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
 		this.setMode("idle");
@@ -876,11 +891,27 @@ var swipe_actions_controller_default = class extends Controller {
 		if (SPOOFED_METHODS.has(method)) form.appendChild(this.hiddenInput("_method", method));
 		const redirect = this.hiddenInput("_redirect", "");
 		form.appendChild(redirect);
+		let confirmed = false;
+		let sent = false;
 		const submit = () => {
 			redirect.value = window.location.pathname + window.location.search;
-			form.submit();
+			this.close();
+			confirmed = true;
+			try {
+				form.requestSubmit();
+			} finally {
+				confirmed = false;
+			}
 		};
 		form.addEventListener("submit", (event) => {
+			if (sent) {
+				event.preventDefault();
+				return;
+			}
+			if (confirmed) {
+				sent = true;
+				return;
+			}
 			event.preventDefault();
 			if (action.confirm === void 0) {
 				submit();
@@ -893,6 +924,9 @@ var swipe_actions_controller_default = class extends Controller {
 				confirmLabel: action.label,
 				onConfirm: submit
 			} }));
+		});
+		form.addEventListener("turbo:submit-end", (event) => {
+			if (!event.detail.success) sent = false;
 		});
 		const button = document.createElement("button");
 		button.type = "submit";

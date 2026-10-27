@@ -73,3 +73,35 @@ describe('large-title', () => {
         expect(roots).toEqual([null]);
     });
 });
+
+describe('large-title after a Turbo morph', () => {
+    it('applies the collapsed state again once the morph put the bar back as rendered', async () => {
+        // An observer that reports, on every observe(), a title scrolled off screen.
+        vi.stubGlobal(
+            'IntersectionObserver',
+            class {
+                constructor(private readonly callback: IntersectionObserverCallback) {}
+
+                observe(target: Element): void {
+                    this.callback([{ isIntersecting: false, target } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+                }
+
+                disconnect(): void {}
+            },
+        );
+        document.body.innerHTML = markup('overflow-y: auto');
+        await tick();
+        expect(bar().classList.contains('is-collapsed')).toBe(true);
+
+        // What the morph does: the bar as the server renders it.
+        bar().className = 'rm-mnb-compact-bar';
+        bar().setAttribute('inert', '');
+        bar().setAttribute('aria-hidden', 'true');
+        document.dispatchEvent(new CustomEvent('turbo:morph'));
+
+        expect(bar().classList.contains('is-collapsed')).toBe(true);
+        expect(bar().classList.contains('is-contained')).toBe(true);
+        expect(bar().hasAttribute('inert')).toBe(false);
+        expect(bar().hasAttribute('aria-hidden')).toBe(false);
+    });
+});

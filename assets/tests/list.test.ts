@@ -171,6 +171,18 @@ describe('list controller', () => {
         expect(document.querySelectorAll('input:checked')).toHaveLength(0);
         expect(query('[data-controller="list"]').classList.contains('is-selecting')).toBe(false);
     });
+
+    it('leaves selection mode after a Turbo morph, <html> included', () => {
+        query<HTMLButtonElement>('#toggle').click();
+        // What the morph does: the list as the server renders it, <html> untouched.
+        query('[data-controller="list"]').classList.remove('is-selecting');
+
+        document.dispatchEvent(new CustomEvent('turbo:morph'));
+        query<HTMLAnchorElement>('#link-1').click();
+
+        expect(document.documentElement.classList.contains('rm-mnb-list-selecting')).toBe(false);
+        expect(query<HTMLInputElement>('input[value="1"]').checked).toBe(false);
+    });
 });
 
 describe('filter-bar controller', () => {

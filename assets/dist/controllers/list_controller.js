@@ -60,9 +60,11 @@ var list_controller_default = class extends Controller {
 	onFrameLoad = () => this.dedupeSections();
 	onToggleCommand = () => this.toggleSelecting();
 	onToggleEditingCommand = () => this.toggleEditing();
+	onMorph = () => this.setMode("idle");
 	connect() {
 		this.element.addEventListener("click", this.onClick, true);
 		this.element.addEventListener("turbo:frame-load", this.onFrameLoad);
+		document.addEventListener("turbo:morph", this.onMorph);
 		window.addEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
 		window.addEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
 		this.dedupeSections();
@@ -70,6 +72,7 @@ var list_controller_default = class extends Controller {
 	disconnect() {
 		this.element.removeEventListener("click", this.onClick, true);
 		this.element.removeEventListener("turbo:frame-load", this.onFrameLoad);
+		document.removeEventListener("turbo:morph", this.onMorph);
 		window.removeEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
 		window.removeEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
 		this.setMode("idle");

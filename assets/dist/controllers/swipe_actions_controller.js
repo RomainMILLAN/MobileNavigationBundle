@@ -156,11 +156,27 @@ var swipe_actions_controller_default = class extends Controller {
 		if (SPOOFED_METHODS.has(method)) form.appendChild(this.hiddenInput("_method", method));
 		const redirect = this.hiddenInput("_redirect", "");
 		form.appendChild(redirect);
+		let confirmed = false;
+		let sent = false;
 		const submit = () => {
 			redirect.value = window.location.pathname + window.location.search;
-			form.submit();
+			this.close();
+			confirmed = true;
+			try {
+				form.requestSubmit();
+			} finally {
+				confirmed = false;
+			}
 		};
 		form.addEventListener("submit", (event) => {
+			if (sent) {
+				event.preventDefault();
+				return;
+			}
+			if (confirmed) {
+				sent = true;
+				return;
+			}
 			event.preventDefault();
 			if (action.confirm === void 0) {
 				submit();
@@ -173,6 +189,9 @@ var swipe_actions_controller_default = class extends Controller {
 				confirmLabel: action.label,
 				onConfirm: submit
 			} }));
+		});
+		form.addEventListener("turbo:submit-end", (event) => {
+			if (!event.detail.success) sent = false;
 		});
 		const button = document.createElement("button");
 		button.type = "submit";

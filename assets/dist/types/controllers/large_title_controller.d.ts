@@ -16,7 +16,10 @@ export default class extends Controller<HTMLElement> {
     readonly hasScrollerTarget: boolean;
     readonly scrollerTarget: HTMLElement;
     private observer;
+    private readonly onMorph;
     connect(): void;
     disconnect(): void;
+    private observe;
+    private unobserve;
     private setCollapsed;
 }

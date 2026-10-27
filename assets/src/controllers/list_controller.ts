@@ -64,9 +64,14 @@ export default class extends Controller<HTMLElement> {
     private readonly onToggleCommand = (): void => this.toggleSelecting();
     private readonly onToggleEditingCommand = (): void => this.toggleEditing();
 
+    // A Turbo morph puts the list back as the server renders it, while the class on <html>
+    // stays: after an action, like iOS, the list leaves its mode.
+    private readonly onMorph = (): void => this.setMode('idle');
+
     connect(): void {
         this.element.addEventListener('click', this.onClick, true);
         this.element.addEventListener('turbo:frame-load', this.onFrameLoad);
+        document.addEventListener('turbo:morph', this.onMorph);
         window.addEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
         window.addEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
         this.dedupeSections();
@@ -75,6 +80,7 @@ export default class extends Controller<HTMLElement> {
     disconnect(): void {
         this.element.removeEventListener('click', this.onClick, true);
         this.element.removeEventListener('turbo:frame-load', this.onFrameLoad);
+        document.removeEventListener('turbo:morph', this.onMorph);
         window.removeEventListener(TOGGLE_SELECTING_EVENT, this.onToggleCommand);
         window.removeEventListener(TOGGLE_EDITING_EVENT, this.onToggleEditingCommand);
         this.setMode('idle');

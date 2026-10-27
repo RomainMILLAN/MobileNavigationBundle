@@ -20,7 +20,24 @@ export default class extends Controller<HTMLElement> {
 
     private observer: IntersectionObserver | null = null;
 
+    // A Turbo morph puts the bar back as the server renders it: observing again makes the
+    // observer report the real state.
+    private readonly onMorph = (): void => {
+        this.unobserve();
+        this.observe();
+    };
+
     connect(): void {
+        document.addEventListener('turbo:morph', this.onMorph);
+        this.observe();
+    }
+
+    disconnect(): void {
+        document.removeEventListener('turbo:morph', this.onMorph);
+        this.unobserve();
+    }
+
+    private observe(): void {
         if (!this.hasBarTarget || !this.hasTitleTarget || !this.hasScrollerTarget) {
             return;
         }
@@ -45,7 +62,7 @@ export default class extends Controller<HTMLElement> {
         this.observer.observe(this.titleTarget);
     }
 
-    disconnect(): void {
+    private unobserve(): void {
         this.observer?.disconnect();
         this.observer = null;
     }

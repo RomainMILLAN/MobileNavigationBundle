@@ -22,6 +22,7 @@ export default class extends Controller<HTMLElement> {
     private readonly onFrameLoad;
     private readonly onToggleCommand;
     private readonly onToggleEditingCommand;
+    private readonly onMorph;
     connect(): void;
     disconnect(): void;
     toggleSelecting(): void;

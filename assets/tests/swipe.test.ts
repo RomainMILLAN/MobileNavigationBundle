@@ -33,7 +33,19 @@ const confirmSheet = `
         </div>
     </div>`;
 
+// What reaches the document (where Turbo listens) without being cancelled: the
+// submissions Turbo would take over. preventDefault() then stops jsdom navigating.
 let submitted: string[] = [];
+let redirects: string[] = [];
+const onDocumentSubmit = (event: Event): void => {
+    const form = event.target as HTMLFormElement;
+    if (!event.defaultPrevented) {
+        submitted.push(form.getAttribute('action') ?? '');
+        redirects.push((form.elements.namedItem('_redirect') as HTMLInputElement | null)?.value ?? '');
+    }
+    event.preventDefault();
+};
+let nativeSubmit: ReturnType<typeof vi.spyOn>;
 
 beforeAll(() => {
     if (typeof window.requestAnimationFrame !== 'function') {
@@ -47,9 +59,9 @@ beforeAll(() => {
 
 beforeEach(async () => {
     submitted = [];
-    vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function (this: HTMLFormElement) {
-        submitted.push(this.getAttribute('action') ?? '');
-    });
+    redirects = [];
+    document.addEventListener('submit', onDocumentSubmit);
+    nativeSubmit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => undefined);
     vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
     document.body.innerHTML = `
         ${confirmSheet}
@@ -60,6 +72,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+    document.removeEventListener('submit', onDocumentSubmit);
     document.body.innerHTML = '';
     await tick();
     vi.restoreAllMocks();
@@ -68,7 +81,13 @@ afterEach(async () => {
 const panelButtons = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>('.rm-mnb-swipe-actions__button'));
 const submitAction = (url: string): void => {
     const form = query<HTMLFormElement>(`form[action="${url}"]`);
-    form.dispatchEvent(new Event('submit', { cancelable: true }));
+    // The user's tap: a real submit event, which bubbles.
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+};
+const touch = (type: string, clientX: number): void => {
+    const event = new Event(type, { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [{ clientX, clientY: 10 }] });
+    query('.rm-mnb-list-row').dispatchEvent(event);
 };
 
 describe('swipe panel', () => {
@@ -147,5 +166,71 @@ describe('method spoofing', () => {
         query<HTMLButtonElement>('#destroy').click();
 
         expect(submitted).toEqual(['/delete']);
+    });
+});
+
+describe('submission through Turbo', () => {
+    it('lets exactly one submit reach the document, never through form.submit()', () => {
+        history.replaceState(null, '', '/accounts/3?page=2');
+
+        submitAction('/validate');
+
+        expect(submitted).toEqual(['/validate']);
+        expect(redirects).toEqual(['/accounts/3?page=2']);
+        expect(nativeSubmit).not.toHaveBeenCalled();
+    });
+
+    it('sends a single POST on a double tap', () => {
+        submitAction('/validate');
+        submitAction('/validate');
+
+        expect(submitted).toEqual(['/validate']);
+    });
+
+    it('lets the action be sent again after a failed Turbo submission', () => {
+        submitAction('/validate');
+        query('form[action="/validate"]').dispatchEvent(new CustomEvent('turbo:submit-end', { detail: { success: false } }));
+
+        submitAction('/validate');
+
+        expect(submitted).toEqual(['/validate', '/validate']);
+    });
+
+    it('keeps the confirmation for the next tap after a confirmed destructive action', () => {
+        submitAction('/cancel');
+        query<HTMLButtonElement>('#destroy').click();
+
+        submitAction('/delete');
+
+        expect(submitted).toEqual(['/cancel']);
+        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
+    });
+
+    it('drops the pass when the form was detached and fired nothing', () => {
+        const form = query<HTMLFormElement>('form[action="/cancel"]');
+        // A browser fires no submit event for a detached form; jsdom would.
+        form.requestSubmit = (): void => undefined;
+        submitAction('/cancel');
+        query<HTMLButtonElement>('#destroy').click();
+
+        submitAction('/cancel');
+
+        expect(submitted).toEqual([]);
+        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
+    });
+
+    it('rebuilds its panel removed by a Turbo morph, and its actions still go through', () => {
+        submitAction('/validate');
+        document.querySelectorAll('.rm-mnb-swipe-actions').forEach((panel) => panel.remove());
+
+        touch('touchstart', 300);
+        touch('touchmove', 0);
+        touch('touchend', 0);
+
+        const panel = query('.rm-mnb-swipe-actions');
+        expect(panel?.isConnected).toBe(true);
+        expect(panelButtons()).toHaveLength(ACTIONS.length);
+        submitAction('/validate');
+        expect(submitted).toEqual(['/validate', '/validate']);
     });
 });

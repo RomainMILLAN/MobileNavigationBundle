@@ -153,12 +153,32 @@ export default class extends Controller<HTMLElement> {
         const redirect = this.hiddenInput('_redirect', '');
         form.appendChild(redirect);
 
+        // form.submit() fires no "submit" event: Turbo would not see the submission and would
+        // reload the whole page, scrolled back to the top. requestSubmit() fires it. Same
+        // scheme as confirm_submit_controller: only the submit resent here goes through, once.
+        let confirmed = false;
+        let sent = false;
         const submit = (): void => {
             redirect.value = window.location.pathname + window.location.search;
-            form.submit();
+            this.close();
+            confirmed = true;
+            try {
+                form.requestSubmit();
+            } finally {
+                // Detached form: no event at all, the pass must not outlive this call.
+                confirmed = false;
+            }
         };
 
         form.addEventListener('submit', (event) => {
+            if (sent) {
+                event.preventDefault();
+                return;
+            }
+            if (confirmed) {
+                sent = true;
+                return;
+            }
             event.preventDefault();
             if (action.confirm === undefined) {
                 submit();
@@ -168,6 +188,12 @@ export default class extends Controller<HTMLElement> {
             window.dispatchEvent(new CustomEvent<ConfirmRequestDetail>(CONFIRM_REQUEST_EVENT, {
                 detail: { title: action.label, message: action.confirm, confirmLabel: action.label, onConfirm: submit },
             }));
+        });
+        // Network failure under Turbo: the page stays, the action must be retryable.
+        form.addEventListener('turbo:submit-end', (event) => {
+            if (!(event as CustomEvent<{ success: boolean }>).detail.success) {
+                sent = false;
+            }
         });
 
         const button = document.createElement('button');

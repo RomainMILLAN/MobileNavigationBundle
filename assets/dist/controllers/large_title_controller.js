@@ -15,7 +15,19 @@ var large_title_controller_default = class extends Controller {
 		"scroller"
 	];
 	observer = null;
+	onMorph = () => {
+		this.unobserve();
+		this.observe();
+	};
 	connect() {
+		document.addEventListener("turbo:morph", this.onMorph);
+		this.observe();
+	}
+	disconnect() {
+		document.removeEventListener("turbo:morph", this.onMorph);
+		this.unobserve();
+	}
+	observe() {
 		if (!this.hasBarTarget || !this.hasTitleTarget || !this.hasScrollerTarget) return;
 		const overflowY = getComputedStyle(this.scrollerTarget).overflowY;
 		const root = overflowY === "auto" || overflowY === "scroll" ? this.scrollerTarget : null;
@@ -31,7 +43,7 @@ var large_title_controller_default = class extends Controller {
 		});
 		this.observer.observe(this.titleTarget);
 	}
-	disconnect() {
+	unobserve() {
 		this.observer?.disconnect();
 		this.observer = null;
 	}

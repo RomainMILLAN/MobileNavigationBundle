@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.3 - 2026-10-27
+
+Reported from Finance (a swipe action sent the user back to the top of the list).
+
+### Changed
+
+- `swipe-actions` submits a POST action with `requestSubmit()` instead of `form.submit()`,
+  which fired no `submit` event: Turbo now takes the submission over instead of a full page
+  load. A double tap sends a single POST; a failed Turbo submission can be retried. Under
+  Turbo, the action's endpoint must answer with a redirect (or a 4xx/5xx).
+- `LoadMore` renders its frame with `refresh="morph"`: on a morphing page refresh, a loaded
+  page is reloaded in place instead of emptied. No effect without a morphing refresh.
+- `large-title` and `list` realign after `turbo:morph`: the compact bar gets its collapsed
+  state back, and the list leaves the "Select" or "Edit" mode.
+
+See "Keeping the scroll after an action" in `docs/frontend.md` for the two meta tags.
+
 ## 0.2.2 - 2026-10-09
 
 Reported from Notifier (notification history in the iOS PWA).

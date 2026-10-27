@@ -3,8 +3,11 @@
     "Load more": the next page loads into this frame, without leaving the list. The
     response must contain a <turbo-frame> with the same id (the rows of the next page, and
     its own "Load more" if any remain). Requires Turbo. Props: see the LoadMore class.
+
+    refresh="morph": on a morphing page refresh, a loaded page keeps its place (it is
+    reloaded from its src, not emptied). Without a morphing refresh in the app, no effect.
 #}
-<turbo-frame id="{{ frameId }}" target="_top">
+<turbo-frame id="{{ frameId }}" target="_top" refresh="morph">
     <a href="{{ href }}" class="rm-mnb-load-more {{ attributes.render('class') }}" data-turbo-frame="{{ frameId }}" {{ attributes }}>
         {{ 'list.load_more'|trans }}
     </a>

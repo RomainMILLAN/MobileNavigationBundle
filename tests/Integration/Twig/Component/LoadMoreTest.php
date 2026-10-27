@@ -15,6 +15,8 @@ final class LoadMoreTest extends ComponentTestCase
 
         self::assertSame('page-2', $crawler->filter('turbo-frame')->attr('id'));
         self::assertSame('_top', $crawler->filter('turbo-frame')->attr('target'));
+        // A loaded page is reloaded in place, not emptied, on a morphing page refresh.
+        self::assertSame('morph', $crawler->filter('turbo-frame')->attr('refresh'));
         $link = $crawler->filter('turbo-frame > a.rm-mnb-load-more');
         self::assertSame('/transactions?page=2', $link->attr('href'));
         self::assertSame('page-2', $link->attr('data-turbo-frame'));

@@ -58,6 +58,30 @@ The bundle never imports `@hotwired/turbo`; it reads `window.Turbo` at run time.
 
 `navigate` and `swipe-actions` only follow http(s) URLs of the current origin.
 
+### Keeping the scroll after an action
+
+A POST swipe action is submitted with `requestSubmit()`, so Turbo takes it over (without
+Turbo, it is a native submission, as before). It sends `_redirect` = the current path and
+query. To keep the scroll position and the pages already loaded by `LoadMore`, the app sets:
+
+```html
+<meta name="turbo-refresh-method" content="morph">
+<meta name="turbo-refresh-scroll" content="preserve">
+```
+
+A redirect to the current URL is then a morphing page refresh: the scroll stays, and every
+loaded `LoadMore` frame (`refresh="morph"`) is reloaded in place, one request per page, in
+cascade. Without these meta tags, `refresh="morph"` has no effect.
+
+Under Turbo, the swipe action's endpoint must answer with a redirect (or a 4xx/5xx): Turbo
+does not render a 200 HTML answer to a form. An endpoint that picks its format from `Accept`
+receives `text/vnd.turbo-stream.html`, sent by Turbo on every POST.
+
+Rule for the bundle's controllers: a state or a node set outside the server rendering must be
+realigned after `turbo:morph`, or rebuilt on demand (like the swipe panel). One scheme: an
+arrow function held as a property, added in `connect()`, removed in `disconnect()`, that
+applies the state again (`large-title`, `list`).
+
 ## Storage
 
 `swipe-back` keeps the in-app history in `sessionStorage['rm-mnb-history']` (URL and
