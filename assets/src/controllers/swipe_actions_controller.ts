@@ -153,14 +153,15 @@ export default class extends Controller<HTMLElement> {
         const redirect = this.hiddenInput('_redirect', '');
         form.appendChild(redirect);
 
-        // form.submit() fires no "submit" event: Turbo would not see the submission and would
-        // reload the whole page, scrolled back to the top. requestSubmit() fires it. Same
-        // scheme as confirm_submit_controller: only the submit resent here goes through, once.
+        // The submission must stay a "submit" event, the one Turbo takes over: form.submit()
+        // fires none, and the whole page would reload, scrolled back to the top. Without a
+        // confirmation, the user's own submit goes through. After a confirmation, it is resent
+        // with requestSubmit(), outside that first event: a browser ignores requestSubmit()
+        // while the form is still firing its submit event. Same scheme as
+        // confirm_submit_controller: only the submit resent here goes through, once.
         let confirmed = false;
         let sent = false;
-        const submit = (): void => {
-            redirect.value = window.location.pathname + window.location.search;
-            this.close();
+        const resubmit = (): void => {
             confirmed = true;
             try {
                 form.requestSubmit();
@@ -175,18 +176,16 @@ export default class extends Controller<HTMLElement> {
                 event.preventDefault();
                 return;
             }
-            if (confirmed) {
+            if (confirmed || action.confirm === undefined) {
+                redirect.value = window.location.pathname + window.location.search;
+                this.close();
                 sent = true;
                 return;
             }
             event.preventDefault();
-            if (action.confirm === undefined) {
-                submit();
-                return;
-            }
             this.close();
             window.dispatchEvent(new CustomEvent<ConfirmRequestDetail>(CONFIRM_REQUEST_EVENT, {
-                detail: { title: action.label, message: action.confirm, confirmLabel: action.label, onConfirm: submit },
+                detail: { title: action.label, message: action.confirm, confirmLabel: action.label, onConfirm: resubmit },
             }));
         });
         // Network failure under Turbo: the page stays, the action must be retryable.

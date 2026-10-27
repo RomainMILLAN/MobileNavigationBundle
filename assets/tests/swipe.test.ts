@@ -47,6 +47,20 @@ const onDocumentSubmit = (event: Event): void => {
 };
 let nativeSubmit: ReturnType<typeof vi.spyOn>;
 
+// A browser ignores requestSubmit() while the form is still firing its submit event (the
+// "firing submission events" flag); jsdom does not. Reproduced here, or a resubmission from
+// inside the submit listener would pass the tests and do nothing in a browser.
+const firing = new WeakSet<HTMLFormElement>();
+const requestSubmit = HTMLFormElement.prototype.requestSubmit;
+const whileFiring = (form: HTMLFormElement, fire: () => void): void => {
+    firing.add(form);
+    try {
+        fire();
+    } finally {
+        firing.delete(form);
+    }
+};
+
 beforeAll(() => {
     if (typeof window.requestAnimationFrame !== 'function') {
         vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(0), 0));
@@ -62,6 +76,11 @@ beforeEach(async () => {
     redirects = [];
     document.addEventListener('submit', onDocumentSubmit);
     nativeSubmit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => undefined);
+    vi.spyOn(HTMLFormElement.prototype, 'requestSubmit').mockImplementation(function (this: HTMLFormElement, submitter?: HTMLElement | null) {
+        if (!firing.has(this)) {
+            whileFiring(this, () => requestSubmit.call(this, submitter));
+        }
+    });
     vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
     document.body.innerHTML = `
         ${confirmSheet}
@@ -82,7 +101,7 @@ const panelButtons = (): HTMLElement[] => Array.from(document.querySelectorAll<H
 const submitAction = (url: string): void => {
     const form = query<HTMLFormElement>(`form[action="${url}"]`);
     // The user's tap: a real submit event, which bubbles.
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    whileFiring(form, () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
 };
 const touch = (type: string, clientX: number): void => {
     const event = new Event(type, { bubbles: true, cancelable: true });
@@ -178,6 +197,13 @@ describe('submission through Turbo', () => {
         expect(submitted).toEqual(['/validate']);
         expect(redirects).toEqual(['/accounts/3?page=2']);
         expect(nativeSubmit).not.toHaveBeenCalled();
+    });
+
+    it('lets the user\'s own submit through for an action without confirmation', () => {
+        submitAction('/validate');
+
+        expect(HTMLFormElement.prototype.requestSubmit).not.toHaveBeenCalled();
+        expect(submitted).toEqual(['/validate']);
     });
 
     it('sends a single POST on a double tap', () => {

@@ -158,9 +158,7 @@ var swipe_actions_controller_default = class extends Controller {
 		form.appendChild(redirect);
 		let confirmed = false;
 		let sent = false;
-		const submit = () => {
-			redirect.value = window.location.pathname + window.location.search;
-			this.close();
+		const resubmit = () => {
 			confirmed = true;
 			try {
 				form.requestSubmit();
@@ -173,21 +171,19 @@ var swipe_actions_controller_default = class extends Controller {
 				event.preventDefault();
 				return;
 			}
-			if (confirmed) {
+			if (confirmed || action.confirm === void 0) {
+				redirect.value = window.location.pathname + window.location.search;
+				this.close();
 				sent = true;
 				return;
 			}
 			event.preventDefault();
-			if (action.confirm === void 0) {
-				submit();
-				return;
-			}
 			this.close();
 			window.dispatchEvent(new CustomEvent(CONFIRM_REQUEST_EVENT, { detail: {
 				title: action.label,
 				message: action.confirm,
 				confirmLabel: action.label,
-				onConfirm: submit
+				onConfirm: resubmit
 			} }));
 		});
 		form.addEventListener("turbo:submit-end", (event) => {

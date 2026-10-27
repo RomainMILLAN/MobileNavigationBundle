@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.4 - 2026-10-27
+
+### Fixed
+
+- A POST swipe action without confirmation (validate, duplicate…) sent nothing in a browser
+  since 0.2.3: it was resent with `requestSubmit()` from inside its own submit event, which
+  a browser ignores. The user's own submit now goes through; `requestSubmit()` only resends
+  a confirmed action, from the confirmation sheet. The tests reproduce the browser rule
+  that jsdom lacks.
+
 ## 0.2.3 - 2026-10-27
 
 Reported from Finance (a swipe action sent the user back to the top of the list).
