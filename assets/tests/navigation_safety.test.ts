@@ -95,21 +95,22 @@ describe('swipe-actions controller', () => {
 
 describe('swipe-back controller', () => {
     it('stays inert without Turbo', async () => {
-        const addEventListener = vi.spyOn(document, 'addEventListener');
         document.body.innerHTML = '<div class="rm-mnb-scroller" data-controller="swipe-back"></div>';
         await tick();
 
-        expect(addEventListener.mock.calls.map(([type]) => type)).not.toContain('turbo:load');
         expect(window.sessionStorage.getItem('rm-mnb-history')).toBeNull();
     });
 
-    // After the inert case: the history tracking is installed once per page.
+    // The history tracker starts once Turbo has written its restoration state.
     it('tracks the history with Turbo', async () => {
         window.Turbo = { visit: vi.fn(), session: { view: { snapshotCache: { get: () => undefined } } } };
-        const addEventListener = vi.spyOn(document, 'addEventListener');
+        window.history.replaceState({ turbo: { restorationIdentifier: 'first', restorationIndex: 0 } }, '');
         document.body.innerHTML = '<div class="rm-mnb-scroller" data-controller="swipe-back"></div>';
         await tick();
 
-        expect(addEventListener.mock.calls.map(([type]) => type)).toContain('turbo:load');
+        expect(JSON.parse(window.sessionStorage.getItem('rm-mnb-history') ?? 'null')).toMatchObject({
+            stack: [{ id: 'first', index: 0 }],
+            loadedIndex: 0,
+        });
     });
 });

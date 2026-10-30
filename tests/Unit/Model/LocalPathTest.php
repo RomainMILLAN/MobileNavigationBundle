@@ -27,6 +27,7 @@ final class LocalPathTest extends TestCase
     {
         yield 'root' => ['/'];
         yield 'with query' => ['/a/b?c=d'];
+        yield 'encoded line feed' => ['/a%0ab'];
         yield 'at the length limit' => ['/'.u('a')->repeat(2047)->toString()];
         yield 'unicode' => ['/comptes/éé'];
     }

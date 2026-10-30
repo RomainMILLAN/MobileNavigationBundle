@@ -6,6 +6,10 @@
                 <source>back.to</source>
                 <target>Retour à %label%</target>
             </trans-unit>
+            <trans-unit id="back.previous" resname="back.previous">
+                <source>back.previous</source>
+                <target>Page précédente</target>
+            </trans-unit>
             <trans-unit id="sheet.close" resname="sheet.close">
                 <source>sheet.close</source>
                 <target>Fermer</target>

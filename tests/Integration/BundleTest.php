@@ -109,6 +109,20 @@ final class BundleTest extends IntegrationTestCase
     }
 
     #[Test]
+    public function it_should_mount_the_back_controller_on_the_back_button(): void
+    {
+        $link = $this->renderComponent('BackButton', ['href' => '/accounts', 'label' => 'Accounts'])->filter('a');
+        $prefix = 'data-romainmillan--mobile-navigation-bundle--back-';
+
+        self::assertSame('romainmillan--mobile-navigation-bundle--back', $link->attr('data-controller'));
+        self::assertSame('romainmillan--mobile-navigation-bundle--back#go', $link->attr('data-action'));
+        self::assertSame('/accounts', $link->attr('href'));
+        self::assertSame('Back to %label%', $link->attr($prefix.'target-label-value'));
+        self::assertSame('Previous page', $link->attr($prefix.'previous-label-value'));
+        self::assertSame('Back to Accounts', $link->attr($prefix.'fallback-label-value'));
+    }
+
+    #[Test]
     public function it_should_translate_in_english_and_french(): void
     {
         self::assertSame('Back to Accounts', $this->renderComponent('BackButton', ['href' => '/a', 'label' => 'Accounts'])->filter('a')->attr('aria-label'));

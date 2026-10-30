@@ -4,6 +4,38 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 - 2026-10-30
+
+Reported from Finance (the back button went to the list instead of the previous page; a
+swipe back went back two pages).
+
+### Added
+
+- `back` controller, mounted by `BackButton`: goes to the previous page when the app's
+  history proves one, otherwise follows `href`. Its aria-label says where the click leads.
+- `SwipeAction::linkCarryingReturnPath()`: a link that adds `_redirect` (the current local
+  path) on click. Captured by `contract.json` (`carriesReturnPath`).
+- `[data-rm-mnb-page-title]`: the page's name in the history (otherwise `document.title`).
+- Translation `back.previous`.
+
+### Changed
+
+- **Peer `@hotwired/turbo` `^8.0`** (Turbo 7 is no longer supported). Migration: under
+  Turbo 7 nothing fails, but swipe back no longer activates and the back button follows
+  its `href`, silently. Upgrade to Turbo 8.
+- `BackButton`: the click goes to the previous page; `href` becomes the parent fallback.
+- History: a register keyed by Turbo's (restorationIdentifier, restorationIndex), shared by
+  the controllers, started lazily; `applyVisit`/`previousEntry` removed (never exported).
+- `swipe-back`: a system cancellation (`touchcancel`) never navigates, nor a gesture during
+  which the history moved (a native back): one swipe, one page back.
+- A long row value (`.rm-mnb-row__value`) scrolls sideways instead of overflowing.
+
+### Security
+
+- `_redirect` (POST swipe actions, opt-in links) is only sent when the current path is a
+  local path (`isLocalPath`); empty otherwise.
+- Page titles are never stored: no account name at rest in `sessionStorage`.
+
 ## 0.2.4 - 2026-10-27
 
 ### Fixed

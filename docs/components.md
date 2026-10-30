@@ -28,7 +28,7 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 | `SheetGroup` | `heading` (`null`), `closesSheet` (`false`), `footer` (`null`, a note under the group) | `content` | target `sheet:closeZone` with `closesSheet` |
 | `SheetRow` | `label` (`null`), `href` (`null`), `icon` (`null`), `tone` (`'neutral'`), `value` (`null`, string), `valueAttributes` (array, empty by default), `badge` (`null`, string), `chevron` (`false`), `checked` (`false`), `danger` (`false`), `static` (`false`), `switch` (`false`), `multiline` (`false`), `valueTone` (`null`) | `content`, `icon` | renders an `a` with `href`, a `div` with `static`, a `button` otherwise; with `switch`, the state is `aria-checked`, held by the app; with `multiline`, the value goes under the label, on several lines; `valueTone` inks the value (`neutral` or unknown = body ink) |
 | `SheetFormRow` | `action` (required), `token` (required), `label` (required), `icon` (`null`), `tone` (`'neutral'`), `danger` (`false`), `confirm` (`null`, `{title, message, confirmLabel = label}`), `fields` (`{}`, hidden fields with scalar values, `_token` refused) | — | a POST `<form>` holding a submit `SheetRow`; with `confirm`, controller `confirm-submit` asks the `ConfirmSheet` first (or `confirm()` when the sheet is not shown), and lets a single submission through |
-| `BackButton` | `href` (required), `label` (required) | — | |
+| `BackButton` | `href` (required), `label` (required) | — | goes to the previous page when the history proves one, otherwise to `href`, the parent fallback (`label` names it). A `data-controller` passed by the app replaces the `back` controller |
 | `CompactBar` | `title` (required), `back` (`null`, `{href, label}`) | `trailing` | target `large-title:bar` |
 | `ListSection` | `title` (`''`), `rows` (`[]`, rows already rendered) | `content` | target `list:section` |
 | `ListRow` | `title` (required), `href` (`null`), `titleStrike` (`false`), `subtitle` (`null`), `leading` (`null`, `{icon, tone}`), `value` (`null`, `{text, tone}`), `valueAttributes` (array, empty by default), `caption` (`null`, `{text, tone}`, a second value under the value), `captionAttributes` (array, empty by default), `badge` (`null`, `{label, tone}`), `chevron` (`true`), `swipe` (`null`, `{actions: list<SwipeAction>, csrfToken}`), `selectable` (`null`, `{name, value, label, attributes: ?StimulusAttributes}`), `turboFrame` (`'_top'`), `reorder` (`null`, `{label, attributes: ?StimulusAttributes}`) | `leading_icon` (variable `leading`) | controller `swipe-actions` when there are actions; `reorder` adds a drag handle shown in "Edit" mode only, the app sets its drag target on it through `attributes` |
@@ -67,7 +67,8 @@ SwipeAction::destructive($deleteUrl, 'icon-trash', new TranslatableMessage('item
 
 A destructive action always writes, is always negative and always confirmed in the
 `ConfirmSheet` first. Every URL must be a local path. A writing action is submitted in a
-POST form with `_token` (the CSRF token) and `_redirect` (the current path and query). When
+POST form with `_token` (the CSRF token) and `_redirect` (the current path and query, when it
+is a local path; empty otherwise). When
 its `HttpMethod` is `Put`, `Patch` or `Delete`, the form also carries `_method`, which
 Symfony reads with `framework.http_method_override: true` and Laravel natively; the
 controller emits that field for these three values only.

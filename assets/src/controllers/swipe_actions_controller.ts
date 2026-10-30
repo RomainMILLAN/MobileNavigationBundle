@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 
 import { CONFIRM_REQUEST_EVENT, type ConfirmRequestDetail } from '../confirm_contract';
 import { haptic } from '../utils/haptic';
-import { sameOriginUrl } from '../utils/same_origin';
+import { currentReturnPath, sameOriginUrl } from '../utils/same_origin';
 import { toTone } from '../utils/tones';
 
 /**
@@ -17,6 +17,8 @@ export interface SwipeAction {
     method?: string;
     /** Present on every destructive action: the confirmation sheet's message. */
     confirm?: string;
+    /** A link that carries its return path: `_redirect` is added on click. */
+    carriesReturnPath?: true;
 }
 
 /**
@@ -135,6 +137,18 @@ export default class extends Controller<HTMLElement> {
         if (action.method === undefined || action.method.toUpperCase() === 'GET') {
             const link = document.createElement('a');
             link.href = action.url;
+            if (action.carriesReturnPath === true) {
+                // The panel survives Turbo navigations (and the filter bar rewrites the URL
+                // in place): the return path is read at click time.
+                link.addEventListener('click', () => {
+                    const target = sameOriginUrl(action.url);
+                    const returnPath = currentReturnPath();
+                    if (target !== null && returnPath !== null && !target.searchParams.has('_redirect')) {
+                        target.searchParams.set('_redirect', returnPath);
+                        link.href = target.href;
+                    }
+                });
+            }
             this.createContent(action, link);
 
             return link;
@@ -177,7 +191,7 @@ export default class extends Controller<HTMLElement> {
                 return;
             }
             if (confirmed || action.confirm === undefined) {
-                redirect.value = window.location.pathname + window.location.search;
+                redirect.value = currentReturnPath() ?? '';
                 this.close();
                 sent = true;
                 return;

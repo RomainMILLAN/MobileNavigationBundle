@@ -11,6 +11,8 @@ export interface SwipeAction {
     method?: string;
     /** Present on every destructive action: the confirmation sheet's message. */
     confirm?: string;
+    /** A link that carries its return path: `_redirect` is added on click. */
+    carriesReturnPath?: true;
 }
 /**
  * Swiping a row to the left reveals its actions, each with its label. A

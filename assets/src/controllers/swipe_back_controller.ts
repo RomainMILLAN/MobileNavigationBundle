@@ -1,118 +1,44 @@
 import { Controller } from '@hotwired/stimulus';
 
 import { haptic } from '../utils/haptic';
-import {
-    applyVisit,
-    previousEntry,
-    shouldCompleteBack,
-    withCurrentScroll,
-    type HistoryEntry,
-    type VisitAction,
-} from '../utils/history_stack';
+import { shouldCompleteBack } from '../utils/history_stack';
+import { historyTracker } from '../utils/history_tracker';
+import { scroller } from '../utils/scroller';
 
 /**
  * Swipe back from the left edge, as on iOS: the page follows the finger and
  * reveals the previous page, offset then brought back into place (parallax). On release,
- * history.back() shows that same page, at the same scroll position: nothing jumps.
+ * history.go() shows that same page, at the same scroll position: nothing jumps.
  *
  * The previous page is an inert copy of the snapshot Turbo keeps of every page
  * it leaves. Without a snapshot, only the background shows, and the back gesture stays smooth.
  *
- * Set on the page container (.rm-mnb-scroller). The gesture exists only if there is an
- * app page to go back to, with Turbo only, and by default only in the installed PWA: in a
- * browser, the edge swipe already belongs to the browser (double back otherwise).
+ * Set on the page container (.rm-mnb-scroller). The gesture exists only if the history
+ * tracker proves a previous page in the app, with Turbo only, and by default only in the
+ * installed PWA: in a browser, the edge swipe already belongs to the browser.
+ *
+ * A system cancellation (touchcancel, e.g. iOS taking the edge gesture over) never
+ * navigates, and neither does a gesture during which the history already moved: either
+ * would go back twice.
  */
-const STORAGE_KEY = 'rm-mnb-history';
 const EDGE_ZONE = 24;
 const MIN_DRAG = 10;
 const PARALLAX = 0.3;
 const SETTLE_MS = 320;
 const SAFETY_MS = 4000;
 
-let stack: HistoryEntry[] = readStack();
-let pendingAction: VisitAction | null = null;
-let tracking = false;
+// Created with the module: its listeners must be there before the first Turbo event.
+const tracker = historyTracker();
 
-function readStack(): HistoryEntry[] {
-    try {
-        const raw = window.sessionStorage.getItem(STORAGE_KEY);
-        const parsed: unknown = raw === null ? [] : JSON.parse(raw);
-
-        return Array.isArray(parsed) ? parsed.filter(isEntry) : [];
-    } catch {
-        return [];
+// The scrolling container (PWA) is not restored by Turbo, only the window is: the
+// restored page gets back here the scroll position where it was left.
+document.addEventListener('turbo:render', () => {
+    const entry = tracker.restoredEntry();
+    const element = scroller();
+    if (element !== null && entry !== null) {
+        element.scrollTop = entry.scroll;
     }
-}
-
-function isEntry(value: unknown): value is HistoryEntry {
-    return typeof value === 'object' && value !== null
-        && typeof (value as HistoryEntry).url === 'string'
-        && typeof (value as HistoryEntry).scroll === 'number';
-}
-
-function writeStack(): void {
-    try {
-        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stack.slice(-50)));
-    } catch {
-        // Storage unavailable (private browsing): the stack lives in memory.
-    }
-}
-
-function scroller(): HTMLElement | null {
-    const element = document.querySelector<HTMLElement>('.rm-mnb-scroller');
-    if (element === null) {
-        return null;
-    }
-    const overflow = getComputedStyle(element).overflowY;
-
-    return overflow === 'auto' || overflow === 'scroll' ? element : null;
-}
-
-function currentScroll(): number {
-    return scroller()?.scrollTop ?? window.scrollY;
-}
-
-/** Tracks the app's history, once and for all, whatever the number of pages. */
-function trackHistory(): void {
-    if (tracking) {
-        return;
-    }
-    tracking = true;
-
-    document.addEventListener('turbo:visit', (event) => {
-        pendingAction = (event as CustomEvent<{ action: VisitAction }>).detail.action;
-        // Going back restores the page's scroll position at once: an animated scroll
-        // (the theme's scroll-behavior: smooth) would first show it at the top, then sliding.
-        if (pendingAction === 'restore') {
-            document.documentElement.classList.add('rm-mnb-restoring');
-        }
-    });
-    document.addEventListener('turbo:before-cache', () => {
-        stack = withCurrentScroll(stack, currentScroll());
-        writeStack();
-    });
-    // The scrolling container (PWA) is not restored by Turbo, only the window is:
-    // the restored page gets back here the scroll position where it was left.
-    document.addEventListener('turbo:render', () => {
-        if (pendingAction !== 'restore') {
-            return;
-        }
-        const element = scroller();
-        const entry = [...stack].reverse().find((candidate) => candidate.url === window.location.href);
-        if (element !== null && entry !== undefined) {
-            element.scrollTop = entry.scroll;
-        }
-    });
-    document.addEventListener('turbo:load', () => {
-        window.requestAnimationFrame(() => document.documentElement.classList.remove('rm-mnb-restoring'));
-        stack = applyVisit(stack, window.location.href, pendingAction ?? 'advance');
-        pendingAction = null;
-        writeStack();
-    });
-
-    stack = applyVisit(stack, window.location.href, 'advance');
-    writeStack();
-}
+});
 
 /** The page's Turbo snapshot, or null (Turbo internal API: never blocking). */
 function cachedPage(url: string): HTMLElement | null {
@@ -158,28 +84,34 @@ export default class extends Controller<HTMLElement> {
     private tracking = false;
     private dragging = false;
     private underlay: HTMLElement | null = null;
+    private gestureHref = '';
+    private historyMoved = false;
 
     private readonly onTouchStart = (event: TouchEvent): void => this.touchStart(event);
     private readonly onTouchMove = (event: TouchEvent): void => this.touchMove(event);
     private readonly onTouchEnd = (): void => this.touchEnd();
+    private readonly onTouchCancel = (): void => this.touchCancel();
+    private readonly onPopState = (): void => {
+        this.historyMoved = true;
+    };
 
     connect(): void {
         // Without Turbo there is no snapshot nor visit event: the gesture stays off.
         if (window.Turbo?.session === undefined) {
             return;
         }
-        trackHistory();
+        tracker.ensureStarted();
         this.element.addEventListener('touchstart', this.onTouchStart, { passive: true });
         this.element.addEventListener('touchmove', this.onTouchMove, { passive: false });
         this.element.addEventListener('touchend', this.onTouchEnd, { passive: true });
-        this.element.addEventListener('touchcancel', this.onTouchEnd, { passive: true });
+        this.element.addEventListener('touchcancel', this.onTouchCancel, { passive: true });
     }
 
     disconnect(): void {
         this.element.removeEventListener('touchstart', this.onTouchStart);
         this.element.removeEventListener('touchmove', this.onTouchMove);
         this.element.removeEventListener('touchend', this.onTouchEnd);
-        this.element.removeEventListener('touchcancel', this.onTouchEnd);
+        this.element.removeEventListener('touchcancel', this.onTouchCancel);
         this.reset();
     }
 
@@ -188,7 +120,8 @@ export default class extends Controller<HTMLElement> {
             || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
         return (standalone || !this.requireStandaloneValue)
-            && previousEntry(stack) !== null
+            && !tracker.isGoingBack()
+            && tracker.target() !== null
             && !document.documentElement.classList.contains('rm-mnb-has-open-sheet');
     }
 
@@ -205,6 +138,9 @@ export default class extends Controller<HTMLElement> {
         this.lastX = touch.clientX;
         this.lastTime = event.timeStamp;
         this.velocity = 0;
+        if (this.tracking) {
+            this.watchHistory();
+        }
     }
 
     private touchMove(event: TouchEvent): void {
@@ -241,6 +177,7 @@ export default class extends Controller<HTMLElement> {
     private touchEnd(): void {
         if (!this.dragging) {
             this.tracking = false;
+            this.unwatchHistory();
             return;
         }
         this.tracking = false;
@@ -254,8 +191,32 @@ export default class extends Controller<HTMLElement> {
         }
     }
 
+    /** A system cancellation is never an intent to go back: the page returns into place. */
+    private touchCancel(): void {
+        if (!this.dragging) {
+            this.tracking = false;
+            this.unwatchHistory();
+            return;
+        }
+        this.tracking = false;
+        this.dragging = false;
+        this.cancel();
+    }
+
+    /** Watches whether the history moves during the gesture (a native back, for instance). */
+    private watchHistory(): void {
+        this.unwatchHistory();
+        this.gestureHref = window.location.href;
+        this.historyMoved = false;
+        window.addEventListener('popstate', this.onPopState);
+    }
+
+    private unwatchHistory(): void {
+        window.removeEventListener('popstate', this.onPopState);
+    }
+
     private buildUnderlay(): void {
-        const previous = previousEntry(stack);
+        const previous = tracker.target()?.entry ?? null;
         const underlay = document.createElement('div');
         underlay.className = 'rm-mnb-back-underlay';
         // Never in the snapshot Turbo takes of this page when leaving it.
@@ -310,8 +271,14 @@ export default class extends Controller<HTMLElement> {
             underlay?.classList.add('is-front');
             this.element.classList.remove('rm-mnb-back-swipe--moving', 'rm-mnb-back-swipe--settling');
             this.element.style.removeProperty('transform');
+            const moved = this.historyMoved || window.location.href !== this.gestureHref;
+            this.unwatchHistory();
+            const target = moved ? null : tracker.target();
+            if (target === null || tracker.goBack(target) !== 'navigating') {
+                this.reset();
+                return;
+            }
             document.documentElement.classList.add('rm-mnb-restoring');
-            window.history.back();
             window.setTimeout(() => {
                 if (underlay?.isConnected) {
                     this.reset();
@@ -333,6 +300,7 @@ export default class extends Controller<HTMLElement> {
     }
 
     private reset(): void {
+        this.unwatchHistory();
         this.underlay?.remove();
         this.underlay = null;
         this.element.classList.remove('rm-mnb-back-swipe--moving', 'rm-mnb-back-swipe--settling');

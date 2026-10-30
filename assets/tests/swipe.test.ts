@@ -260,3 +260,67 @@ describe('submission through Turbo', () => {
         expect(submitted).toEqual(['/validate', '/validate']);
     });
 });
+
+describe('return path', () => {
+    const mountLink = async (action: Record<string, unknown>): Promise<HTMLAnchorElement> => {
+        document.body.innerHTML = `
+            <div class="rm-mnb-list-row" data-controller="swipe-actions"
+                 data-swipe-actions-actions-value='${JSON.stringify([action])}'
+                 data-swipe-actions-csrf-token-value="token"></div>`;
+        await tick();
+        const link = query<HTMLAnchorElement>('a.rm-mnb-swipe-actions__button');
+        // jsdom would navigate on an unprevented click.
+        link.addEventListener('click', (event) => event.preventDefault());
+
+        return link;
+    };
+    const edit = { url: '/transactions/7/edit', icon: 'icon-edit', tone: 'accent', label: 'Modifier' };
+
+    it('adds the current path on click, read at click time', async () => {
+        history.replaceState(null, '', '/accounts/3');
+        const link = await mountLink({ ...edit, carriesReturnPath: true });
+        history.replaceState(null, '', '/accounts/3?page=2');
+
+        link.click();
+
+        expect(new URL(link.href).searchParams.get('_redirect')).toBe('/accounts/3?page=2');
+    });
+
+    it('leaves the link alone when not asked, or when it already has one', async () => {
+        history.replaceState(null, '', '/accounts/3');
+        const plain = await mountLink(edit);
+        plain.click();
+        expect(new URL(plain.href).searchParams.has('_redirect')).toBe(false);
+
+        const own = await mountLink({ ...edit, url: '/transactions/7/edit?_redirect=/home', carriesReturnPath: true });
+        own.click();
+        expect(new URL(own.href).searchParams.get('_redirect')).toBe('/home');
+    });
+
+    it('never carries a path that is not local', async () => {
+        const link = await mountLink({ ...edit, carriesReturnPath: true });
+        vi.spyOn(window, 'location', 'get').mockReturnValue({
+            ...window.location,
+            href: 'https://app.example//evil.tld',
+            origin: 'https://app.example',
+            pathname: '//evil.tld',
+            search: '',
+        } as unknown as Location);
+
+        link.click();
+
+        expect(new URL(link.href).searchParams.has('_redirect')).toBe(false);
+    });
+
+    it('sends an empty _redirect from a page whose path is not local', () => {
+        vi.spyOn(window, 'location', 'get').mockReturnValue({
+            ...window.location,
+            pathname: '//evil.tld',
+            search: '',
+        } as unknown as Location);
+
+        submitAction('/validate');
+
+        expect(redirects).toEqual(['']);
+    });
+});

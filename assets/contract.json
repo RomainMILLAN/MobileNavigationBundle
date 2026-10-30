@@ -3,6 +3,7 @@
     "spoofedMethods": ["PUT", "PATCH", "DELETE"],
     "swipeActions": {
         "link": {"url": "/items/1/edit", "icon": "icon-edit", "tone": "accent", "label": "Edit"},
+        "linkCarryingReturnPath": {"url": "/items/1/edit", "icon": "icon-edit", "tone": "accent", "label": "Edit", "carriesReturnPath": true},
         "post": {"url": "/items/1/ack?from=list", "icon": "icon-check", "tone": "positive", "label": "Acknowledge", "method": "POST"},
         "destructive": {"url": "/items/1", "icon": "icon-trash", "tone": "negative", "label": "Delete", "method": "DELETE", "confirm": "This cannot be undone."}
     },

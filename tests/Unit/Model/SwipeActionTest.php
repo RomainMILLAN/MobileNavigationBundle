@@ -25,6 +25,15 @@ final class SwipeActionTest extends TestCase
     }
 
     #[Test]
+    public function it_should_describe_a_link_carrying_its_return_path(): void
+    {
+        $action = SwipeAction::linkCarryingReturnPath('/items/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('item.edit', domain: 'app'));
+
+        self::assertSame(['url' => '/items/1/edit', 'icon' => 'icon-edit', 'tone' => 'accent', 'label' => 'Edit', 'carriesReturnPath' => true], $action->payload(TestTranslator::create()));
+        self::assertSame('GET', $action->getMethod());
+    }
+
+    #[Test]
     public function it_should_describe_a_post(): void
     {
         $action = SwipeAction::post('/items/1/validate', 'icon-ok', Tone::Positive, new TranslatableMessage('item.validate', domain: 'app'));

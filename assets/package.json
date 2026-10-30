@@ -1,6 +1,6 @@
 {
   "name": "@romainmillan/mobile-navigation-bundle",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "iOS 26 \"liquid glass\" mobile navigation: Stimulus controllers and styles of romainmillan/mobile-navigation-bundle",
   "license": "MIT",
@@ -45,6 +45,12 @@
   },
   "symfony": {
     "controllers": {
+      "back": {
+        "main": "dist/controllers/back_controller.js",
+        "webpackMode": "eager",
+        "fetch": "eager",
+        "enabled": true
+      },
       "confirm-sheet": {
         "main": "dist/controllers/confirm_sheet_controller.js",
         "webpackMode": "eager",
@@ -124,7 +130,7 @@
   },
   "peerDependencies": {
     "@hotwired/stimulus": "^3.0.0",
-    "@hotwired/turbo": "^7.3 || ^8.0"
+    "@hotwired/turbo": "^8.0"
   },
   "peerDependenciesMeta": {
     "@hotwired/turbo": {

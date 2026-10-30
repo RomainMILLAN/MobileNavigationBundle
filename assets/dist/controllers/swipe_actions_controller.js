@@ -25,6 +25,20 @@ function sameOriginUrl(url) {
 	if (target.protocol !== "http:" && target.protocol !== "https:") return null;
 	return target.origin === window.location.origin ? target : null;
 }
+var LOCAL_PATH_MAX = 2048;
+/**
+* Same rule as the PHP LocalPath: not empty, at most 2048 characters, starts with "/",
+* starts neither with "//" nor with "/\", no control character nor space. A pathname
+* can start with "//" (https://host//evil.example): it is not local by construction.
+*/
+function isLocalPath(value) {
+	return value.length > 0 && value.length <= LOCAL_PATH_MAX && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\") && !/[\x00-\x20\x7F]/.test(value);
+}
+/** The current page as a return path, or null when it is not a safe local path. */
+function currentReturnPath() {
+	const value = window.location.pathname + window.location.search;
+	return isLocalPath(value) ? value : null;
+}
 // src/utils/tones.ts
 /**
 * The module's tones: a closed list. Any unknown value falls back to `neutral`, so
@@ -140,6 +154,14 @@ var swipe_actions_controller_default = class extends Controller {
 		if (action.method === void 0 || action.method.toUpperCase() === "GET") {
 			const link = document.createElement("a");
 			link.href = action.url;
+			if (action.carriesReturnPath === true) link.addEventListener("click", () => {
+				const target = sameOriginUrl(action.url);
+				const returnPath = currentReturnPath();
+				if (target !== null && returnPath !== null && !target.searchParams.has("_redirect")) {
+					target.searchParams.set("_redirect", returnPath);
+					link.href = target.href;
+				}
+			});
 			this.createContent(action, link);
 			return link;
 		}
@@ -168,7 +190,7 @@ var swipe_actions_controller_default = class extends Controller {
 				return;
 			}
 			if (confirmed || action.confirm === void 0) {
-				redirect.value = window.location.pathname + window.location.search;
+				redirect.value = currentReturnPath() ?? "";
 				this.close();
 				sent = true;
 				return;

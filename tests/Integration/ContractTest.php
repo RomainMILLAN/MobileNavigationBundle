@@ -51,6 +51,7 @@ final class ContractTest extends TestCase
             )),
             'swipeActions' => [
                 'link' => SwipeAction::link('/items/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('Edit'))->payload($translator),
+                'linkCarryingReturnPath' => SwipeAction::linkCarryingReturnPath('/items/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('Edit'))->payload($translator),
                 'post' => SwipeAction::post('/items/1/ack?from=list', 'icon-check', Tone::Positive, new TranslatableMessage('Acknowledge'))->payload($translator),
                 'destructive' => SwipeAction::destructive('/items/1', 'icon-trash', new TranslatableMessage('Delete'), new TranslatableMessage('This cannot be undone.'), HttpMethod::Delete)->payload($translator),
             ],

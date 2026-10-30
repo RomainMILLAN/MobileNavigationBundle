@@ -281,10 +281,21 @@
     white-space: nowrap;
 }
 
+// A value too long for the row (an account holder, say) scrolls sideways instead of
+// overflowing: it gives way first, the label keeps at least a third of the row.
 .rm-mnb-row__value {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 65%;
+    overflow-x: auto;
+    white-space: nowrap;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 // Value with a marked meaning (income, expense): the measured ink of its tone.
@@ -316,6 +327,8 @@
 
 .rm-mnb-row__value--multiline {
     flex: initial;
+    max-width: none;
+    overflow-x: visible;
     font-weight: 400;
     line-height: 1.4;
     white-space: pre-line;

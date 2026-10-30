@@ -1,5 +1,6 @@
 import type { Application, ControllerConstructor } from '@hotwired/stimulus';
 
+import BackController from './controllers/back_controller';
 import ConfirmSheetController from './controllers/confirm_sheet_controller';
 import ConfirmSubmitController from './controllers/confirm_submit_controller';
 import EmitEventController from './controllers/emit_event_controller';
@@ -23,6 +24,7 @@ import TabBarController from './controllers/tab_bar_controller';
 export const IDENTIFIER_PREFIX = 'romainmillan--mobile-navigation-bundle--';
 
 export const controllers: Readonly<Record<string, ControllerConstructor>> = {
+    back: BackController,
     'confirm-sheet': ConfirmSheetController,
     'confirm-submit': ConfirmSubmitController,
     'emit-event': EmitEventController,

@@ -18,7 +18,7 @@ server side.
 | `symfony/ux-twig-component` | ^2.25.2 or ^3.0 |
 | `symfony/stimulus-bundle` | ^2.20 or ^3.0 |
 | `@hotwired/stimulus` | ^3.0 |
-| `@hotwired/turbo` | ^7.3 or ^8.0, **optional** |
+| `@hotwired/turbo` | ^8.0, **optional** |
 
 UX 3 requires PHP ≥ 8.4 and Symfony ≥ 7.4.
 
@@ -64,7 +64,7 @@ then enable its controllers in `assets/controllers.json`:
 }
 ```
 
-(one entry per controller: `confirm-sheet`, `confirm-submit`, `emit-event`, `filter-bar`, `gesture`,
+(one entry per controller: `back`, `confirm-sheet`, `confirm-submit`, `emit-event`, `filter-bar`, `gesture`,
 `large-title`, `list`, `navigate`, `sheet`, `swipe-actions`, `swipe-back`, `tab-bar`). You
 can also register them all by hand: see [docs/frontend.md](docs/frontend.md).
 
@@ -97,7 +97,7 @@ Then map the `--rm-mnb-*` CSS variables to your theme, in a single file. See
 | `TabBar` | glass tab pill, lens, tab badges, optional detached "+" |
 | `Sheet` | iOS sheet, driven by `<id>:open|close|toggle` window events |
 | `SheetGroup`, `SheetRow` | grouped list and its rows |
-| `BackButton` | back disc; the parent name is spoken, not shown |
+| `BackButton` | back disc: the previous page, or its `href` (parent fallback); the destination is spoken, not shown |
 | `CompactBar` | floating compact bar (`title`, `back`, `trailing` block) |
 | `ListSection`, `ListRow` | compact list: sections, rows (tap = view, swipe = actions) |
 | `SelectToggle`, `EditToggle` | "Select / Done" and "Edit / Done" buttons (list modes) |

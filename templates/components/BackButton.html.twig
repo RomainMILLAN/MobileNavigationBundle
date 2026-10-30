@@ -1,9 +1,18 @@
 {% trans_default_domain 'rm_mnb' %}
 {#
-    iOS 26 back button: a glass disc and a chevron. The parent name is not shown, it is
-    spoken to screen readers. Props: see the BackButton class.
+    iOS 26 back button: a glass disc and a chevron. It goes to the previous page when the
+    app's history proves one (back controller), otherwise to `href`, the parent fallback.
+    The destination's name is not shown, it is spoken to screen readers: the controller
+    keeps the aria-label in line with where the click leads. A `data-controller` passed by
+    the consumer would replace this one. Props: see the BackButton class.
 #}
+{% set parent_label = 'back.to'|trans({'%label%': label}) %}
 <a href="{{ href }}" class="rm-mnb-glass-disc rm-mnb-back {{ attributes.render('class') }}"
-   aria-label="{{ 'back.to'|trans({'%label%': label}) }}" {{ attributes }}>
+   aria-label="{{ parent_label }}"
+   {{ attributes.defaults(stimulus_controller(rm_mnb_controller('back'), {
+       targetLabel: 'back.to'|trans,
+       previousLabel: 'back.previous'|trans,
+       fallbackLabel: parent_label,
+   })|stimulus_action(rm_mnb_controller('back'), 'go')) }}>
     <span class="rm-mnb-icon rm-mnb-icon--back" aria-hidden="true"></span>
 </a>

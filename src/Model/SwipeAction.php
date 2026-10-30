@@ -30,6 +30,7 @@ final readonly class SwipeAction
         private TranslatableInterface $label,
         private string $method,
         private ?TranslatableInterface $confirm,
+        private bool $carriesReturnPath = false,
     ) {
     }
 
@@ -37,6 +38,16 @@ final readonly class SwipeAction
     public static function link(string $url, string $icon, Tone $tone, TranslatableInterface $label): self
     {
         return new self(LocalPath::createFromString($url), $icon, $tone, $label, self::GET, null);
+    }
+
+    /**
+     * A navigation (GET) that carries its return path: on click, the controller adds
+     * `_redirect` = the current local path (if the URL has none), so that the target page
+     * can come back where the row was. The consumer validates `_redirect` as it would a POST's.
+     */
+    public static function linkCarryingReturnPath(string $url, string $icon, Tone $tone, TranslatableInterface $label): self
+    {
+        return new self(LocalPath::createFromString($url), $icon, $tone, $label, self::GET, null, true);
     }
 
     /** A write that loses nothing (POST): validate. */
@@ -53,12 +64,12 @@ final readonly class SwipeAction
 
     /**
      * The action, described for the swipe-actions controller: `method` is omitted for a
-     * GET, `confirm` when there is none.
+     * GET, `confirm` when there is none, `carriesReturnPath` unless it is true.
      *
      * The translator is lent for the duration of the call, never kept: the action stays a
      * value without state dependency.
      *
-     * @return array{url: string, icon: string, tone: string, label: string, method?: string, confirm?: string}
+     * @return array{url: string, icon: string, tone: string, label: string, method?: string, confirm?: string, carriesReturnPath?: true}
      */
     public function payload(TranslatorInterface $translator): array
     {
@@ -75,6 +86,10 @@ final readonly class SwipeAction
 
         if ($this->confirm instanceof TranslatableInterface) {
             $payload['confirm'] = $this->confirm->trans($translator);
+        }
+
+        if ($this->carriesReturnPath) {
+            $payload['carriesReturnPath'] = true;
         }
 
         return $payload;
