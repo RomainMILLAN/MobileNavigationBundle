@@ -359,12 +359,14 @@ var MIN_DRAG = 10;
 var PARALLAX = .3;
 var SETTLE_MS = 320;
 var SAFETY_MS = 4e3;
-var tracker = historyTracker();
-document.addEventListener("turbo:render", () => {
-	const entry = tracker.restoredEntry();
-	const element = scroller();
-	if (element !== null && entry !== null) element.scrollTop = entry.scroll;
-});
+if (typeof window !== "undefined") {
+	historyTracker();
+	document.addEventListener("turbo:render", () => {
+		const entry = historyTracker().restoredEntry();
+		const element = scroller();
+		if (element !== null && entry !== null) element.scrollTop = entry.scroll;
+	});
+}
 /** The page's Turbo snapshot, or null (Turbo internal API: never blocking). */
 function cachedPage(url) {
 	try {
@@ -412,7 +414,7 @@ var swipe_back_controller_default = class extends Controller {
 	};
 	connect() {
 		if (window.Turbo?.session === void 0) return;
-		tracker.ensureStarted();
+		historyTracker().ensureStarted();
 		this.element.addEventListener("touchstart", this.onTouchStart, { passive: true });
 		this.element.addEventListener("touchmove", this.onTouchMove, { passive: false });
 		this.element.addEventListener("touchend", this.onTouchEnd, { passive: true });
@@ -426,7 +428,7 @@ var swipe_back_controller_default = class extends Controller {
 		this.reset();
 	}
 	get enabled() {
-		return (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true || !this.requireStandaloneValue) && !tracker.isGoingBack() && tracker.target() !== null && !document.documentElement.classList.contains("rm-mnb-has-open-sheet");
+		return (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true || !this.requireStandaloneValue) && !historyTracker().isGoingBack() && historyTracker().target() !== null && !document.documentElement.classList.contains("rm-mnb-has-open-sheet");
 	}
 	touchStart(event) {
 		const touch = event.touches[0];
@@ -498,7 +500,7 @@ var swipe_back_controller_default = class extends Controller {
 		window.removeEventListener("popstate", this.onPopState);
 	}
 	buildUnderlay() {
-		const previous = tracker.target()?.entry ?? null;
+		const previous = historyTracker().target()?.entry ?? null;
 		const underlay = document.createElement("div");
 		underlay.className = "rm-mnb-back-underlay";
 		underlay.setAttribute("data-turbo-temporary", "");
@@ -542,8 +544,8 @@ var swipe_back_controller_default = class extends Controller {
 			this.element.style.removeProperty("transform");
 			const moved = this.historyMoved || window.location.href !== this.gestureHref;
 			this.unwatchHistory();
-			const target = moved ? null : tracker.target();
-			if (target === null || tracker.goBack(target) !== "navigating") {
+			const target = moved ? null : historyTracker().target();
+			if (target === null || historyTracker().goBack(target) !== "navigating") {
 				this.reset();
 				return;
 			}

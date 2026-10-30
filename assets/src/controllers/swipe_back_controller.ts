@@ -27,18 +27,21 @@ const PARALLAX = 0.3;
 const SETTLE_MS = 320;
 const SAFETY_MS = 4000;
 
-// Created with the module: its listeners must be there before the first Turbo event.
-const tracker = historyTracker();
+// Created with the module in a browser (never on import elsewhere: SSR, Node tests): its
+// listeners must be there before the first Turbo event.
+if (typeof window !== 'undefined') {
+    historyTracker();
 
-// The scrolling container (PWA) is not restored by Turbo, only the window is: the
-// restored page gets back here the scroll position where it was left.
-document.addEventListener('turbo:render', () => {
-    const entry = tracker.restoredEntry();
-    const element = scroller();
-    if (element !== null && entry !== null) {
-        element.scrollTop = entry.scroll;
-    }
-});
+    // The scrolling container (PWA) is not restored by Turbo, only the window is: the
+    // restored page gets back here the scroll position where it was left.
+    document.addEventListener('turbo:render', () => {
+        const entry = historyTracker().restoredEntry();
+        const element = scroller();
+        if (element !== null && entry !== null) {
+            element.scrollTop = entry.scroll;
+        }
+    });
+}
 
 /** The page's Turbo snapshot, or null (Turbo internal API: never blocking). */
 function cachedPage(url: string): HTMLElement | null {
@@ -100,7 +103,7 @@ export default class extends Controller<HTMLElement> {
         if (window.Turbo?.session === undefined) {
             return;
         }
-        tracker.ensureStarted();
+        historyTracker().ensureStarted();
         this.element.addEventListener('touchstart', this.onTouchStart, { passive: true });
         this.element.addEventListener('touchmove', this.onTouchMove, { passive: false });
         this.element.addEventListener('touchend', this.onTouchEnd, { passive: true });
@@ -120,8 +123,8 @@ export default class extends Controller<HTMLElement> {
             || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
         return (standalone || !this.requireStandaloneValue)
-            && !tracker.isGoingBack()
-            && tracker.target() !== null
+            && !historyTracker().isGoingBack()
+            && historyTracker().target() !== null
             && !document.documentElement.classList.contains('rm-mnb-has-open-sheet');
     }
 
@@ -216,7 +219,7 @@ export default class extends Controller<HTMLElement> {
     }
 
     private buildUnderlay(): void {
-        const previous = tracker.target()?.entry ?? null;
+        const previous = historyTracker().target()?.entry ?? null;
         const underlay = document.createElement('div');
         underlay.className = 'rm-mnb-back-underlay';
         // Never in the snapshot Turbo takes of this page when leaving it.
@@ -273,8 +276,8 @@ export default class extends Controller<HTMLElement> {
             this.element.style.removeProperty('transform');
             const moved = this.historyMoved || window.location.href !== this.gestureHref;
             this.unwatchHistory();
-            const target = moved ? null : tracker.target();
-            if (target === null || tracker.goBack(target) !== 'navigating') {
+            const target = moved ? null : historyTracker().target();
+            if (target === null || historyTracker().goBack(target) !== 'navigating') {
                 this.reset();
                 return;
             }

@@ -14,7 +14,10 @@ import { historyTracker } from '../utils/history_tracker';
  * The tracker is created with the module, so its turbo:load listener runs before ours.
  * Without Turbo 8 (no restoration state) there is never a target: the href applies.
  */
-const tracker = historyTracker();
+// Created with the module in a browser (never on import elsewhere: SSR, Node tests).
+if (typeof window !== 'undefined') {
+    historyTracker();
+}
 
 export default class extends Controller<HTMLElement> {
     static values = {
@@ -31,7 +34,7 @@ export default class extends Controller<HTMLElement> {
     private readonly onPageChange = (): void => this.refreshLabel();
 
     connect(): void {
-        tracker.ensureStarted();
+        historyTracker().ensureStarted();
         this.refreshLabel();
         // A morph puts the server's aria-label back: it is set again after it.
         document.addEventListener('turbo:morph', this.onPageChange);
@@ -47,6 +50,7 @@ export default class extends Controller<HTMLElement> {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
             return;
         }
+        const tracker = historyTracker();
         // Never a second navigation while going back.
         if (tracker.isGoingBack()) {
             event.preventDefault();
@@ -65,7 +69,7 @@ export default class extends Controller<HTMLElement> {
         if (!this.hasTargetLabelValue) {
             return;
         }
-        const title = tracker.target()?.entry.title;
+        const title = historyTracker().target()?.entry.title;
         let label: string;
         if (title === undefined) {
             label = this.fallbackLabelValue;

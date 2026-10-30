@@ -336,7 +336,7 @@ function isTracker(value) {
 * The tracker is created with the module, so its turbo:load listener runs before ours.
 * Without Turbo 8 (no restoration state) there is never a target: the href applies.
 */
-var tracker = historyTracker();
+if (typeof window !== "undefined") historyTracker();
 var back_controller_default = class extends Controller {
 	static values = {
 		targetLabel: String,
@@ -345,7 +345,7 @@ var back_controller_default = class extends Controller {
 	};
 	onPageChange = () => this.refreshLabel();
 	connect() {
-		tracker.ensureStarted();
+		historyTracker().ensureStarted();
 		this.refreshLabel();
 		document.addEventListener("turbo:morph", this.onPageChange);
 		document.addEventListener("turbo:load", this.onPageChange);
@@ -356,6 +356,7 @@ var back_controller_default = class extends Controller {
 	}
 	go(event) {
 		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+		const tracker = historyTracker();
 		if (tracker.isGoingBack()) {
 			event.preventDefault();
 			return;
@@ -366,7 +367,7 @@ var back_controller_default = class extends Controller {
 	}
 	refreshLabel() {
 		if (!this.hasTargetLabelValue) return;
-		const title = tracker.target()?.entry.title;
+		const title = historyTracker().target()?.entry.title;
 		let label;
 		if (title === void 0) label = this.fallbackLabelValue;
 		else if (title === "") label = this.previousLabelValue;

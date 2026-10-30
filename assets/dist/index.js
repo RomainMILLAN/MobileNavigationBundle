@@ -341,7 +341,7 @@ function isTracker(value) {
 * The tracker is created with the module, so its turbo:load listener runs before ours.
 * Without Turbo 8 (no restoration state) there is never a target: the href applies.
 */
-var tracker$1 = historyTracker();
+if (typeof window !== "undefined") historyTracker();
 var back_controller_default = class extends Controller {
 	static values = {
 		targetLabel: String,
@@ -350,7 +350,7 @@ var back_controller_default = class extends Controller {
 	};
 	onPageChange = () => this.refreshLabel();
 	connect() {
-		tracker$1.ensureStarted();
+		historyTracker().ensureStarted();
 		this.refreshLabel();
 		document.addEventListener("turbo:morph", this.onPageChange);
 		document.addEventListener("turbo:load", this.onPageChange);
@@ -361,17 +361,18 @@ var back_controller_default = class extends Controller {
 	}
 	go(event) {
 		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-		if (tracker$1.isGoingBack()) {
+		const tracker = historyTracker();
+		if (tracker.isGoingBack()) {
 			event.preventDefault();
 			return;
 		}
-		const target = tracker$1.target();
+		const target = tracker.target();
 		if (target === null) return;
-		if (tracker$1.goBack(target) !== "refused") event.preventDefault();
+		if (tracker.goBack(target) !== "refused") event.preventDefault();
 	}
 	refreshLabel() {
 		if (!this.hasTargetLabelValue) return;
-		const title = tracker$1.target()?.entry.title;
+		const title = historyTracker().target()?.entry.title;
 		let label;
 		if (title === void 0) label = this.fallbackLabelValue;
 		else if (title === "") label = this.previousLabelValue;
@@ -1417,12 +1418,14 @@ var MIN_DRAG = 10;
 var PARALLAX = .3;
 var SETTLE_MS = 320;
 var SAFETY_MS = 4e3;
-var tracker = historyTracker();
-document.addEventListener("turbo:render", () => {
-	const entry = tracker.restoredEntry();
-	const element = scroller();
-	if (element !== null && entry !== null) element.scrollTop = entry.scroll;
-});
+if (typeof window !== "undefined") {
+	historyTracker();
+	document.addEventListener("turbo:render", () => {
+		const entry = historyTracker().restoredEntry();
+		const element = scroller();
+		if (element !== null && entry !== null) element.scrollTop = entry.scroll;
+	});
+}
 /** The page's Turbo snapshot, or null (Turbo internal API: never blocking). */
 function cachedPage(url) {
 	try {
@@ -1470,7 +1473,7 @@ var swipe_back_controller_default = class extends Controller {
 	};
 	connect() {
 		if (window.Turbo?.session === void 0) return;
-		tracker.ensureStarted();
+		historyTracker().ensureStarted();
 		this.element.addEventListener("touchstart", this.onTouchStart, { passive: true });
 		this.element.addEventListener("touchmove", this.onTouchMove, { passive: false });
 		this.element.addEventListener("touchend", this.onTouchEnd, { passive: true });
@@ -1484,7 +1487,7 @@ var swipe_back_controller_default = class extends Controller {
 		this.reset();
 	}
 	get enabled() {
-		return (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true || !this.requireStandaloneValue) && !tracker.isGoingBack() && tracker.target() !== null && !document.documentElement.classList.contains("rm-mnb-has-open-sheet");
+		return (window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true || !this.requireStandaloneValue) && !historyTracker().isGoingBack() && historyTracker().target() !== null && !document.documentElement.classList.contains("rm-mnb-has-open-sheet");
 	}
 	touchStart(event) {
 		const touch = event.touches[0];
@@ -1556,7 +1559,7 @@ var swipe_back_controller_default = class extends Controller {
 		window.removeEventListener("popstate", this.onPopState);
 	}
 	buildUnderlay() {
-		const previous = tracker.target()?.entry ?? null;
+		const previous = historyTracker().target()?.entry ?? null;
 		const underlay = document.createElement("div");
 		underlay.className = "rm-mnb-back-underlay";
 		underlay.setAttribute("data-turbo-temporary", "");
@@ -1600,8 +1603,8 @@ var swipe_back_controller_default = class extends Controller {
 			this.element.style.removeProperty("transform");
 			const moved = this.historyMoved || window.location.href !== this.gestureHref;
 			this.unwatchHistory();
-			const target = moved ? null : tracker.target();
-			if (target === null || tracker.goBack(target) !== "navigating") {
+			const target = moved ? null : historyTracker().target();
+			if (target === null || historyTracker().goBack(target) !== "navigating") {
 				this.reset();
 				return;
 			}
