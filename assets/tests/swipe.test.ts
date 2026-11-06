@@ -18,6 +18,9 @@ const ACTIONS = [
     { url: '/delete', icon: 'icon-trash', tone: 'negative', label: 'Supprimer', method: 'DELETE', confirm: 'Définitivement.' },
     { url: '/patch', icon: 'icon-pen', tone: 'accent', label: 'Corriger', method: 'patch' },
     { url: '/odd', icon: 'icon-x', tone: 'accent', label: 'Bizarre', method: 'TRACE' },
+    // SwipeAction::confirmed() and ::write(): not negative, yet confirmed / spoofed.
+    { url: '/resend', icon: 'icon-send', tone: 'accent', label: 'Renvoyer', method: 'POST', confirm: 'Il repart vers ses destinataires.' },
+    { url: '/unmute', icon: 'icon-bell', tone: 'accent', label: 'Réactiver', method: 'DELETE' },
 ];
 
 // The ConfirmSheet.html.twig markup, with short Stimulus identifiers.
@@ -161,6 +164,28 @@ describe('destructive action confirmation', () => {
         query<HTMLButtonElement>('#destroy').click();
 
         expect(submitted).toEqual([]);
+    });
+});
+
+describe('a confirmed write that is not destructive', () => {
+    it('asks first, in its own tone, then sends once confirmed', () => {
+        expect(panelButtons()[6]?.classList.contains('rm-mnb-tone--accent')).toBe(true);
+
+        submitAction('/resend');
+        expect(submitted).toEqual([]);
+        expect(query('[data-confirm-sheet-target="title"]').textContent).toBe('Renvoyer');
+
+        query<HTMLButtonElement>('#destroy').click();
+
+        expect(submitted).toEqual(['/resend']);
+    });
+
+    it('sends a write with a spoofed DELETE right away, without confirmation', () => {
+        expect(query<HTMLFormElement>('form[action="/unmute"]').querySelector<HTMLInputElement>('input[name="_method"]')?.value).toBe('DELETE');
+
+        submitAction('/unmute');
+
+        expect(submitted).toEqual(['/unmute']);
     });
 });
 

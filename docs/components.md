@@ -24,7 +24,7 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 | Component | Props (default) | Blocks | Notes |
 |---|---|---|---|
 | `TabBar` | `label` (required), `tabs` (required, list of `{href, label, icon, current = false, badge = null}`, `badge` being a `TabBadge`), `fab` (`null`, `{label, icon, href?, sheet?}`), `more` (`null`, `{sheet, label, icon}`), `fabAttributes` (`null`, `?StimulusAttributes`) | `tab_icon` (variable `tab`), `more_icon` (`more`), `fab_icon` (`fab`) | controllers `tab-bar`, `emit-event` (`<sheet>:toggle`); without `fab` there is no "+" and the pill takes the whole width; the "+" is a link with `href`, a button that emits `<sheet>:toggle` with `sheet`, disabled otherwise; a tab `badge` is drawn on its icon (`TabBadge::createFromCount(int $count, Tone $tone = Tone::Negative, $accessibleLabel = null)`: never below 1, "99+" above 99; with an accessible label, the number is hidden from screen readers and the label read instead); `fabAttributes` is chained to `emit-event` in a **single** `data-controller` |
-| `Sheet` | `id` (required), `title` (required), `titleHidden` (`false`), `scrollable` (`true`), `forceCloseEvents` (`['turbo:before-cache']`), `mobileOnly` (`false`) | `content` | controller `sheet`; with `mobileOnly`, above 768 px the content renders in place |
+| `Sheet` | `id` (required), `title` (required), `titleHidden` (`false`), `scrollable` (`true`), `forceCloseEvents` (`['turbo:before-cache']`), `mobileOnly` (`false`), `open` (`false`), `cleanUrl` (`null`, a local path) | `content` | controller `sheet`; with `mobileOnly`, above 768 px the content renders in place; with `open`, the sheet opens itself once connected (once: a restored snapshot does not reopen it), then replaces the address bar with `cleanUrl` so that a reload does not either |
 | `SheetGroup` | `heading` (`null`), `closesSheet` (`false`), `footer` (`null`, a note under the group) | `content` | target `sheet:closeZone` with `closesSheet` |
 | `SheetRow` | `label` (`null`), `href` (`null`), `icon` (`null`), `tone` (`'neutral'`), `value` (`null`, string), `valueAttributes` (array, empty by default), `badge` (`null`, string), `chevron` (`false`), `checked` (`false`), `danger` (`false`), `static` (`false`), `switch` (`false`), `multiline` (`false`), `valueTone` (`null`) | `content`, `icon` | renders an `a` with `href`, a `div` with `static`, a `button` otherwise; with `switch`, the state is `aria-checked`, held by the app; with `multiline`, the value goes under the label, on several lines; `valueTone` inks the value (`neutral` or unknown = body ink) |
 | `SheetFormRow` | `action` (required), `token` (required), `label` (required), `icon` (`null`), `tone` (`'neutral'`), `danger` (`false`), `confirm` (`null`, `{title, message, confirmLabel = label}`), `fields` (`{}`, hidden fields with scalar values, `_token` refused) | — | a POST `<form>` holding a submit `SheetRow`; with `confirm`, controller `confirm-submit` asks the `ConfirmSheet` first (or `confirm()` when the sheet is not shown), and lets a single submission through |
@@ -61,12 +61,17 @@ use Symfony\Component\Translation\TranslatableMessage;
 
 SwipeAction::link($this->urlGenerator->generate('item_edit', ['id' => $id]), 'icon-edit', Tone::Accent, new TranslatableMessage('item.edit'));
 SwipeAction::post($validateUrl, 'icon-check', Tone::Positive, new TranslatableMessage('item.validate'));
+SwipeAction::write($unmuteUrl, 'icon-bell', Tone::Accent, new TranslatableMessage('item.unmute'), HttpMethod::Delete);
+SwipeAction::confirmed($resendUrl, 'icon-send', Tone::Accent, new TranslatableMessage('item.resend'), new TranslatableMessage('item.resend_confirm'));
 SwipeAction::destructive($deleteUrl, 'icon-trash', new TranslatableMessage('item.delete'), new TranslatableMessage('item.delete_confirm'));
 SwipeAction::destructive($deleteUrl, 'icon-trash', new TranslatableMessage('item.delete'), new TranslatableMessage('item.delete_confirm'), HttpMethod::Delete);
 ```
 
 A destructive action always writes, is always negative and always confirmed in the
-`ConfirmSheet` first. Every URL must be a local path. A writing action is submitted in a
+`ConfirmSheet` first. `post()` is `write()` with `HttpMethod::Post`: a write that loses
+nothing, sent at once, whatever method its route expects. `confirmed()` is a write that
+loses nothing but reaches someone (resend, notify): it is confirmed first too, in its own
+tone, and refuses `Tone::Negative` — what destroys goes through `destructive()`. Every URL must be a local path. A writing action is submitted in a
 POST form with `_token` (the CSRF token) and `_redirect` (the current path and query, when it
 is a local path; empty otherwise). When
 its `HttpMethod` is `Put`, `Patch` or `Delete`, the form also carries `_method`, which

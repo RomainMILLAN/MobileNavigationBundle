@@ -184,3 +184,38 @@ describe('returnTarget', () => {
         expect(returnTarget(byId('in'), [byId('t')], hidden)).toBeNull();
     });
 });
+
+describe('a sheet opened on load', () => {
+    const landing = (cleanUrl: string): string => `
+        <div class="sheet" id="mute" role="dialog" aria-modal="true"
+             data-controller="sheet" data-sheet-name-value="mute"
+             data-sheet-open-on-load-value="true" data-sheet-clean-url-value="${cleanUrl}">
+            <div class="sheet__panel" tabindex="-1" data-sheet-target="panel">
+                <button type="button">Mute for 1 h</button>
+            </div>
+        </div>`;
+
+    it('opens itself, drops the value and cleans the address bar with the local path', async () => {
+        window.history.replaceState(null, '', '/webhooks/1?sheet=mute');
+        document.body.innerHTML = landing('/webhooks/1');
+        await tick();
+
+        expect(isOpen('mute')).toBe(true);
+        expect(byId('mute').getAttribute('data-sheet-open-on-load-value')).toBe('false');
+        expect(window.location.pathname + window.location.search).toBe('/webhooks/1');
+    });
+
+    it('opens but ignores a clean URL that is not a local path', async () => {
+        window.history.replaceState(null, '', '/webhooks/1?sheet=mute');
+        document.body.innerHTML = landing('//evil.example/x');
+        await tick();
+
+        expect(isOpen('mute')).toBe(true);
+        expect(window.location.pathname + window.location.search).toBe('/webhooks/1?sheet=mute');
+    });
+
+    it('stays closed by default', () => {
+        expect(isOpen('sheet-a')).toBe(false);
+        expect(isOpen('sheet-b')).toBe(false);
+    });
+});

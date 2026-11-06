@@ -1006,6 +1006,12 @@ function attachSheetDrag(panel, callbacks) {
 * `turbo:before-cache`, so that no Turbo snapshot keeps a sheet open. The app
 * adds its own: a lock screen, or the opening of a modal that would otherwise have
 * a second focus trap competing with the sheet's.
+*
+* With `openOnLoad`, the sheet opens itself once connected (the server chose to land the
+* page on it), then drops the value so that a restored snapshot does not open it again.
+* With `cleanUrl` (a local path given by the server), the address bar is then replaced
+* with it, so that a reload does not open it either. Anything else than a local path is
+* ignored.
 */
 var sheet_controller_default = class extends Controller {
 	static values = {
@@ -1013,6 +1019,14 @@ var sheet_controller_default = class extends Controller {
 		forceCloseEvents: {
 			type: Array,
 			default: ["turbo:before-cache"]
+		},
+		openOnLoad: {
+			type: Boolean,
+			default: false
+		},
+		cleanUrl: {
+			type: String,
+			default: ""
 		}
 	};
 	static targets = [
@@ -1067,6 +1081,11 @@ var sheet_controller_default = class extends Controller {
 				else this.panelTarget.style.transform = "";
 			}
 		});
+		if (this.openOnLoadValue) {
+			this.openOnLoadValue = false;
+			this.open();
+			if (isLocalPath(this.cleanUrlValue)) window.history.replaceState(window.history.state, "", this.cleanUrlValue);
+		}
 	}
 	disconnect() {
 		window.removeEventListener(`${this.nameValue}:toggle`, this.onToggleCommand);

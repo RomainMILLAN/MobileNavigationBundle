@@ -63,4 +63,28 @@ final class SheetTest extends ComponentTestCase
         self::assertSame('fr', $root->attr('lang'));
         self::assertSame('bar', $root->attr('data-foo'));
     }
+
+    #[Test]
+    public function it_should_stay_closed_on_load_by_default(): void
+    {
+        $sheet = $this->renderComponent('Sheet', ['id' => 'more', 'title' => 'More'])->filter('#more');
+
+        self::assertSame('false', $sheet->attr('data-'.self::PREFIX.'sheet-open-on-load-value'));
+        self::assertSame('', $sheet->attr('data-'.self::PREFIX.'sheet-clean-url-value'));
+    }
+
+    #[Test]
+    public function it_should_open_on_load_and_clean_the_address_bar(): void
+    {
+        $sheet = $this->renderComponent('Sheet', [...['id' => 'mute', 'title' => 'Mute'], 'open' => true, 'cleanUrl' => '/webhooks/1'])->filter('#mute');
+
+        self::assertSame('true', $sheet->attr('data-'.self::PREFIX.'sheet-open-on-load-value'));
+        self::assertSame('/webhooks/1', $sheet->attr('data-'.self::PREFIX.'sheet-clean-url-value'));
+    }
+
+    #[Test]
+    public function it_should_refuse_a_clean_url_that_is_not_local(): void
+    {
+        $this->assertMountFails('Sheet', [...['id' => 'mute', 'title' => 'Mute'], 'cleanUrl' => 'https://evil.example/'], 'local path');
+    }
 }

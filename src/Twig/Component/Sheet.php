@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RomainMillan\MobileNavigation\Twig\Component;
 
+use RomainMillan\MobileNavigation\Model\LocalPath;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Attribute\PreMount;
 
@@ -34,6 +35,19 @@ final class Sheet
     public bool $mobileOnly = false;
 
     /**
+     * Opens itself once connected: the server decided the page lands on this sheet (a
+     * link that means "choose a duration", say). Opened once, never again on a restore.
+     */
+    public bool $open = false;
+
+    /**
+     * Local path the address bar is replaced with once the sheet opened on load, so that
+     * a reload does not open it again. Given by the server: the client never learns which
+     * query parameter asked for the sheet.
+     */
+    public ?string $cleanUrl = null;
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
@@ -42,6 +56,12 @@ final class Sheet
     public function preMount(array $data): array
     {
         RequiredProps::createForComponent(self::class, 'id', 'title')->assertPresentIn($data);
+
+        // Refused at mount, where the component is called, rather than silently dropped by
+        // the controller: a clean URL that is not a local path is a programming error.
+        if (\is_string($data['cleanUrl'] ?? null)) {
+            $data['cleanUrl'] = LocalPath::createFromString($data['cleanUrl'])->toString();
+        }
 
         return $data;
     }

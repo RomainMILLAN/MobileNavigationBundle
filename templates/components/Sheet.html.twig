@@ -6,7 +6,7 @@
     root. Props: see the Sheet class.
 #}
 <div class="rm-mnb-sheet{{ mobileOnly ? ' rm-mnb-sheet--mobile-only' }} {{ attributes.render('class') }}" id="{{ id }}"{% if not mobileOnly %} role="dialog" aria-modal="true"{% endif %} aria-labelledby="{{ id }}-title"
-     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents })) }}>
+     {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents, openOnLoad: open, cleanUrl: cleanUrl ?? '' })) }}>
     {# A <div> has no default event for Stimulus: click is explicit. #}
     <div class="rm-mnb-sheet__backdrop" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss', 'click') }}></div>
     <div class="rm-mnb-sheet__panel" tabindex="-1" {{ stimulus_target(rm_mnb_controller('sheet'), 'panel') }}>
