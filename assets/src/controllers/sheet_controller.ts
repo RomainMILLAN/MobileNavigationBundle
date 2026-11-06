@@ -1,6 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 import { focusableIn, isVisible, returnTarget, trapTab } from '../utils/focus_trap';
+import { isLocalPath } from '../utils/same_origin';
 import { attachSheetDrag, shouldDismiss } from '../utils/sheet_drag';
 
 interface SheetEventDetail {
@@ -37,16 +38,26 @@ interface CloseOptions {
  * `turbo:before-cache`, so that no Turbo snapshot keeps a sheet open. The app
  * adds its own: a lock screen, or the opening of a modal that would otherwise have
  * a second focus trap competing with the sheet's.
+ *
+ * With `openOnLoad`, the sheet opens itself once connected (the server chose to land the
+ * page on it), then drops the value so that a restored snapshot does not open it again.
+ * With `cleanUrl` (a local path given by the server), the address bar is then replaced
+ * with it, so that a reload does not open it either. Anything else than a local path is
+ * ignored.
  */
 export default class extends Controller<HTMLElement> {
     static values = {
         name: String,
         forceCloseEvents: { type: Array, default: ['turbo:before-cache'] },
+        openOnLoad: { type: Boolean, default: false },
+        cleanUrl: { type: String, default: '' },
     };
     static targets = ['panel', 'scroll', 'closeZone'];
 
     declare readonly nameValue: string;
     declare readonly forceCloseEventsValue: string[];
+    declare openOnLoadValue: boolean;
+    declare readonly cleanUrlValue: string;
     declare readonly panelTarget: HTMLElement;
     declare readonly hasScrollTarget: boolean;
     declare readonly scrollTarget: HTMLElement;
@@ -121,6 +132,14 @@ export default class extends Controller<HTMLElement> {
                 }
             },
         });
+
+        if (this.openOnLoadValue) {
+            this.openOnLoadValue = false;
+            this.open();
+            if (isLocalPath(this.cleanUrlValue)) {
+                window.history.replaceState(window.history.state, '', this.cleanUrlValue);
+            }
+        }
     }
 
     disconnect(): void {

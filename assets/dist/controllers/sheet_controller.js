@@ -46,6 +46,16 @@ function trapTab(event, root) {
 		first.focus({ preventScroll: true });
 	}
 }
+// src/utils/same_origin.ts
+var LOCAL_PATH_MAX = 2048;
+/**
+* Same rule as the PHP LocalPath: not empty, at most 2048 characters, starts with "/",
+* starts neither with "//" nor with "/\", no control character nor space. A pathname
+* can start with "//" (https://host//evil.example): it is not local by construction.
+*/
+function isLocalPath(value) {
+	return value.length > 0 && value.length <= LOCAL_PATH_MAX && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\") && !/[\x00-\x20\x7F]/.test(value);
+}
 /** Downwards, the sheet follows the finger; upwards, it resists. */
 function dampen(delta) {
 	return delta >= 0 ? delta : delta * .15;
@@ -156,6 +166,12 @@ function attachSheetDrag(panel, callbacks) {
 * `turbo:before-cache`, so that no Turbo snapshot keeps a sheet open. The app
 * adds its own: a lock screen, or the opening of a modal that would otherwise have
 * a second focus trap competing with the sheet's.
+*
+* With `openOnLoad`, the sheet opens itself once connected (the server chose to land the
+* page on it), then drops the value so that a restored snapshot does not open it again.
+* With `cleanUrl` (a local path given by the server), the address bar is then replaced
+* with it, so that a reload does not open it either. Anything else than a local path is
+* ignored.
 */
 var sheet_controller_default = class extends Controller {
 	static values = {
@@ -163,6 +179,14 @@ var sheet_controller_default = class extends Controller {
 		forceCloseEvents: {
 			type: Array,
 			default: ["turbo:before-cache"]
+		},
+		openOnLoad: {
+			type: Boolean,
+			default: false
+		},
+		cleanUrl: {
+			type: String,
+			default: ""
 		}
 	};
 	static targets = [
@@ -217,6 +241,11 @@ var sheet_controller_default = class extends Controller {
 				else this.panelTarget.style.transform = "";
 			}
 		});
+		if (this.openOnLoadValue) {
+			this.openOnLoadValue = false;
+			this.open();
+			if (isLocalPath(this.cleanUrlValue)) window.history.replaceState(window.history.state, "", this.cleanUrlValue);
+		}
 	}
 	disconnect() {
 		window.removeEventListener(`${this.nameValue}:toggle`, this.onToggleCommand);

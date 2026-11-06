@@ -15,9 +15,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * GET included, targets the current origin.
  *
  * "Destructive" is carried by the type: a deletion or a cancellation is built with
- * destructive(), so it always writes, is always negative and always confirmed first. It
- * writes with POST unless the route expects another HttpMethod (a DELETE route, say): the
- * controller then sends a POST with a "_method" field.
+ * destructive(), so it always writes, is always negative and always confirmed first. A
+ * write that destroys nothing is built with post()/write(), or confirmed() when it reaches
+ * someone and deserves a second thought. Every write is a POST unless the route expects
+ * another HttpMethod (a DELETE route, say): the controller then sends a POST with a
+ * "_method" field.
  */
 final readonly class SwipeAction
 {
@@ -50,10 +52,33 @@ final readonly class SwipeAction
         return new self(LocalPath::createFromString($url), $icon, $tone, $label, self::GET, null, true);
     }
 
-    /** A write that loses nothing (POST): validate. */
+    /** A write that loses nothing (POST): validate. Shorthand for write(..., HttpMethod::Post). */
     public static function post(string $url, string $icon, Tone $tone, TranslatableInterface $label): self
     {
-        return new self(LocalPath::createFromString($url), $icon, $tone, $label, HttpMethod::Post->value, null);
+        return self::write($url, $icon, $tone, $label);
+    }
+
+    /**
+     * A write that loses nothing, with the method its route expects: an "unmute" served by
+     * a DELETE route is not a destruction, so it is neither negative nor confirmed.
+     */
+    public static function write(string $url, string $icon, Tone $tone, TranslatableInterface $label, HttpMethod $method = HttpMethod::Post): self
+    {
+        return new self(LocalPath::createFromString($url), $icon, $tone, $label, $method->value, null);
+    }
+
+    /**
+     * A write that loses nothing but reaches someone (send again, notify): confirmed first,
+     * in its own tone. A negative tone is refused: what destroys goes through destructive(),
+     * so "negative" and "destructive" keep meaning the same thing.
+     */
+    public static function confirmed(string $url, string $icon, Tone $tone, TranslatableInterface $label, TranslatableInterface $confirm, HttpMethod $method = HttpMethod::Post): self
+    {
+        if (Tone::Negative === $tone) {
+            throw new \InvalidArgumentException('A negative swipe action is destructive: build it with SwipeAction::destructive().');
+        }
+
+        return new self(LocalPath::createFromString($url), $icon, $tone, $label, $method->value, $confirm);
     }
 
     /** A write that destroys or cancels (negative tone, mandatory confirmation). */
@@ -103,6 +128,12 @@ final readonly class SwipeAction
 
     /** Exposed for consumer tests, not part of the rendering contract. */
     public function isDestructive(): bool
+    {
+        return Tone::Negative === $this->tone && $this->requiresConfirmation();
+    }
+
+    /** Exposed for consumer tests, not part of the rendering contract. */
+    public function requiresConfirmation(): bool
     {
         return $this->confirm instanceof TranslatableInterface;
     }

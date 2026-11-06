@@ -28,6 +28,12 @@ interface CloseOptions {
  * `turbo:before-cache`, so that no Turbo snapshot keeps a sheet open. The app
  * adds its own: a lock screen, or the opening of a modal that would otherwise have
  * a second focus trap competing with the sheet's.
+ *
+ * With `openOnLoad`, the sheet opens itself once connected (the server chose to land the
+ * page on it), then drops the value so that a restored snapshot does not open it again.
+ * With `cleanUrl` (a local path given by the server), the address bar is then replaced
+ * with it, so that a reload does not open it either. Anything else than a local path is
+ * ignored.
  */
 export default class extends Controller<HTMLElement> {
     static values: {
@@ -36,10 +42,20 @@ export default class extends Controller<HTMLElement> {
             type: ArrayConstructor;
             default: string[];
         };
+        openOnLoad: {
+            type: BooleanConstructor;
+            default: boolean;
+        };
+        cleanUrl: {
+            type: StringConstructor;
+            default: string;
+        };
     };
     static targets: string[];
     readonly nameValue: string;
     readonly forceCloseEventsValue: string[];
+    openOnLoadValue: boolean;
+    readonly cleanUrlValue: string;
     readonly panelTarget: HTMLElement;
     readonly hasScrollTarget: boolean;
     readonly scrollTarget: HTMLElement;
