@@ -76,23 +76,6 @@ describe('navigate controller', () => {
     });
 });
 
-describe('swipe-actions controller', () => {
-    it('ignores an action that targets another host', async () => {
-        const actions = [
-            { url: '/edit', icon: 'icon-edit', tone: 'accent', label: 'Edit' },
-            { url: 'https://evil.example/steal', icon: 'icon-x', tone: 'negative', label: 'Steal', method: 'POST' },
-            { url: 'javascript:alert(1)', icon: 'icon-x', tone: 'negative', label: 'Script' },
-        ];
-        document.body.innerHTML = `<div class="rm-mnb-list-row" data-controller="swipe-actions"
-            data-swipe-actions-actions-value='${JSON.stringify(actions)}' data-swipe-actions-csrf-token-value="token"></div>`;
-        await tick();
-
-        const labels = Array.from(document.querySelectorAll('.rm-mnb-swipe-actions__button')).map((button) => button.getAttribute('aria-label'));
-
-        expect(labels).toEqual(['Edit']);
-    });
-});
-
 describe('swipe-back controller', () => {
     it('stays inert without Turbo', async () => {
         document.body.innerHTML = '<div class="rm-mnb-scroller" data-controller="swipe-back"></div>';

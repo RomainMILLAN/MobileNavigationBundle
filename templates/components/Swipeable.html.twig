@@ -1,0 +1,14 @@
+{#
+    Swipe actions around markup the app renders itself: the content block slides over the
+    actions panel (CSS scroll snap, no gesture code), the "Actions" button reveals them
+    without swiping. Other attributes go on the root. Props: see the Swipeable class.
+#}
+<div class="rm-mnb-swipeable {{ attributes.render('class') }}" {{ attributes.defaults(this.swipeAttributes) }}>
+    <div class="rm-mnb-swipe" {{ stimulus_target(rm_mnb_controller('swipe-actions'), 'track') }}>
+        <div class="rm-mnb-swipe__content">
+            {% block content %}{% endblock %}
+            {{ include('@MobileNavigation/components/_swipe_toggle.html.twig', { panelId: this.swipePanelId, label: label }) }}
+        </div>
+        {{ include('@MobileNavigation/components/_swipe_panel.html.twig', { actions: this.swipeActionList, csrfToken: swipe.csrfToken, panelId: this.swipePanelId, label: label }) }}
+    </div>
+</div>

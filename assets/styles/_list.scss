@@ -288,25 +288,98 @@
 
 // --- Swipe ---
 
-// The sliding row goes over the actions panel, which it reveals.
-.rm-mnb-swipe--moving {
-    position: relative;
-    z-index: $rm-mnb-z-swipe;
+// The row content and its actions panel share one horizontal scroll-snap track: the
+// browser slides the panel into view (momentum, snapping), the page keeps scrolling
+// vertically, and nothing intercepts touchmove.
+.rm-mnb-swipe {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: 100% max-content;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    // Excess scroll chains to the page, without the panel bouncing (auto where `chain`
+    // is unknown, which chains too).
+    overscroll-behavior-x: auto;
+    overscroll-behavior-x: chain;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    // In "Select" or "Edit" mode a row is checked or dragged: it does not slide.
+    .is-selecting &,
+    .is-editing & {
+        overflow-x: hidden;
+    }
 }
 
-.rm-mnb-swipe--settling {
-    transition: transform 0.2s ease;
+@media (prefers-reduced-motion: no-preference) {
+    .rm-mnb-swipe {
+        scroll-behavior: smooth;
+    }
+}
+
+.rm-mnb-swipe__content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    background-color: var(--rm-mnb-surface);
+    scroll-snap-align: start;
+}
+
+.rm-mnb-swipeable {
+    display: flex;
+}
+
+// "Actions" button: always there for a fine pointer (no swipe on a desktop); for touch,
+// out of sight until it gets the keyboard focus, but still read by screen readers and
+// reachable by voice control by its name.
+.rm-mnb-swipe__toggle {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: $rm-mnb-control-size;
+    align-self: stretch;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgba(var(--rm-mnb-ink-rgb), 0.6);
+    font-size: 1.25rem;
+
+    &[hidden] {
+        display: none;
+    }
+
+    &:focus-visible {
+        @include focus-ring(-2px);
+    }
+
+    @media (pointer: coarse) {
+        &:not(:focus-visible) {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+    }
+
+    .is-selecting &,
+    .is-editing & {
+        display: none;
+    }
 }
 
 .rm-mnb-swipe-actions {
-    position: fixed;
-    z-index: 0;
-    display: none;
+    display: flex;
     align-items: stretch;
-
-    &.is-visible {
-        display: flex;
-    }
+    scroll-snap-align: end;
 }
 
 .rm-mnb-swipe-actions__form {

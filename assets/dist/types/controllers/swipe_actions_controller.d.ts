@@ -1,59 +1,34 @@
 import { Controller } from '@hotwired/stimulus';
-/**
- * Action revealed by swiping a row to the left. The server builds and
- * translates it: the module only receives text, never a translation key.
- */
-export interface SwipeAction {
-    url: string;
-    icon: string;
-    tone: string;
-    label: string;
-    method?: string;
-    /** Present on every destructive action: the confirmation sheet's message. */
-    confirm?: string;
-    /** A link that carries its return path: `_redirect` is added on click. */
-    carriesReturnPath?: true;
-}
-/**
- * Swiping a row to the left reveals its actions, each with its label. A
- * destructive action is not sent directly: it goes through the confirmation sheet.
- * The panel lives in <body> (it must stay under the sliding row) and is removed
- * before every Turbo snapshot.
- */
 export default class extends Controller<HTMLElement> {
-    static values: {
-        actions: ArrayConstructor;
-        csrfToken: StringConstructor;
-    };
-    readonly actionsValue: SwipeAction[];
-    /** Only the actions that target the current origin: any other is ignored. */
-    private get actions();
-    readonly csrfTokenValue: string;
-    private startX;
-    private startY;
-    private currentX;
-    private swiping;
+    static targets: string[];
+    readonly hasTrackTarget: boolean;
+    readonly trackTarget: HTMLElement;
+    readonly panelTarget: HTMLElement;
+    readonly hasToggleTarget: boolean;
+    readonly toggleTarget: HTMLButtonElement;
     private opened;
-    private panel;
-    private panelWidth;
-    private panelLeft;
-    private panelTop;
-    private readonly onTouchStart;
-    private readonly onTouchMove;
-    private readonly onTouchEnd;
-    private readonly onDocumentTouch;
-    private readonly onBeforeCache;
+    private frame;
+    private readonly onScroll;
+    private readonly onOtherOpened;
+    private readonly onDocumentPointer;
+    private readonly onKeydown;
+    private readonly onFocusIn;
+    private readonly sent;
+    private readonly onSubmit;
+    private readonly onSubmitEnd;
+    private readonly onReset;
     connect(): void;
     disconnect(): void;
-    private reset;
-    private buildPanel;
-    private createContent;
-    private hiddenInput;
-    private createButton;
-    private positionPanel;
-    private touchStart;
-    private touchMove;
-    private touchEnd;
+    /** The "Actions" button. */
+    toggle(): void;
+    /** Click on a link marked carriesReturnPath: it takes the current path along. */
+    carryReturnPath(event: Event): void;
     private open;
     private close;
+    private scrollTo;
+    /** The scroll position is the truth: a swipe opens or closes the panel by itself. */
+    private sync;
+    private setOpened;
+    private actions;
+    private toggleTargetOrNull;
 }

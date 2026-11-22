@@ -1,0 +1,33 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    Panel of swipe actions, rendered server side (variables: actions, csrfToken, panelId,
+    label). It sits next to the content, in the same horizontal scroll-snap track: the
+    browser slides it into view. A link is a GET; any other action is a POST form carrying
+    _token, _method for PUT / PATCH / DELETE (the HttpMethod list) and _redirect, filled by
+    the controller at submit time. A destructive action goes through confirm-submit, like
+    SheetFormRow. The controller takes the actions out of the tab order while hidden.
+#}
+<div class="rm-mnb-swipe-actions" id="{{ panelId }}" role="group"
+     aria-label="{{ 'swipe.actions'|trans({'%item%': label}) }}"
+     {{ stimulus_target(rm_mnb_controller('swipe-actions'), 'panel') }}>
+    {% for action in actions %}
+        {% set content %}
+            {% block swipe_action_icon %}<i class="{{ action.icon }}" aria-hidden="true"></i>{% endblock %}
+            <span class="rm-mnb-swipe-actions__label">{{ action.label }}</span>
+        {% endset %}
+        {% if action.method is not defined %}
+            <a href="{{ action.url }}" class="rm-mnb-swipe-actions__button rm-mnb-tone--{{ action.tone }}"
+               {% if action.carriesReturnPath is defined %}{{ stimulus_action(rm_mnb_controller('swipe-actions'), 'carryReturnPath', 'click') }}{% endif %}>{{ content }}</a>
+        {% else %}
+            <form method="post" action="{{ action.url }}" class="rm-mnb-swipe-actions__form"
+                  {% if action.confirm is defined %}{{ stimulus_controller(rm_mnb_controller('confirm-submit'), { title: action.label, message: action.confirm, confirmLabel: action.label }) }}{% endif %}>
+                <input type="hidden" name="_token" value="{{ csrfToken }}">
+                {% if action.method in ['PUT', 'PATCH', 'DELETE'] %}
+                    <input type="hidden" name="_method" value="{{ action.method }}">
+                {% endif %}
+                <input type="hidden" name="_redirect" value="">
+                <button type="submit" class="rm-mnb-swipe-actions__button rm-mnb-tone--{{ action.tone }}">{{ content }}</button>
+            </form>
+        {% endif %}
+    {% endfor %}
+</div>

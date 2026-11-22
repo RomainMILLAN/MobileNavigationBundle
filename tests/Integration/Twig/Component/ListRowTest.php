@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RomainMillan\MobileNavigation\Tests\Integration\Twig\Component;
 
 use PHPUnit\Framework\Attributes\Test;
+use RomainMillan\MobileNavigation\Model\HttpMethod;
 use RomainMillan\MobileNavigation\Model\SwipeAction;
 use RomainMillan\MobileNavigation\Model\SwipeActions;
 use RomainMillan\MobileNavigation\Model\Tone;
@@ -93,16 +94,98 @@ final class ListRowTest extends ComponentTestCase
     }
 
     #[Test]
-    public function it_should_mount_the_swipe_actions(): void
+    public function it_should_mount_the_swipe_actions_controller_without_value(): void
     {
-        $row = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => [
-            'actions' => [SwipeAction::link('/transactions/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('Edit'))],
-            'csrfToken' => 'token',
-        ]])->filter('.rm-mnb-list-row');
+        $row = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $this->swipe()])->filter('.rm-mnb-list-row');
 
         self::assertSame(self::PREFIX.'swipe-actions', $row->attr('data-controller'));
-        self::assertSame('[{"url":"\/transactions\/1\/edit","icon":"icon-edit","tone":"accent","label":"Edit"}]', $row->attr('data-'.self::PREFIX.'swipe-actions-actions-value'));
-        self::assertSame('token', $row->attr('data-'.self::PREFIX.'swipe-actions-csrf-token-value'));
+        self::assertNull($row->attr('data-'.self::PREFIX.'swipe-actions-actions-value'));
+        self::assertNull($row->attr('data-'.self::PREFIX.'swipe-actions-csrf-token-value'));
+    }
+
+    #[Test]
+    public function it_should_put_the_row_and_its_actions_in_one_snap_track(): void
+    {
+        $track = $this->renderComponent('ListRow', ['title' => 'Groceries', 'href' => '/transactions/1', 'swipe' => $this->swipe()])->filter('.rm-mnb-list-row > .rm-mnb-swipe');
+
+        self::assertSame('track', $track->attr('data-'.self::PREFIX.'swipe-actions-target'));
+        self::assertCount(1, $track->filter('.rm-mnb-swipe__content > a.rm-mnb-list-row__main'));
+        self::assertCount(1, $track->filter('.rm-mnb-swipe__content + .rm-mnb-swipe-actions[role="group"]'));
+    }
+
+    #[Test]
+    public function it_should_name_the_actions_button_and_panel_after_the_row(): void
+    {
+        $row = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $this->swipe()]);
+        $toggle = $row->filter('button.rm-mnb-swipe__toggle');
+        $panel = $row->filter('.rm-mnb-swipe-actions');
+
+        self::assertSame('Show the actions for Groceries', $toggle->attr('aria-label'));
+        self::assertSame('false', $toggle->attr('aria-expanded'));
+        self::assertNotNull($toggle->attr('hidden'));
+        self::assertSame($panel->attr('id'), $toggle->attr('aria-controls'));
+        self::assertMatchesRegularExpression('/^rm-mnb-swipe-[0-9a-f]{12}$/', (string) $panel->attr('id'));
+        self::assertSame('Actions for Groceries', $panel->attr('aria-label'));
+    }
+
+    #[Test]
+    public function it_should_render_a_link_action(): void
+    {
+        $link = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $this->swipe()])->filter('.rm-mnb-swipe-actions a');
+
+        self::assertSame('/transactions/1/edit', $link->attr('href'));
+        self::assertSame('rm-mnb-swipe-actions__button rm-mnb-tone--accent', $link->attr('class'));
+        self::assertSame('icon-edit', $link->filter('i')->attr('class'));
+        self::assertSame('Edit', $link->filter('.rm-mnb-swipe-actions__label')->text());
+        self::assertNull($link->attr('data-action'));
+    }
+
+    #[Test]
+    public function it_should_let_a_link_carry_its_return_path_on_click(): void
+    {
+        $swipe = SwipeActions::createFromActions([SwipeAction::linkCarryingReturnPath('/transactions/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('Edit'))], 'token');
+
+        $link = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $swipe])->filter('.rm-mnb-swipe-actions a');
+
+        self::assertSame('click->'.self::PREFIX.'swipe-actions#carryReturnPath', $link->attr('data-action'));
+    }
+
+    #[Test]
+    public function it_should_render_a_writing_action_as_a_post_form(): void
+    {
+        $form = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $this->swipe()])->filter('form[action="/transactions/1/ack"]');
+
+        self::assertSame('post', $form->attr('method'));
+        self::assertSame('token', $form->filter('input[name="_token"]')->attr('value'));
+        self::assertSame('', $form->filter('input[name="_redirect"]')->attr('value'));
+        self::assertCount(0, $form->filter('input[name="_method"]'));
+        self::assertNull($form->attr('data-controller'));
+        self::assertSame('submit', $form->filter('button')->attr('type'));
+    }
+
+    #[Test]
+    public function it_should_confirm_a_destructive_action_and_spoof_its_method(): void
+    {
+        $form = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $this->swipe()])->filter('form[action="/transactions/1"]');
+
+        self::assertSame('DELETE', $form->filter('input[name="_method"]')->attr('value'));
+        self::assertSame(self::PREFIX.'confirm-submit', $form->attr('data-controller'));
+        self::assertSame('Delete', $form->attr('data-'.self::PREFIX.'confirm-submit-title-value'));
+        self::assertSame('Gone for good.', $form->attr('data-'.self::PREFIX.'confirm-submit-message-value'));
+        self::assertSame('Delete', $form->attr('data-'.self::PREFIX.'confirm-submit-confirm-label-value'));
+        self::assertSame('rm-mnb-swipe-actions__button rm-mnb-tone--negative', $form->filter('button')->attr('class'));
+    }
+
+    #[Test]
+    public function it_should_escape_the_action_texts(): void
+    {
+        $swipe = SwipeActions::createFromActions([SwipeAction::link('/x', 'icon', Tone::Accent, new TranslatableMessage('<b>X</b>'))], 'to"ken');
+
+        $html = $this->renderTwigComponent('MobileNavigation:ListRow', ['title' => '<i>G</i>', 'swipe' => $swipe])->toString();
+
+        self::assertStringNotContainsString('<b>', $html);
+        self::assertStringNotContainsString('<i>G', $html);
+        self::assertStringContainsString('&lt;b&gt;X&lt;/b&gt;', $html);
     }
 
     #[Test]
@@ -112,7 +195,7 @@ final class ListRowTest extends ComponentTestCase
             $html = $this->renderTwigComponent('MobileNavigation:ListRow', ['title' => 'Groceries', ...$swipe])->toString();
 
             self::assertStringNotContainsString('data-controller', $html);
-            self::assertStringNotContainsString('csrf', $html);
+            self::assertStringNotContainsString('rm-mnb-swipe', $html);
         }
     }
 
@@ -210,5 +293,14 @@ final class ListRowTest extends ComponentTestCase
 
         self::assertSame('listitem', $row->attr('role'));
         self::assertSame('bar', $row->attr('data-foo'));
+    }
+
+    private function swipe(): SwipeActions
+    {
+        return SwipeActions::createFromActions([
+            SwipeAction::link('/transactions/1/edit', 'icon-edit', Tone::Accent, new TranslatableMessage('Edit')),
+            SwipeAction::post('/transactions/1/ack', 'icon-check', Tone::Positive, new TranslatableMessage('Acknowledge')),
+            SwipeAction::destructive('/transactions/1', 'icon-trash', new TranslatableMessage('Delete'), new TranslatableMessage('Gone for good.'), HttpMethod::Delete),
+        ], 'token');
     }
 }
