@@ -143,13 +143,6 @@
     }
 }
 
-// Scroll lock while a sheet is open, in both modes (document or container).
-html.rm-mnb-has-open-sheet,
-html.rm-mnb-has-open-sheet body,
-html.rm-mnb-has-open-sheet .rm-mnb-scroller {
-    overflow: hidden;
-}
-
 // Screen-reader-only text (titles of sheets without a visible title).
 .rm-mnb-visually-hidden {
     position: absolute !important;

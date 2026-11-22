@@ -5,14 +5,40 @@
 // iOS sheets: shell, grouped lists, rows, confirmation
 // ===========================
 
+// A <dialog>, opened with showModal(). Its UA box (centered, padded, bordered, sized to
+// its content, display: none when closed) is reset: it covers the viewport and stays
+// rendered when closed, hidden by visibility. That keeps the exit slide running after
+// close() has taken it out of the top layer, without @starting-style or
+// transition-behavior: allow-discrete, which not every target engine has.
 .rm-mnb-sheet {
     position: fixed;
     inset: 0 0 calc(0px - var(--rm-mnb-viewport-gap));
     z-index: $rm-mnb-z-sheet;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    // Scroll lock without touching <html> or <body>: no scroll chains from the sheet to
+    // the page (overflow: hidden on the root would drop the scrollbar, shift the layout and
+    // break position: sticky).
+    overflow: hidden;
+    overscroll-behavior: contain;
     visibility: hidden;
     pointer-events: none;
     // visibility switches after closing, to let the panel slide back down.
     transition: visibility 0s linear $rm-mnb-duration-sheet;
+}
+
+// The sheet draws its own backdrop (a light-dismiss target): the native one stays clear.
+.rm-mnb-sheet::backdrop {
+    background: transparent;
+    overscroll-behavior: contain;
 }
 
 .rm-mnb-sheet--open {
@@ -80,6 +106,8 @@
     border: 0;
     background: none;
     cursor: grab;
+    // The handle is a drag surface: the browser must not take the gesture for a scroll.
+    touch-action: none;
     -webkit-tap-highlight-color: transparent;
 
     &::before {
@@ -132,6 +160,7 @@
     .rm-mnb-sheet--mobile-only {
         position: static;
         z-index: auto;
+        overflow: visible;
         visibility: visible;
         pointer-events: auto;
 
@@ -426,10 +455,27 @@
     }
 }
 
+// Reduced motion: the panel no longer slides, it fades in and out, briefly.
 @media (prefers-reduced-motion: reduce) {
-    .rm-mnb-sheet,
+    .rm-mnb-sheet {
+        transition-delay: 0.1s;
+    }
+
+    .rm-mnb-sheet--open {
+        transition-delay: 0s;
+    }
+
     .rm-mnb-sheet__panel,
     .rm-mnb-sheet__backdrop {
-        transition-duration: 0.01ms;
+        transition: opacity 0.1s linear;
+    }
+
+    .rm-mnb-sheet__panel {
+        opacity: 0;
+        transform: none;
+
+        .rm-mnb-sheet--open & {
+            opacity: 1;
+        }
     }
 }

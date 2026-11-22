@@ -135,12 +135,6 @@
     scroll-padding-bottom: calc(62px + max(env(safe-area-inset-bottom, 0px), 8px) + 8px);
   }
 }
-html.rm-mnb-has-open-sheet,
-html.rm-mnb-has-open-sheet body,
-html.rm-mnb-has-open-sheet .rm-mnb-scroller {
-  overflow: hidden;
-}
-
 .rm-mnb-visually-hidden {
   position: absolute !important;
   width: 1px !important;
@@ -416,9 +410,26 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
   position: fixed;
   inset: 0 0 calc(0px - var(--rm-mnb-viewport-gap));
   z-index: 1050;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: hidden;
+  overscroll-behavior: contain;
   visibility: hidden;
   pointer-events: none;
   transition: visibility 0s linear 0.45s;
+}
+
+.rm-mnb-sheet::backdrop {
+  background: transparent;
+  overscroll-behavior: contain;
 }
 
 .rm-mnb-sheet--open {
@@ -505,6 +516,7 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
   border: 0;
   background: none;
   cursor: grab;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
 .rm-mnb-sheet__handle::before {
@@ -553,6 +565,7 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
   .rm-mnb-sheet--mobile-only {
     position: static;
     z-index: auto;
+    overflow: visible;
     visibility: visible;
     pointer-events: auto;
   }
@@ -809,10 +822,22 @@ html.rm-mnb-has-open-sheet .rm-mnb-tab-bar-layer > * {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rm-mnb-sheet,
+  .rm-mnb-sheet {
+    transition-delay: 0.1s;
+  }
+  .rm-mnb-sheet--open {
+    transition-delay: 0s;
+  }
   .rm-mnb-sheet__panel,
   .rm-mnb-sheet__backdrop {
-    transition-duration: 0.01ms;
+    transition: opacity 0.1s linear;
+  }
+  .rm-mnb-sheet__panel {
+    opacity: 0;
+    transform: none;
+  }
+  .rm-mnb-sheet--open .rm-mnb-sheet__panel {
+    opacity: 1;
   }
 }
 .rm-mnb-glass-disc {

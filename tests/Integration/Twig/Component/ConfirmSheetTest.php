@@ -13,7 +13,9 @@ final class ConfirmSheetTest extends ComponentTestCase
     {
         $sheet = $this->renderComponent('ConfirmSheet')->filter('#rm-mnb-confirm');
 
+        self::assertSame('dialog', $sheet->nodeName());
         self::assertSame('alertdialog', $sheet->attr('role'));
+        self::assertNull($sheet->attr('aria-modal'));
         self::assertSame(self::PREFIX.'sheet '.self::PREFIX.'confirm-sheet', $sheet->attr('data-controller'));
         self::assertSame('rm-mnb-confirm', $sheet->attr('data-'.self::PREFIX.'confirm-sheet-sheet-value'));
         self::assertSame('rm-mnb-confirm-title', $sheet->attr('aria-labelledby'));

@@ -1,11 +1,12 @@
 {% trans_default_domain 'rm_mnb' %}
 {#
-    iOS sheet. The <id>:open|close|toggle commands (window events) drive it. With
-    mobileOnly, above 768 px its content renders in place, without the shell: it is a
-    dialog only once open. Other attributes (class, Stimulus actions by spread) go on the
+    iOS sheet: a <dialog> the controller opens with showModal() (top layer, page inert,
+    Esc and the Android back gesture close it). The <id>:open|close|toggle commands (window
+    events) drive it. With mobileOnly, above 768 px its content renders in place, without
+    the shell. Other attributes (class, Stimulus actions by spread) go on the
     root. Props: see the Sheet class.
 #}
-<div class="rm-mnb-sheet{{ mobileOnly ? ' rm-mnb-sheet--mobile-only' }} {{ attributes.render('class') }}" id="{{ id }}"{% if not mobileOnly %} role="dialog" aria-modal="true"{% endif %} aria-labelledby="{{ id }}-title"
+<dialog class="rm-mnb-sheet{{ mobileOnly ? ' rm-mnb-sheet--mobile-only' }} {{ attributes.render('class') }}" id="{{ id }}" aria-labelledby="{{ id }}-title"
      {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents })) }}>
     {# A <div> has no default event for Stimulus: click is explicit. #}
     <div class="rm-mnb-sheet__backdrop" {{ stimulus_action(rm_mnb_controller('sheet'), 'dismiss', 'click') }}></div>
@@ -16,4 +17,4 @@
             {% block content %}{% endblock %}
         </div>
     </div>
-</div>
+</dialog>

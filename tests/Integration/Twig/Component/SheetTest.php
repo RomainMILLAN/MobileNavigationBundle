@@ -13,8 +13,9 @@ final class SheetTest extends ComponentTestCase
     {
         $sheet = $this->renderComponent('Sheet', ['id' => 'more', 'title' => 'More'])->filter('#more');
 
-        self::assertSame('dialog', $sheet->attr('role'));
-        self::assertSame('true', $sheet->attr('aria-modal'));
+        self::assertSame('dialog', $sheet->nodeName());
+        self::assertNull($sheet->attr('role'));
+        self::assertNull($sheet->attr('aria-modal'));
         self::assertSame('more-title', $sheet->attr('aria-labelledby'));
         self::assertSame(self::PREFIX.'sheet', $sheet->attr('data-controller'));
         self::assertSame('more', $sheet->attr('data-'.self::PREFIX.'sheet-name-value'));
@@ -30,7 +31,7 @@ final class SheetTest extends ComponentTestCase
     {
         $sheet = $this->renderComponent('Sheet', [...['id' => 'more', 'title' => 'More'], 'titleHidden' => true, 'scrollable' => false, 'mobileOnly' => true, 'forceCloseEvents' => ['app:locked']])->filter('#more');
 
-        self::assertNull($sheet->attr('role'));
+        self::assertSame('dialog', $sheet->nodeName());
         self::assertStringContainsString('rm-mnb-sheet--mobile-only', (string) $sheet->attr('class'));
         self::assertCount(1, $sheet->filter('h2.rm-mnb-visually-hidden'));
         self::assertNull($sheet->filter('.rm-mnb-sheet__body')->attr('data-'.self::PREFIX.'sheet-target'));

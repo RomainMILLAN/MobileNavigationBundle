@@ -22,7 +22,7 @@ const ACTIONS = [
 
 // The ConfirmSheet.html.twig markup, with short Stimulus identifiers.
 const confirmSheet = `
-    <div id="confirm" class="rm-mnb-sheet" role="alertdialog" aria-modal="true"
+    <dialog id="confirm" class="rm-mnb-sheet" role="alertdialog"
          data-controller="sheet confirm-sheet" data-sheet-name-value="confirm" data-confirm-sheet-sheet-value="confirm">
         <div class="rm-mnb-sheet__backdrop" data-action="click->sheet#dismiss"></div>
         <div class="rm-mnb-sheet__panel" tabindex="-1" data-sheet-target="panel">
@@ -31,7 +31,7 @@ const confirmSheet = `
             <button type="button" id="destroy" data-confirm-sheet-target="confirm" data-action="confirm-sheet#confirm"></button>
             <button type="button" id="close" data-action="sheet#dismiss">Fermer</button>
         </div>
-    </div>`;
+    </dialog>`;
 
 // What reaches the document (where Turbo listens) without being cancelled: the
 // submissions Turbo would take over. preventDefault() then stops jsdom navigating.

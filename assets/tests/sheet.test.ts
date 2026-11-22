@@ -14,7 +14,7 @@ import { returnTarget } from '../src/utils/focus_trap';
 
 function sheetMarkup(name: string): string {
     return `
-        <div class="sheet" id="${name}" role="dialog" aria-modal="true"
+        <dialog class="sheet" id="${name}"
              data-controller="sheet" data-sheet-name-value="${name}"
              data-sheet-force-close-events-value='["turbo:before-cache","inactivity:locked","show.bs.modal"]'>
             <div class="sheet__panel" tabindex="-1" data-sheet-target="panel">
@@ -22,7 +22,7 @@ function sheetMarkup(name: string): string {
                     <button type="button" class="row-${name}">Action ${name}</button>
                 </div>
             </div>
-        </div>
+        </dialog>
         <button type="button" class="trigger-${name}" aria-controls="${name}" aria-expanded="false">${name}</button>`;
 }
 
@@ -75,17 +75,61 @@ describe('sheets', () => {
         expect(document.documentElement.classList.contains('rm-mnb-has-open-sheet')).toBe(false);
     });
 
-    it('ignores Escape with no open sheet: no close emitted, no focus moved', () => {
-        const outside = query('.trigger-sheet-a');
-        outside.focus();
-        const closed = vi.fn();
-        window.addEventListener('rm-mnb:sheet-closed', closed);
+    it('opens as a modal dialog and closes it again', () => {
+        send('sheet-a:open');
+        expect((byId('sheet-a') as HTMLDialogElement).open).toBe(true);
 
-        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        send('sheet-a:close');
+        expect((byId('sheet-a') as HTMLDialogElement).open).toBe(false);
+    });
 
-        expect(closed).not.toHaveBeenCalled();
-        expect(document.activeElement).toBe(outside);
-        window.removeEventListener('rm-mnb:sheet-closed', closed);
+    it('closes on cancel (Esc, Android back) and keeps the native close from running', () => {
+        const trigger = query('.trigger-sheet-a');
+        trigger.focus();
+        send('sheet-a:open');
+
+        const cancel = new Event('cancel', { cancelable: true });
+        byId('sheet-a').dispatchEvent(cancel);
+
+        expect(cancel.defaultPrevented).toBe(true);
+        expect(isOpen('sheet-a')).toBe(false);
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('catches up when the browser closes the dialog on its own', () => {
+        send('sheet-a:open');
+
+        byId('sheet-a').removeAttribute('open');
+        byId('sheet-a').dispatchEvent(new Event('close'));
+
+        expect(isOpen('sheet-a')).toBe(false);
+        expect(document.documentElement.classList.contains('rm-mnb-has-open-sheet')).toBe(false);
+    });
+
+    it('hands its return target to the sheet that replaces it', () => {
+        const trigger = query('.trigger-sheet-a');
+        trigger.focus();
+        send('sheet-a:open');
+        query('.row-sheet-a').focus();
+        query('.trigger-sheet-b').remove();
+
+        send('sheet-b:open');
+        send('sheet-b:close');
+
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('does not open a mobile-only sheet rendered in place', async () => {
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<dialog id="filters" class="rm-mnb-sheet--mobile-only" style="position: static" data-controller="sheet" data-sheet-name-value="filters"><div data-sheet-target="panel"></div></dialog>',
+        );
+        await tick();
+
+        send('filters:open');
+
+        expect(isOpen('filters')).toBe(false);
+        expect((byId('filters') as HTMLDialogElement).open).toBe(false);
     });
 
     it('re-emits nothing when closing an already closed sheet', () => {
@@ -148,7 +192,7 @@ describe('sheets', () => {
         const error = vi.spyOn(console, 'error').mockImplementation(() => {});
         document.body.insertAdjacentHTML(
             'beforeend',
-            '<div id="autre" role="dialog" aria-modal="true" data-controller="sheet" data-sheet-name-value="sheet-c"><div data-sheet-target="panel"></div></div>',
+            '<dialog id="autre" data-controller="sheet" data-sheet-name-value="sheet-c"><div data-sheet-target="panel"></div></dialog>',
         );
         await tick();
 
@@ -166,8 +210,14 @@ describe('returnTarget', () => {
         expect(returnTarget(byId('b'), [byId('t')], visible)).toBe(byId('b'));
     });
 
-    it('falls back to the first visible trigger when the active element is in a sheet', () => {
-        document.body.innerHTML = '<div role="dialog" aria-modal="true"><button id="in">in</button></div><button id="t">t</button>';
+    it('keeps the active element when it is in a sheet rendered in place (not open)', () => {
+        document.body.innerHTML = '<dialog class="rm-mnb-sheet--mobile-only"><button id="in">in</button></dialog><button id="t">t</button>';
+
+        expect(returnTarget(byId('in'), [byId('t')], visible)).toBe(byId('in'));
+    });
+
+    it('falls back to the first visible trigger when the active element is in an open sheet', () => {
+        document.body.innerHTML = '<dialog class="rm-mnb-sheet--open" open><button id="in">in</button></dialog><button id="t">t</button>';
 
         expect(returnTarget(byId('in'), [byId('t')], visible)).toBe(byId('t'));
     });
@@ -179,7 +229,7 @@ describe('returnTarget', () => {
     });
 
     it('returns nothing when no trigger is visible', () => {
-        document.body.innerHTML = '<div role="dialog" aria-modal="true"><button id="in">in</button></div><button id="t">t</button>';
+        document.body.innerHTML = '<dialog class="rm-mnb-sheet--open" open><button id="in">in</button></dialog><button id="t">t</button>';
 
         expect(returnTarget(byId('in'), [byId('t')], hidden)).toBeNull();
     });
