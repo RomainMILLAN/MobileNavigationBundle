@@ -17,6 +17,8 @@ export default class extends Controller<HTMLElement> {
     readonly scrollerTarget: HTMLElement;
     private observer;
     private readonly onMorph;
+    private resizeFrame;
+    private readonly onResize;
     connect(): void;
     disconnect(): void;
     private observe;

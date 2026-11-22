@@ -47,9 +47,11 @@
         {% endif %}
     {% if href %}</a>{% else %}</div>{% endif %}
     {% if reorder %}
-        <span class="rm-mnb-list-row__reorder" role="button" tabindex="-1" aria-label="{{ reorder.label }}"
-              {{ reorder.attributes ? reorder.attributes|raw }}>
+        {# A real button: hidden (so out of the tab order) outside "Edit" mode, focusable in it.
+           The app wires its keyboard alternative to the drag on it (arrow keys, say). #}
+        <button type="button" class="rm-mnb-list-row__reorder" aria-label="{{ reorder.label }}"
+                {{ reorder.attributes ? reorder.attributes|raw }}>
             <span class="rm-mnb-icon rm-mnb-icon--grip" aria-hidden="true"></span>
-        </span>
+        </button>
     {% endif %}
 </div>

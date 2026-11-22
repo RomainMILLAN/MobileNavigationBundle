@@ -79,7 +79,7 @@
 .rm-mnb-list-section__header {
     margin: 0 8px 6px;
     color: var(--rm-mnb-ink);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 600;
 }
 
@@ -136,7 +136,7 @@
 .rm-mnb-list-row__title {
     display: block;
     overflow: hidden;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -153,7 +153,7 @@
     margin-top: 2px;
     overflow: hidden;
     color: rgba(var(--rm-mnb-ink-rgb), 0.8);
-    font-size: 13px;
+    font-size: 0.8125rem;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -169,7 +169,7 @@
 
 .rm-mnb-list-row__value {
     color: var(--rm-mnb-tone-ink-current, var(--rm-mnb-ink));
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -177,7 +177,7 @@
 
 .rm-mnb-list-row__caption {
     color: var(--rm-mnb-tone-ink-current, rgba(var(--rm-mnb-ink-rgb), 0.8));
-    font-size: 12px;
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 
@@ -189,7 +189,7 @@
 .rm-mnb-list-row__chevron {
     flex: none;
     color: rgba(var(--rm-mnb-ink-rgb), 0.45);
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 // Selection circle: hidden outside "Select" mode.
@@ -241,13 +241,20 @@
     justify-content: center;
     width: $rm-mnb-control-size;
     align-self: stretch;
+    padding: 0;
+    border: 0;
+    background: none;
     color: rgba(var(--rm-mnb-ink-rgb), 0.45);
-    font-size: 20px;
+    font-size: 1.25rem;
     cursor: grab;
     touch-action: none;
 
     .is-editing & {
         display: inline-flex;
+    }
+
+    &:focus-visible {
+        @include focus-ring(-2px);
     }
 }
 
@@ -318,7 +325,7 @@
     border: 0;
     background-color: var(--rm-mnb-tone-solid-current, var(--rm-mnb-tone-neutral-solid));
     color: var(--rm-mnb-on-tone);
-    font-size: 20px;
+    font-size: 1.25rem;
     text-decoration: none;
 
     &:hover {
@@ -333,7 +340,7 @@
 .rm-mnb-swipe-actions__label {
     max-width: 100%;
     overflow: hidden;
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -362,7 +369,7 @@
         top: 50%;
         left: 14px;
         color: rgba(var(--rm-mnb-ink-rgb), 0.8);
-        font-size: 18px;
+        font-size: 1.125rem;
         transform: translateY(-50%);
         pointer-events: none;
     }
@@ -377,7 +384,7 @@
     background-color: rgba(var(--rm-mnb-ink-rgb), 0.08);
     color: var(--rm-mnb-ink);
     // 16px: below that, iOS zooms in on the field on focus.
-    font-size: 16px;
+    font-size: 1rem;
     outline: none;
 
     &::placeholder {
@@ -391,7 +398,7 @@
 
 .rm-mnb-filter-bar__button {
     position: relative;
-    font-size: 20px;
+    font-size: 1.25rem;
 }
 
 .rm-mnb-filter-bar__count {
@@ -404,7 +411,7 @@
     border-radius: 9px;
     background-color: var(--rm-mnb-accent-fill);
     color: var(--rm-mnb-on-accent);
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
     line-height: 18px;
     text-align: center;
@@ -428,6 +435,6 @@
     margin: 0;
     padding: 48px 24px;
     color: rgba(var(--rm-mnb-ink-rgb), 0.8);
-    font-size: 15px;
+    font-size: 0.9375rem;
     text-align: center;
 }

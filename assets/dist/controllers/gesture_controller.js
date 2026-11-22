@@ -12,6 +12,10 @@ function haptic(style = "light") {
 var EVENT_PREFIX = "rm-mnb-gesture";
 var gesture_controller_default = class extends Controller {
 	static values = {
+		doubleTap: {
+			type: Boolean,
+			default: false
+		},
 		doubleTapMs: {
 			type: Number,
 			default: 280
@@ -32,6 +36,7 @@ var gesture_controller_default = class extends Controller {
 	startX = 0;
 	startY = 0;
 	moved = false;
+	touching = false;
 	disconnect() {
 		this.cancelLongPress();
 		this.cancelSingleTap();
@@ -42,6 +47,7 @@ var gesture_controller_default = class extends Controller {
 		this.startX = touch.clientX;
 		this.startY = touch.clientY;
 		this.moved = false;
+		this.touching = true;
 		this.longPressTriggered = false;
 		this.longPressTimer = setTimeout(() => {
 			this.longPressTriggered = true;
@@ -58,6 +64,7 @@ var gesture_controller_default = class extends Controller {
 	}
 	end(event) {
 		this.cancelLongPress();
+		this.touching = false;
 		const touch = event.changedTouches[0];
 		const deltaX = (touch ? touch.clientX : this.startX) - this.startX;
 		const deltaY = (touch ? touch.clientY : this.startY) - this.startY;
@@ -78,6 +85,10 @@ var gesture_controller_default = class extends Controller {
 			return;
 		}
 		if (this.moved) return;
+		if (!this.doubleTapValue) {
+			this.dispatch("tap", { prefix: EVENT_PREFIX });
+			return;
+		}
 		this.suppress(event);
 		const now = Date.now();
 		if (this.singleTapTimer && now - this.lastTapTime < this.doubleTapMsValue) {
@@ -93,8 +104,19 @@ var gesture_controller_default = class extends Controller {
 			this.dispatch("tap", { prefix: EVENT_PREFIX });
 		}, this.doubleTapMsValue);
 	}
+	/**
+	* Replaces the native context menu with a longpress. Outside a touch (right click,
+	* the Menu key, Shift+F10), it is the keyboard and mouse equivalent of the long press;
+	* during a touch, the timer already handles it (Android also fires contextmenu then).
+	*/
 	preventContextMenu(event) {
 		event.preventDefault();
+		if (!this.touching) this.dispatch("longpress", { prefix: EVENT_PREFIX });
+	}
+	cancel() {
+		this.cancelLongPress();
+		this.touching = false;
+		this.longPressTriggered = false;
 	}
 	replayNative() {
 		this.element.click();

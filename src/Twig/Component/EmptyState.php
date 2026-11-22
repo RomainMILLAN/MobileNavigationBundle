@@ -30,6 +30,12 @@ final class EmptyState
     public ?array $action = null;
 
     /**
+     * Level of the title heading (1 to 6), 2 by default; null renders a plain paragraph,
+     * for a page whose outline already has its headings.
+     */
+    public ?int $headingLevel = 2;
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
@@ -38,6 +44,11 @@ final class EmptyState
     public function preMount(array $data): array
     {
         RequiredProps::createForComponent(self::class, 'title')->assertPresentIn($data);
+
+        $headingLevel = \array_key_exists('headingLevel', $data) ? $data['headingLevel'] : 2;
+        if (null !== $headingLevel && (!\is_int($headingLevel) || $headingLevel < 1 || $headingLevel > 6)) {
+            throw new \InvalidArgumentException(\sprintf('The "headingLevel" prop of the MobileNavigation:EmptyState component must be an integer from 1 to 6, or null; got %s.', get_debug_type($headingLevel)));
+        }
 
         if (null !== ($data['action'] ?? null)) {
             $data['action'] = StructuredProp::createForComponent(self::class, 'action', new LinkOptions())->resolve($data['action']);

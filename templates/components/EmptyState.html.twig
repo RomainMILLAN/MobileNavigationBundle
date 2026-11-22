@@ -6,7 +6,8 @@
     {% if icon %}
         <span class="rm-mnb-empty-state__icon"><span class="rm-mnb-icon-slot">{% block icon %}<i class="{{ icon }}" aria-hidden="true"></i>{% endblock %}</span></span>
     {% endif %}
-    <p class="rm-mnb-empty-state__title">{{ title }}</p>
+    {% set tag = headingLevel ? 'h' ~ headingLevel : 'p' %}
+    <{{ tag }} class="rm-mnb-empty-state__title">{{ title }}</{{ tag }}>
     {% if message %}
         <p class="rm-mnb-empty-state__message">{{ message }}</p>
     {% endif %}

@@ -27,13 +27,24 @@ export default class extends Controller<HTMLElement> {
         this.observe();
     };
 
+    // The observer margin depends on the bar height and the title position, which a
+    // rotation or a text size change moves: they are measured again.
+    private resizeFrame = 0;
+    private readonly onResize = (): void => {
+        cancelAnimationFrame(this.resizeFrame);
+        this.resizeFrame = requestAnimationFrame(this.onMorph);
+    };
+
     connect(): void {
         document.addEventListener('turbo:morph', this.onMorph);
+        window.addEventListener('resize', this.onResize);
         this.observe();
     }
 
     disconnect(): void {
         document.removeEventListener('turbo:morph', this.onMorph);
+        window.removeEventListener('resize', this.onResize);
+        cancelAnimationFrame(this.resizeFrame);
         this.unobserve();
     }
 

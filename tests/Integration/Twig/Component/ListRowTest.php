@@ -167,7 +167,8 @@ final class ListRowTest extends ComponentTestCase
         $handle = $this->renderComponent('ListRow', ['title' => 'Groceries', 'reorder' => ['label' => 'Move Groceries']])->filter('.rm-mnb-list-row__reorder');
 
         self::assertSame('Move Groceries', $handle->attr('aria-label'));
-        self::assertSame('button', $handle->attr('role'));
+        self::assertSame('button', $handle->nodeName());
+        self::assertSame('button', $handle->attr('type'));
         self::assertCount(1, $handle->filter('.rm-mnb-icon--grip'));
         self::assertStringContainsString('data-app--sortable-target="handle"', $html);
         self::assertCount(0, $this->renderComponent('ListRow', ['title' => 'Groceries'])->filter('.rm-mnb-list-row__reorder'));

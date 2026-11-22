@@ -8,8 +8,8 @@
 // The layer captures nothing itself: only the pill and the "+" receive taps.
 .rm-mnb-tab-bar-layer {
     position: fixed;
-    left: $rm-mnb-tab-bar-inset;
-    right: $rm-mnb-tab-bar-inset;
+    left: max(#{$rm-mnb-tab-bar-inset}, env(safe-area-inset-left, 0px));
+    right: max(#{$rm-mnb-tab-bar-inset}, env(safe-area-inset-right, 0px));
     // max(): when Safari collapses its bar, the inset can drop; the pill keeps 8px.
     bottom: calc(max(env(safe-area-inset-bottom, 0px), 8px) - var(--rm-mnb-viewport-gap));
     z-index: $rm-mnb-z-chrome;
@@ -45,11 +45,12 @@
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
-    height: $rm-mnb-tab-bar-height;
+    min-height: $rm-mnb-tab-bar-height;
     padding: 4px;
     border-radius: $rm-mnb-radius-pill;
-    // Horizontal dragging belongs to the lens, not to the browser.
-    touch-action: none;
+    // Horizontal dragging belongs to the lens, not to the browser; a vertical pan is
+    // left to it (the bar does not scroll, so it changes nothing, but it is not blocked).
+    touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -112,7 +113,7 @@
     background: none;
     color: var(--rm-mnb-ink);
     // 10px: a label such as "Dashboard" fits whole in a third of the pill at 375px.
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.15;
@@ -122,7 +123,7 @@
     transition: color $rm-mnb-duration-fade ease;
 
     .rm-mnb-icon-slot > * {
-        font-size: 24px;
+        font-size: 1.5rem;
         line-height: 1;
     }
 
@@ -135,9 +136,25 @@
         @include accent-ink;
     }
 
+    // Until the lens is placed (no JS yet, or none at all), the current tab carries the
+    // lens fill itself: the color is never its only mark (WCAG 1.4.1).
+    &[aria-current="page"]::before {
+        content: '';
+        position: absolute;
+        inset: 0 4px;
+        z-index: -1;
+        border-radius: inherit;
+        background-color: var(--rm-mnb-lens);
+    }
+
     &:focus-visible {
         @include focus-ring(-2px);
     }
+}
+
+// Once the lens is placed, it is the mark.
+.rm-mnb-tab-bar:has(.rm-mnb-tab-bar__lens.is-visible) .rm-mnb-tab-bar__tab::before {
+    content: none;
 }
 
 // During the drag, only the target carries the accent.
@@ -164,7 +181,7 @@
     border-radius: 9px;
     background-color: var(--rm-mnb-tone-solid-current, var(--rm-mnb-tone-negative-solid));
     color: var(--rm-mnb-on-tone);
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
     line-height: 18px;
     text-align: center;
@@ -185,7 +202,7 @@
     border-radius: 50%;
     background-color: var(--rm-mnb-accent-fill);
     color: var(--rm-mnb-on-accent);
-    font-size: 28px;
+    font-size: 1.75rem;
     text-decoration: none;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.35),
