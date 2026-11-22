@@ -2090,6 +2090,53 @@ html.rm-mnb-restoring .rm-mnb-scroller {
     outline: 1px solid var(--rm-mnb-border);
   }
 }
+.rm-mnb-tab-bar-layer {
+  view-transition-name: rm-mnb-tab-bar;
+}
+
+@keyframes rm-mnb-slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes rm-mnb-slide-to-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes rm-mnb-recede-left {
+  to {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+}
+@keyframes rm-mnb-advance-from-left {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-turbo-visit-direction=forward]::view-transition-old(root) {
+    animation: 0.45s cubic-bezier(0.32, 0.72, 0, 1) both rm-mnb-recede-left;
+  }
+  html[data-turbo-visit-direction=forward]::view-transition-new(root) {
+    animation: 0.45s cubic-bezier(0.32, 0.72, 0, 1) both rm-mnb-slide-from-right;
+  }
+  html[data-turbo-visit-direction=back]::view-transition-old(root) {
+    z-index: 1;
+    animation: 0.45s cubic-bezier(0.32, 0.72, 0, 1) both rm-mnb-slide-to-right;
+  }
+  html[data-turbo-visit-direction=back]::view-transition-new(root) {
+    animation: 0.45s cubic-bezier(0.32, 0.72, 0, 1) both rm-mnb-advance-from-left;
+  }
+}
+html.rm-mnb-gesture-back::view-transition-group(*),
+html.rm-mnb-gesture-back::view-transition-old(*),
+html.rm-mnb-gesture-back::view-transition-new(*) {
+  animation: none;
+}
+
 @media (forced-colors: active) {
   .rm-mnb-filter-bar__input:focus-visible,
   .rm-mnb-form .rm-mnb-field:focus-within {

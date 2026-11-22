@@ -57,7 +57,16 @@ export default class extends Controller<HTMLElement> {
         }
     };
 
-    private readonly onFrameLoad = (): void => this.dedupeSections();
+    // "Load more" replaced itself with the next rows: the focused link is gone and focus
+    // fell back to body. It moves to the first new row, where reading goes on.
+    private readonly onFrameLoad = (event: Event): void => {
+        this.dedupeSections();
+        const frame = event.target;
+        if (!(frame instanceof HTMLElement) || (document.activeElement !== null && document.activeElement !== document.body)) {
+            return;
+        }
+        frame.querySelector<HTMLElement>('a.rm-mnb-list-row__main, a.rm-mnb-load-more')?.focus({ preventScroll: true });
+    };
 
     // "Select" lives in the top row, outside the list: it drives the list through a
     // window event (SelectToggle), like the sheets.

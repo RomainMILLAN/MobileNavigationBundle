@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 
 import { haptic } from '../utils/haptic';
 import { shouldCompleteBack } from '../utils/history_stack';
-import { historyTracker } from '../utils/history_tracker';
+import { historyTracker, markGestureBack } from '../utils/history_tracker';
 import { scroller } from '../utils/scroller';
 
 /**
@@ -282,6 +282,7 @@ export default class extends Controller<HTMLElement> {
                 return;
             }
             document.documentElement.classList.add('rm-mnb-restoring');
+            markGestureBack();
             window.setTimeout(() => {
                 if (underlay?.isConnected) {
                     this.reset();

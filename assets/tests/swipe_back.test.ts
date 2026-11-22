@@ -11,6 +11,7 @@ import type { GoBackResult } from '../src/utils/history_tracker';
 const fake = vi.hoisted(() => ({
     target: null as BackTarget | null,
     goBack: vi.fn<(target: BackTarget) => GoBackResult>(),
+    markGestureBack: vi.fn<() => void>(),
 }));
 
 vi.mock('../src/utils/history_tracker', () => ({
@@ -21,6 +22,7 @@ vi.mock('../src/utils/history_tracker', () => ({
         isGoingBack: () => false,
         restoredEntry: () => null,
     }),
+    markGestureBack: fake.markGestureBack,
 }));
 
 const { default: SwipeBackController } = await import('../src/controllers/swipe_back_controller');
@@ -47,6 +49,7 @@ beforeAll(() => {
 beforeEach(async () => {
     fake.target = { steps: 1, entry: { id: 'a', index: 0, url: 'http://localhost:3000/account', scroll: 0, title: 'Compte' } };
     fake.goBack.mockReset().mockReturnValue('navigating');
+    fake.markGestureBack.mockReset();
     // Left by a successful going back; the (mocked) tracker would remove it on turbo:load.
     document.documentElement.classList.remove('rm-mnb-restoring');
     document.body.innerHTML = '<div class="rm-mnb-scroller" data-controller="swipe-back" data-swipe-back-require-standalone-value="false"></div>';
@@ -59,12 +62,13 @@ afterEach(() => {
 });
 
 describe('swipe back', () => {
-    it('goes back once the drag is released far enough', () => {
+    it('goes back once the drag is released far enough, without a second slide', () => {
         drag();
         touch('touchend', 300);
         vi.advanceTimersByTime(SETTLE);
 
         expect(fake.goBack).toHaveBeenCalledOnce();
+        expect(fake.markGestureBack).toHaveBeenCalledOnce();
     });
 
     it('never navigates on a system cancellation', () => {

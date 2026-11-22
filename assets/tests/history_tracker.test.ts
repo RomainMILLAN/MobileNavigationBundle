@@ -273,3 +273,79 @@ describe('shared instance', () => {
         expect(historyTracker()).toBe(tracker);
     });
 });
+
+describe('focus on the way back', () => {
+    const matches = Element.prototype.matches;
+    const keyboardFocus = (visible: boolean): void => {
+        vi.spyOn(Element.prototype, 'matches').mockImplementation(function (this: Element, selector: string) {
+            return selector === ':focus-visible' ? visible : matches.call(this, selector);
+        });
+    };
+    const leaveFrom = (link: HTMLAnchorElement): void => {
+        link.focus();
+        advanceTo('b', 1, '/transaction');
+    };
+    const restoreTo = (): void => {
+        document.body.innerHTML = '<a href="/other">other</a><a href="/transaction">Groceries</a>';
+        replaceTo('a', 0, '/account');
+        document.dispatchEvent(new CustomEvent('turbo:visit', { detail: { action: 'restore' } }));
+        document.dispatchEvent(new Event('turbo:load'));
+    };
+
+    beforeEach(() => {
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            callback(0);
+            return 0;
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+    });
+
+    it('focuses again the link a keyboard user followed to leave the page', () => {
+        const tracker = create();
+        replaceTo('a', 0, '/account');
+        tracker.ensureStarted();
+        document.body.innerHTML = '<a href="/transaction">Groceries</a>';
+        keyboardFocus(true);
+        leaveFrom(document.querySelector('a')!);
+
+        restoreTo();
+
+        expect(document.activeElement?.textContent).toBe('Groceries');
+    });
+
+    it('moves no focus after a tap', () => {
+        const tracker = create();
+        replaceTo('a', 0, '/account');
+        tracker.ensureStarted();
+        document.body.innerHTML = '<a href="/transaction">Groceries</a>';
+        keyboardFocus(false);
+        leaveFrom(document.querySelector('a')!);
+
+        restoreTo();
+
+        expect(document.activeElement).toBe(document.body);
+    });
+});
+
+describe('gesture back', () => {
+    it('marks a back the browser animated itself, until the page is shown', () => {
+        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+            callback(0);
+            return 0;
+        });
+        create();
+        const popstate = new PopStateEvent('popstate');
+        Object.defineProperty(popstate, 'hasUAVisualTransition', { value: true });
+
+        window.dispatchEvent(popstate);
+        expect(document.documentElement.classList.contains('rm-mnb-gesture-back')).toBe(true);
+
+        document.dispatchEvent(new Event('turbo:load'));
+        expect(document.documentElement.classList.contains('rm-mnb-gesture-back')).toBe(false);
+        vi.unstubAllGlobals();
+    });
+});

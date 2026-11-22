@@ -26,3 +26,9 @@ export declare function historyTracker(): HistoryTracker;
  * listeners. Code uses historyTracker().
  */
 export declare function createHistoryTracker(signal?: AbortSignal): HistoryTracker;
+/**
+ * The back navigation about to start was already animated by a gesture (the bundle's
+ * swipe back, or the browser's own): the directional view transition stands aside (see
+ * _transitions.scss). Removed once the page is shown.
+ */
+export declare function markGestureBack(): void;

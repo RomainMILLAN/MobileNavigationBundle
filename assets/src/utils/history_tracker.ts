@@ -153,6 +153,9 @@ export function createHistoryTracker(signal?: AbortSignal): HistoryTracker {
         },
     };
 
+    // Memory only, like the titles: the link a keyboard user left each page from.
+    const focusByPage = new Map<string, string>();
+
     document.addEventListener('turbo:visit', (event: Event) => {
         visitSincePopstate = true;
         lastVisitRestores = (event as CustomEvent<{ action?: string }>).detail?.action === 'restore';
@@ -186,6 +189,15 @@ export function createHistoryTracker(signal?: AbortSignal): HistoryTracker {
         if (started && loaded !== null) {
             stack = withScroll(stack, loaded, currentScroll());
             persist();
+            rememberFocus(focusByPage, loaded);
+        }
+    }, options);
+
+    // A browser back gesture that animates on its own (iOS Safari, Chrome Android): the
+    // view transition of the restore visit would play the slide a second time.
+    window.addEventListener('popstate', (event) => {
+        if ((event as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition === true) {
+            markGestureBack();
         }
     }, options);
 
@@ -205,6 +217,9 @@ export function createHistoryTracker(signal?: AbortSignal): HistoryTracker {
         stack = recordVisit(stack, loaded, entryOf(page));
         loaded = { id: page.id, index: page.index };
         persist();
+        if (lastVisitRestores) {
+            restoreFocus(focusByPage, loaded);
+        }
         if (goingBack !== null && goingBack.restoreSeen && page.index < goingBack.fromIndex) {
             stopGoingBack();
         }
@@ -225,6 +240,58 @@ export function createHistoryTracker(signal?: AbortSignal): HistoryTracker {
     }, options);
 
     return tracker;
+}
+
+/**
+ * Back to a page by the keyboard, focus goes back to the link it was left from, as on a
+ * native list: the user carries on where they were. Only a link focused by the keyboard
+ * (:focus-visible) is remembered: a tap leaves no focus to give back.
+ */
+function rememberFocus(focusByPage: Map<string, string>, page: HistoryKey): void {
+    const key = `${page.id}:${page.index}`;
+    const active = document.activeElement;
+    focusByPage.delete(key);
+    if (!(active instanceof HTMLAnchorElement) || !active.hasAttribute('href')) {
+        return;
+    }
+    try {
+        if (active.matches(':focus-visible')) {
+            focusByPage.set(key, active.getAttribute('href') ?? '');
+        }
+    } catch {
+        // An engine without :focus-visible: nothing is remembered.
+    }
+}
+
+function restoreFocus(focusByPage: Map<string, string>, page: HistoryKey): void {
+    const href = focusByPage.get(`${page.id}:${page.index}`);
+    if (href === undefined || href === '') {
+        return;
+    }
+    window.requestAnimationFrame(() => {
+        const escaped = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(href) : href.replace(/["\\]/g, '\\$&');
+        const link = document.querySelector<HTMLAnchorElement>(`a[href="${escaped}"]`);
+        if (link !== null && document.activeElement === document.body) {
+            link.focus({ preventScroll: true });
+        }
+    });
+}
+
+/**
+ * The back navigation about to start was already animated by a gesture (the bundle's
+ * swipe back, or the browser's own): the directional view transition stands aside (see
+ * _transitions.scss). Removed once the page is shown.
+ */
+export function markGestureBack(): void {
+    const root = document.documentElement;
+    root.classList.add('rm-mnb-gesture-back');
+    const clear = (): void => {
+        window.requestAnimationFrame(() => root.classList.remove('rm-mnb-gesture-back'));
+        document.removeEventListener('turbo:load', clear);
+        window.clearTimeout(timer);
+    };
+    const timer = window.setTimeout(clear, GOING_BACK_SAFETY_MS);
+    document.addEventListener('turbo:load', clear);
 }
 
 /** The page Turbo has written in history.state, or null (Turbo not started, foreign state). */

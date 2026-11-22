@@ -234,6 +234,7 @@ function createHistoryTracker(signal) {
 			return stack.find((entry) => entry.id === page.id && entry.index === page.index) ?? null;
 		}
 	};
+	const focusByPage = /* @__PURE__ */ new Map();
 	document.addEventListener("turbo:visit", (event) => {
 		visitSincePopstate = true;
 		lastVisitRestores = event.detail?.action === "restore";
@@ -253,7 +254,11 @@ function createHistoryTracker(signal) {
 		if (started && loaded !== null) {
 			stack = withScroll(stack, loaded, currentScroll());
 			persist();
+			rememberFocus(focusByPage, loaded);
 		}
+	}, options);
+	window.addEventListener("popstate", (event) => {
+		if (event.hasUAVisualTransition === true) markGestureBack();
 	}, options);
 	document.addEventListener("turbo:load", () => {
 		window.requestAnimationFrame(() => document.documentElement.classList.remove("rm-mnb-restoring"));
@@ -270,6 +275,7 @@ function createHistoryTracker(signal) {
 			index: page.index
 		};
 		persist();
+		if (lastVisitRestores) restoreFocus(focusByPage, loaded);
 		if (goingBack !== null && goingBack.restoreSeen && page.index < goingBack.fromIndex) stopGoingBack();
 		lastVisitRestores = false;
 	}, options);
@@ -283,6 +289,45 @@ function createHistoryTracker(signal) {
 		}
 	}, options);
 	return tracker;
+}
+/**
+* Back to a page by the keyboard, focus goes back to the link it was left from, as on a
+* native list: the user carries on where they were. Only a link focused by the keyboard
+* (:focus-visible) is remembered: a tap leaves no focus to give back.
+*/
+function rememberFocus(focusByPage, page) {
+	const key = `${page.id}:${page.index}`;
+	const active = document.activeElement;
+	focusByPage.delete(key);
+	if (!(active instanceof HTMLAnchorElement) || !active.hasAttribute("href")) return;
+	try {
+		if (active.matches(":focus-visible")) focusByPage.set(key, active.getAttribute("href") ?? "");
+	} catch {}
+}
+function restoreFocus(focusByPage, page) {
+	const href = focusByPage.get(`${page.id}:${page.index}`);
+	if (href === void 0 || href === "") return;
+	window.requestAnimationFrame(() => {
+		const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(href) : href.replace(/["\\]/g, "\\$&");
+		const link = document.querySelector(`a[href="${escaped}"]`);
+		if (link !== null && document.activeElement === document.body) link.focus({ preventScroll: true });
+	});
+}
+/**
+* The back navigation about to start was already animated by a gesture (the bundle's
+* swipe back, or the browser's own): the directional view transition stands aside (see
+* _transitions.scss). Removed once the page is shown.
+*/
+function markGestureBack() {
+	const root = document.documentElement;
+	root.classList.add("rm-mnb-gesture-back");
+	const clear = () => {
+		window.requestAnimationFrame(() => root.classList.remove("rm-mnb-gesture-back"));
+		document.removeEventListener("turbo:load", clear);
+		window.clearTimeout(timer);
+	};
+	const timer = window.setTimeout(clear, GOING_BACK_SAFETY_MS);
+	document.addEventListener("turbo:load", clear);
 }
 /** The page Turbo has written in history.state, or null (Turbo not started, foreign state). */
 function currentPage() {
@@ -785,7 +830,12 @@ var list_controller_default = class extends Controller {
 			checkbox.dispatchEvent(new Event("change", { bubbles: true }));
 		}
 	};
-	onFrameLoad = () => this.dedupeSections();
+	onFrameLoad = (event) => {
+		this.dedupeSections();
+		const frame = event.target;
+		if (!(frame instanceof HTMLElement) || document.activeElement !== null && document.activeElement !== document.body) return;
+		frame.querySelector("a.rm-mnb-list-row__main, a.rm-mnb-load-more")?.focus({ preventScroll: true });
+	};
 	onToggleCommand = () => this.toggleSelecting();
 	onToggleEditingCommand = () => this.toggleEditing();
 	onMorph = () => this.setMode("idle");
@@ -1555,6 +1605,7 @@ var swipe_back_controller_default = class extends Controller {
 				return;
 			}
 			document.documentElement.classList.add("rm-mnb-restoring");
+			markGestureBack();
 			window.setTimeout(() => {
 				if (underlay?.isConnected) this.reset();
 			}, SAFETY_MS);
