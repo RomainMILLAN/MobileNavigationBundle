@@ -46,6 +46,14 @@
                 <source>actions.more</source>
                 <target>More actions</target>
             </trans-unit>
+            <trans-unit id="swipe.actions" resname="swipe.actions">
+                <source>swipe.actions</source>
+                <target>Actions for %item%</target>
+            </trans-unit>
+            <trans-unit id="swipe.toggle" resname="swipe.toggle">
+                <source>swipe.toggle</source>
+                <target>Show the actions for %item%</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -1,11 +1,11 @@
 /**
- * Focus handling for a modal sheet: what is focusable, the Tab trap, and the element to
- * return focus to on close.
+ * Focus handling for a modal sheet: what is focusable, and the element to return focus to
+ * on close. The Tab trap and the inert page come from showModal(): there is none here.
  */
 
-// ARIA contract published by the sheets' markup: an open or closed sheet is
-// always a modal dialog. We rely on it rather than on a Stimulus attribute.
-export const DIALOG_SELECTOR = '[role="dialog"][aria-modal="true"]';
+// An OPEN sheet, whatever its markup: a mobileOnly sheet rendered in place above
+// 768 px is a <dialog> too, but never one the focus has to leave.
+export const OPEN_SHEET_SELECTOR = '.rm-mnb-sheet--open';
 
 const FOCUSABLE_SELECTOR = [
     'a[href]',
@@ -27,7 +27,7 @@ export function focusableIn(root: HTMLElement): HTMLElement[] {
 /**
  * The element to return focus to when the sheet closes, decided BEFORE opening it.
  *
- * The active element is kept only if it is inside no sheet: when chaining More →
+ * The active element is kept only if it is inside no open sheet: when chaining More →
  * Search, the active element is a row of the More sheet, which will be hidden. On iOS, a tap
  * does not focus the button: the active element is body. In both cases, we fall back to
  * the first visible trigger (aria-controls), otherwise focus will not be moved.
@@ -40,39 +40,10 @@ export function returnTarget(
     if (
         active instanceof HTMLElement
         && active !== active.ownerDocument.body
-        && active.closest(DIALOG_SELECTOR) === null
+        && active.closest(OPEN_SHEET_SELECTOR) === null
     ) {
         return active;
     }
 
     return triggers.find(isShown) ?? null;
-}
-
-/** Keeps Tab and Shift+Tab inside root. */
-export function trapTab(event: KeyboardEvent, root: HTMLElement): void {
-    if (event.key !== 'Tab') {
-        return;
-    }
-
-    const items = focusableIn(root);
-    if (items.length === 0) {
-        event.preventDefault();
-        root.focus({ preventScroll: true });
-        return;
-    }
-
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (first === undefined || last === undefined) {
-        return;
-    }
-    const active = root.ownerDocument.activeElement;
-
-    if (event.shiftKey && (active === first || !root.contains(active))) {
-        event.preventDefault();
-        last.focus({ preventScroll: true });
-    } else if (!event.shiftKey && (active === last || !root.contains(active))) {
-        event.preventDefault();
-        first.focus({ preventScroll: true });
-    }
 }

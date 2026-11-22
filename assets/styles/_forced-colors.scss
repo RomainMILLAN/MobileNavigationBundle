@@ -1,0 +1,33 @@
+// ===========================
+// Forced colors (Windows High Contrast and the like)
+// ===========================
+// The browser drops backgrounds and box-shadows: every mark that relied on them (focus
+// rings drawn with box-shadow, the lens, the current segment) gets a system color.
+
+@media (forced-colors: active) {
+    // Focus rings drawn with box-shadow: an outline takes over.
+    .rm-mnb-filter-bar__input:focus-visible,
+    .rm-mnb-form .rm-mnb-field:focus-within {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    // Current tab and segment: an outline in the selection color, never a lone fill.
+    .rm-mnb-tab-bar__tab[aria-current="page"],
+    .rm-mnb-segmented__item[aria-current="page"],
+    .rm-mnb-segmented__item.is-current {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    .rm-mnb-tab-bar__lens {
+        display: none;
+    }
+
+    // Sheet panel and glass surfaces: a border, since the blur and shadow disappear.
+    .rm-mnb-sheet__panel,
+    .rm-mnb-tab-bar,
+    .rm-mnb-compact-bar__title {
+        border: 1px solid CanvasText;
+    }
+}

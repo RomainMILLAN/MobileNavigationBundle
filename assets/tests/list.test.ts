@@ -212,3 +212,31 @@ describe('filter-bar controller', () => {
         expect(inputs).toBe(1);
     });
 });
+
+describe('"Load more"', () => {
+    const mount = async (): Promise<HTMLElement> => {
+        document.body.innerHTML = `<div class="rm-mnb-list" data-controller="list">${section('Octobre', [1])}<turbo-frame id="page-2"></turbo-frame></div>`;
+        await tick();
+
+        return query<HTMLElement>('#page-2');
+    };
+
+    it('moves the focus lost with the link to the first new row', async () => {
+        const frame = await mount();
+        frame.innerHTML = section('Septembre', [2, 3]);
+
+        frame.dispatchEvent(new Event('turbo:frame-load', { bubbles: true }));
+
+        expect(document.activeElement).toBe(query('#link-2'));
+    });
+
+    it('leaves a focus that is still somewhere', async () => {
+        const frame = await mount();
+        query<HTMLElement>('#link-1').focus();
+        frame.innerHTML = section('Septembre', [2]);
+
+        frame.dispatchEvent(new Event('turbo:frame-load', { bubbles: true }));
+
+        expect(document.activeElement).toBe(query('#link-1'));
+    });
+});

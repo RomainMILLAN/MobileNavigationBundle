@@ -72,6 +72,8 @@ final class ListRow
     /** @var array{label: string|\Stringable, attributes: ?StimulusAttributes}|null Drag handle shown in "Edit" mode, or null. */
     public ?array $reorder = null;
 
+    private ?string $swipePanelId = null;
+
     public function __construct(
         private readonly SwipeControllerAttributes $swipeControllerAttributes,
     ) {
@@ -104,6 +106,20 @@ final class ListRow
     public function swipeAttributes(): StimulusAttributes
     {
         return $this->swipeControllerAttributes->createForActions($this->swipe);
+    }
+
+    /**
+     * @return list<array{url: string, icon: string, tone: string, label: string, method?: string, confirm?: string, carriesReturnPath?: true}>
+     */
+    public function swipeActionList(): array
+    {
+        return $this->swipeControllerAttributes->actionsOf($this->swipe);
+    }
+
+    /** Id of the actions panel, which the "Actions" button controls. */
+    public function swipePanelId(): string
+    {
+        return $this->swipePanelId ??= 'rm-mnb-swipe-'.bin2hex(random_bytes(6));
     }
 
     private function swipeActions(mixed $swipe): SwipeActions

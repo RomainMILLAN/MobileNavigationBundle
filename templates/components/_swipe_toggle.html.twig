@@ -1,0 +1,11 @@
+{% trans_default_domain 'rm_mnb' %}
+{#
+    "Actions" button of a swipeable element (variables: panelId, label): the way to the
+    swipe actions without the gesture (WCAG 2.5.1), for the keyboard, a screen reader, voice
+    control or a mouse. Hidden until the controller connects, since it alone opens the panel.
+#}
+<button type="button" class="rm-mnb-swipe__toggle" hidden aria-expanded="false" aria-controls="{{ panelId }}"
+        aria-label="{{ 'swipe.toggle'|trans({'%item%': label}) }}"
+        {{ stimulus_target(rm_mnb_controller('swipe-actions'), 'toggle')|stimulus_action(rm_mnb_controller('swipe-actions'), 'toggle') }}>
+    <span class="rm-mnb-icon rm-mnb-icon--more" aria-hidden="true"></span>
+</button>

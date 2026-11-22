@@ -57,7 +57,7 @@ final class NamingConsistencyTest extends TestCase
     #[Test]
     public function it_should_spoof_exactly_the_non_post_http_methods(): void
     {
-        $list = u($this->read('assets/src/controllers/swipe_actions_controller.ts'))->match('/const SPOOFED_METHODS: ReadonlySet<string> = new Set\\(\\[([^\\]]+)\\]\\);/')[1] ?? null;
+        $list = u($this->read('templates/components/_swipe_panel.html.twig'))->match('/action\\.method in \\[([^\\]]+)\\]/')[1] ?? null;
         self::assertIsString($list);
         $methods = array_map(static fn (UnicodeString $method): string => $method->trim(" '")->toString(), u($list)->split(','));
 

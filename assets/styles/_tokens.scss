@@ -12,7 +12,8 @@ $rm-mnb-tab-bar-gap: 10px !default;
 $rm-mnb-tab-bar-inset: 16px !default;
 $rm-mnb-fab-size: 62px !default;
 $rm-mnb-control-size: 44px !default;
-$rm-mnb-large-title-size: 34px !default;
+// In rem, like every font size: it follows the text size the user chose.
+$rm-mnb-large-title-size: 2.125rem !default;
 // Distance between the status bar and the top control row (large title and compact
 // bar). Enough to clear the edge effect iOS 26 paints under the status bar.
 $rm-mnb-top-row-offset: 16px !default;

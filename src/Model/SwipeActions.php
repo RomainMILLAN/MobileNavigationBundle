@@ -55,6 +55,12 @@ final readonly class SwipeActions
         return [] === $this->actions;
     }
 
+    /** The CSRF token the panel's forms carry. */
+    public function csrfToken(): string
+    {
+        return $this->csrfToken;
+    }
+
     /**
      * @return array{actions: list<array{url: string, icon: string, tone: string, label: string, method?: string, confirm?: string}>, csrfToken: string}
      */

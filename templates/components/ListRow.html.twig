@@ -1,12 +1,13 @@
 {#
-    iOS grouped list row: tap = view, swipe = actions, selection in "Select" mode. Texts
+    iOS grouped list row: tap = view, swipe = actions (an "Actions" button too, for those
+    who do not swipe), selection in "Select" mode. Texts
     arrive translated, URLs generated server side. The leading_icon block replaces the
     <i> of the chip (variable: leading). caption is a second value under the value (a
     projected balance…). With reorder, a drag handle shows in "Edit" mode;
     the app sets its drag target on it. Props: see the ListRow class.
 #}
-<div class="rm-mnb-list-row {{ attributes.render('class') }}"
-     {{ attributes.defaults(this.swipeAttributes) }}>
+{% set swipeable = not swipe.empty %}
+{% set inner %}
     {% if selectable %}
         <label class="rm-mnb-list-row__select">
             <input type="checkbox" name="{{ selectable.name }}" value="{{ selectable.value }}"
@@ -47,9 +48,26 @@
         {% endif %}
     {% if href %}</a>{% else %}</div>{% endif %}
     {% if reorder %}
-        <span class="rm-mnb-list-row__reorder" role="button" tabindex="-1" aria-label="{{ reorder.label }}"
-              {{ reorder.attributes ? reorder.attributes|raw }}>
+        {# A real button: hidden (so out of the tab order) outside "Edit" mode, focusable in it.
+           The app wires its keyboard alternative to the drag on it (arrow keys, say). #}
+        <button type="button" class="rm-mnb-list-row__reorder" aria-label="{{ reorder.label }}"
+                {{ reorder.attributes ? reorder.attributes|raw }}>
             <span class="rm-mnb-icon rm-mnb-icon--grip" aria-hidden="true"></span>
-        </span>
+        </button>
+    {% endif %}
+{% endset %}
+<div class="rm-mnb-list-row {{ attributes.render('class') }}"
+     {{ attributes.defaults(this.swipeAttributes) }}>
+    {% if swipeable %}
+        {# The row slides over its actions panel: a horizontal scroll-snap track. #}
+        <div class="rm-mnb-swipe" {{ stimulus_target(rm_mnb_controller('swipe-actions'), 'track') }}>
+            <div class="rm-mnb-swipe__content">
+                {{ inner }}
+                {{ include('@MobileNavigation/components/_swipe_toggle.html.twig', { panelId: this.swipePanelId, label: title }) }}
+            </div>
+            {{ include('@MobileNavigation/components/_swipe_panel.html.twig', { actions: this.swipeActionList, csrfToken: swipe.csrfToken, panelId: this.swipePanelId, label: title }) }}
+        </div>
+    {% else %}
+        {{ inner }}
     {% endif %}
 </div>

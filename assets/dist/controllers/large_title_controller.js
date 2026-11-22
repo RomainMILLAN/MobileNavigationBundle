@@ -19,12 +19,20 @@ var large_title_controller_default = class extends Controller {
 		this.unobserve();
 		this.observe();
 	};
+	resizeFrame = 0;
+	onResize = () => {
+		cancelAnimationFrame(this.resizeFrame);
+		this.resizeFrame = requestAnimationFrame(this.onMorph);
+	};
 	connect() {
 		document.addEventListener("turbo:morph", this.onMorph);
+		window.addEventListener("resize", this.onResize);
 		this.observe();
 	}
 	disconnect() {
 		document.removeEventListener("turbo:morph", this.onMorph);
+		window.removeEventListener("resize", this.onResize);
+		cancelAnimationFrame(this.resizeFrame);
 		this.unobserve();
 	}
 	observe() {

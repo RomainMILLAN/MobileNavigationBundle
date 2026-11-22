@@ -1,0 +1,69 @@
+@use 'tokens' as *;
+
+// ===========================
+// Directional page transitions (Turbo 8 view transitions)
+// ===========================
+// Inert until the app opts in with <meta name="view-transition" content="same-origin">:
+// Turbo then renders each visit in a view transition and marks <html> with
+// data-turbo-visit-direction (forward on a visit, back on a restore). Going forward, the
+// new page slides in from the right over the old one; going back, the old page slides
+// away to the right, as in an iOS navigation stack.
+
+// The fixed chrome does not travel with the page.
+.rm-mnb-tab-bar-layer {
+    view-transition-name: rm-mnb-tab-bar;
+}
+
+@keyframes rm-mnb-slide-from-right {
+    from {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes rm-mnb-slide-to-right {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes rm-mnb-recede-left {
+    to {
+        transform: translateX(-30%);
+        opacity: 0.6;
+    }
+}
+
+@keyframes rm-mnb-advance-from-left {
+    from {
+        transform: translateX(-30%);
+        opacity: 0.6;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html[data-turbo-visit-direction="forward"]::view-transition-old(root) {
+        animation: $rm-mnb-duration-sheet $rm-mnb-ease-sheet both rm-mnb-recede-left;
+    }
+
+    html[data-turbo-visit-direction="forward"]::view-transition-new(root) {
+        animation: $rm-mnb-duration-sheet $rm-mnb-ease-sheet both rm-mnb-slide-from-right;
+    }
+
+    // Going back, the leaving page is drawn above the one it returns to.
+    html[data-turbo-visit-direction="back"]::view-transition-old(root) {
+        z-index: 1;
+        animation: $rm-mnb-duration-sheet $rm-mnb-ease-sheet both rm-mnb-slide-to-right;
+    }
+
+    html[data-turbo-visit-direction="back"]::view-transition-new(root) {
+        animation: $rm-mnb-duration-sheet $rm-mnb-ease-sheet both rm-mnb-advance-from-left;
+    }
+}
+
+// A back navigation already animated by a gesture (the swipe back, or the browser's own):
+// no second slide.
+html.rm-mnb-gesture-back::view-transition-group(*),
+html.rm-mnb-gesture-back::view-transition-old(*),
+html.rm-mnb-gesture-back::view-transition-new(*) {
+    animation: none;
+}

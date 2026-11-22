@@ -5,7 +5,7 @@
     carries the action label; the way out is "Close", never "Cancel" (the action itself
     may be called "Cancel"). Props: see the ConfirmSheet class.
 #}
-<div class="rm-mnb-sheet {{ attributes.render('class') }}" id="{{ id }}" role="alertdialog" aria-modal="true"
+<dialog class="rm-mnb-sheet {{ attributes.render('class') }}" id="{{ id }}" role="alertdialog"
      aria-labelledby="{{ id }}-title" aria-describedby="{{ id }}-message"
      {{ attributes.defaults(stimulus_controller(rm_mnb_controller('sheet'), { name: id, forceCloseEvents: forceCloseEvents })|stimulus_controller(rm_mnb_controller('confirm-sheet'), { sheet: id })) }}>
     {# A <div> has no default event for Stimulus: click is explicit. #}
@@ -22,4 +22,4 @@
             </button>
         </div>
     </div>
-</div>
+</dialog>

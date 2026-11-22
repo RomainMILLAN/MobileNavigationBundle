@@ -4,6 +4,60 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 - 2026-11-22
+
+Audit against the modern web platform guides: native dialogs, swipe actions without
+gesture code, accessibility of the chrome and the lists.
+
+### Breaking
+
+- `Sheet` and `ConfirmSheet` render a `<dialog>` opened with `showModal()` instead of a
+  `<div role="dialog" aria-modal="true">`. The browser makes the page inert, keeps Tab
+  inside, and turns Esc and the Android back gesture into a close. The scroll lock no longer
+  sets `overflow: hidden` on `<html>`/`<body>` (the class `rm-mnb-has-open-sheet` stays, as a
+  hook). `trapTab()` and `DIALOG_SELECTOR` are gone from `utils/focus_trap`.
+- Swipe actions are rendered server side, next to the row content, in a horizontal
+  scroll-snap track. The `swipe-actions` controller takes no value any more (no `actions`,
+  no `csrfToken`), and the `rm_mnb_swipe_controller()` Twig function is removed: use the new
+  `Swipeable` component around app markup. A port outside Symfony renders
+  `_swipe_panel.html.twig` and `_swipe_toggle.html.twig`.
+- `gesture` emits `tap` at once and no `doubletap` unless `double-tap-value` is true.
+- The `ListRow` reorder handle is a `<button>`; `EmptyState` renders its title as an `<h2>`.
+- Every font size is in `rem`; `$rm-mnb-large-title-size` defaults to `2.125rem`.
+
+### Added
+
+- An "Actions" button on each swipeable row (`aria-expanded`), for the keyboard, screen
+  readers, voice control and the mouse (WCAG 2.5.1).
+- `Swipeable` component; translations `swipe.actions` and `swipe.toggle`.
+- `EmptyState` `headingLevel` prop.
+- Directional page transitions when the app opts into Turbo view transitions
+  (`<meta name="view-transition" content="same-origin">`), skipped after a gesture back.
+- `forced-colors` support; `color-scheme` in `light-defaults` / `dark-defaults`.
+- Focus goes back to the followed link when a keyboard user comes back to a page, and to the
+  first new row after "Load more".
+- `gesture`: a context menu (right click, Shift+F10) emits `longpress`.
+
+### Changed
+
+- The current tab carries the lens fill before the lens is placed, so color is never its
+  only mark; the current segment is styled by `aria-current`.
+- `scroll-padding` keeps a focused element out from under the fixed bars.
+- Form fields and the switch label are at least 44 px high; the bars use `min-height`; the
+  large title is no longer clamped to two lines; side safe areas are respected.
+- Reduced motion keeps the fades and only drops the movement (sheets, compact bar).
+- The tab bar pill uses `touch-action: pan-y`; the sheet handle `touch-action: none`.
+- `.rm-mnb-visually-hidden` uses `clip-path` instead of the deprecated `clip`.
+
+### Fixed
+
+- After a confirmation opened from an action sheet, focus fell back to `<body>`: the sheet
+  that closes now hands its return target to the one that opens.
+- A swipe action vibrated on every frame past the threshold; a system-cancelled swipe left
+  the row half open; an open panel stayed in place while the page scrolled. (All gone with
+  the scroll-snap rewrite.)
+- The large title recomputes its collapse threshold on resize and rotation.
+
 ## 0.4.0 - 2026-11-06
 
 Reported from Notifier (more swipe actions on its lists, and a swipe that lands on a sheet).

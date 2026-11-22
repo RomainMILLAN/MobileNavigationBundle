@@ -29,6 +29,36 @@ final class EmptyStateTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_render_its_title_as_a_level_two_heading_by_default(): void
+    {
+        $state = $this->renderComponent('EmptyState', ['title' => 'No loan yet']);
+
+        self::assertCount(1, $state->filter('h2.rm-mnb-empty-state__title'));
+    }
+
+    #[Test]
+    public function it_should_render_its_title_at_the_given_heading_level(): void
+    {
+        $state = $this->renderComponent('EmptyState', ['title' => 'No loan yet', 'headingLevel' => 3]);
+
+        self::assertCount(1, $state->filter('h3.rm-mnb-empty-state__title'));
+    }
+
+    #[Test]
+    public function it_should_render_its_title_as_a_paragraph_without_heading_level(): void
+    {
+        $state = $this->renderComponent('EmptyState', ['title' => 'No loan yet', 'headingLevel' => null]);
+
+        self::assertCount(1, $state->filter('p.rm-mnb-empty-state__title'));
+    }
+
+    #[Test]
+    public function it_should_refuse_a_heading_level_out_of_range(): void
+    {
+        $this->assertMountFails('EmptyState', ['title' => 'No loan yet', 'headingLevel' => 7], 'must be an integer from 1 to 6');
+    }
+
+    #[Test]
     public function it_should_refuse_an_unknown_key_in_action(): void
     {
         $this->assertMountFails('EmptyState', [...['title' => 'No loan yet'], 'action' => ['href' => '/x', 'label' => 'X', 'icon' => 'y']], 'Cannot mount the "action" prop of the MobileNavigation:EmptyState component');

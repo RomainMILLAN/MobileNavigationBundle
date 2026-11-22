@@ -59,7 +59,7 @@
 .rm-mnb-back {
     @include accent-ink;
 
-    font-size: 24px;
+    font-size: 1.5rem;
 
     .rm-mnb-icon {
         // The chevron is optically shifted to the left within its disc.
@@ -94,19 +94,17 @@
     }
 
     .rm-mnb-large-title__title {
-        display: -webkit-box;
         grid-area: title;
         min-width: 0;
         margin: 0;
-        overflow: hidden;
+        // A heading is never cut: it wraps, whatever the text size.
+        overflow-wrap: anywhere;
         color: var(--rm-mnb-ink);
         font-size: $rm-mnb-large-title-size;
         font-weight: 700;
         line-height: 1.12;
         letter-spacing: -0.02em;
         text-wrap: balance;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
     }
 
     .rm-mnb-large-title__trailing {
@@ -135,8 +133,12 @@
     // Same margin as the page content: the back disc does not jump on collapse.
     // The controls start below the edge effect iOS 26 paints under the status
     // bar (blur and light veil, outside the page): any higher, it covered them.
-    padding: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset}) var(--rm-mnb-page-inset) 0;
-    height: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset} + #{$rm-mnb-control-size});
+    padding:
+        calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset})
+        max(var(--rm-mnb-page-inset), env(safe-area-inset-right, 0px))
+        0
+        max(var(--rm-mnb-page-inset), env(safe-area-inset-left, 0px));
+    min-height: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset} + #{$rm-mnb-control-size});
     opacity: 0;
     pointer-events: none;
     transition: opacity $rm-mnb-duration-fade ease;
@@ -209,7 +211,7 @@
     overflow: hidden;
     border-radius: 18px;
     color: var(--rm-mnb-ink);
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -217,13 +219,6 @@
 
 .rm-mnb-compact-bar__trailing {
     grid-column: 3;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .rm-mnb-compact-bar,
-    .rm-mnb-compact-bar-veil {
-        transition: none;
-    }
 }
 
 // Only when the scroller scrolls itself (the controller sets is-contained, browser or PWA):

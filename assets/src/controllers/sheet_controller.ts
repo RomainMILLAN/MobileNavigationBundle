@@ -1,11 +1,17 @@
 import { Controller } from '@hotwired/stimulus';
 
-import { focusableIn, isVisible, returnTarget, trapTab } from '../utils/focus_trap';
+import { focusableIn, isVisible, returnTarget } from '../utils/focus_trap';
 import { isLocalPath } from '../utils/same_origin';
 import { attachSheetDrag, shouldDismiss } from '../utils/sheet_drag';
 
 interface SheetEventDetail {
     name: string;
+    /**
+     * Filled by the sheet that closes because this one opens: where its own focus was to
+     * return. The opening sheet takes it when it found none itself (a confirmation opened
+     * from a row of an action sheet), so closing the chain never drops focus on body.
+     */
+    handedReturnTo?: HTMLElement | null;
 }
 
 interface CloseOptions {
@@ -15,6 +21,12 @@ interface CloseOptions {
 
 /**
  * Generic iOS-style bottom sheet. No route, no label: reusable.
+ *
+ * The element is a <dialog>, opened with showModal(): the browser puts it in the top layer,
+ * makes the rest of the page inert, keeps Tab inside it and turns Esc and the Android back
+ * gesture into a `cancel` event, which closes it with its animation. A closed sheet stays
+ * rendered (visibility: hidden, see _sheet.scss): it slides away after leaving the top
+ * layer, and the app can tell a displayable sheet (mobile) from a hidden one.
  *
  * Commands: `<name>:toggle`, `<name>:open`, `<name>:close`, on window (dispatched by the
  * emit-event controller). They carry no detail. Opening an open sheet or
@@ -66,29 +78,41 @@ export default class extends Controller<HTMLElement> {
     private isOpen = false;
     private returnTo: HTMLElement | null = null;
     private detachDrag: (() => void) | null = null;
+    private ownCloses = 0;
 
     private readonly onToggleCommand = (): void => this.toggle();
     private readonly onOpenCommand = (): void => this.open();
     private readonly onCloseCommand = (): void => this.close();
 
     private readonly onOpening = (event: Event): void => {
-        if ((event as CustomEvent<SheetEventDetail>).detail?.name !== this.nameValue) {
-            this.close({ restoreFocus: false });
+        const detail = (event as CustomEvent<SheetEventDetail>).detail;
+        if (detail?.name === this.nameValue || !this.isOpen) {
+            return;
         }
+        detail.handedReturnTo ??= this.returnTo;
+        this.close({ restoreFocus: false });
     };
 
     private readonly onForceClose = (): void => this.close({ animate: false, restoreFocus: false });
 
-    private readonly onKeydown = (event: KeyboardEvent): void => {
-        if (!this.isOpen) {
+    // Esc, the Android back gesture, a close request: the sheet closes itself, animated.
+    private readonly onCancel = (event: Event): void => {
+        event.preventDefault();
+        this.close();
+    };
+
+    // The browser closed the dialog on its own (a second back gesture it no longer lets
+    // the page cancel, say): the state catches up.
+    private readonly onNativeClose = (): void => {
+        // The close event is queued: the one following our own close() must not close a
+        // sheet reopened in between.
+        if (this.ownCloses > 0) {
+            this.ownCloses -= 1;
             return;
         }
-        if (event.key === 'Escape') {
-            event.preventDefault();
+        if (this.isOpen) {
             this.close();
-            return;
         }
-        trapTab(event, this.panelTarget);
     };
 
     // Any action (link, POST, button) inside a marked zone closes the sheet: the
@@ -113,9 +137,10 @@ export default class extends Controller<HTMLElement> {
         window.addEventListener(`${this.nameValue}:open`, this.onOpenCommand);
         window.addEventListener(`${this.nameValue}:close`, this.onCloseCommand);
         window.addEventListener('rm-mnb:sheet-opening', this.onOpening);
-        window.addEventListener('keydown', this.onKeydown);
         this.forceCloseEventsValue.forEach((name) => window.addEventListener(name, this.onForceClose));
         this.element.addEventListener('click', this.onClick);
+        this.element.addEventListener('cancel', this.onCancel);
+        this.element.addEventListener('close', this.onNativeClose);
 
         this.detachDrag = attachSheetDrag(this.panelTarget, {
             canStart: (target) => this.canStartDrag(target),
@@ -147,9 +172,10 @@ export default class extends Controller<HTMLElement> {
         window.removeEventListener(`${this.nameValue}:open`, this.onOpenCommand);
         window.removeEventListener(`${this.nameValue}:close`, this.onCloseCommand);
         window.removeEventListener('rm-mnb:sheet-opening', this.onOpening);
-        window.removeEventListener('keydown', this.onKeydown);
         this.forceCloseEventsValue.forEach((name) => window.removeEventListener(name, this.onForceClose));
         this.element.removeEventListener('click', this.onClick);
+        this.element.removeEventListener('cancel', this.onCancel);
+        this.element.removeEventListener('close', this.onNativeClose);
         this.detachDrag?.();
         this.detachDrag = null;
         this.close({ animate: false, restoreFocus: false });
@@ -169,7 +195,7 @@ export default class extends Controller<HTMLElement> {
     }
 
     public open(): void {
-        if (this.isOpen) {
+        if (this.isOpen || this.rendersInPlace()) {
             return;
         }
 
@@ -177,13 +203,15 @@ export default class extends Controller<HTMLElement> {
         //    it may currently be in.
         this.returnTo = returnTarget(document.activeElement, this.triggers(), isVisible);
 
-        // 2. Announce, before any state change.
-        window.dispatchEvent(new CustomEvent<SheetEventDetail>('rm-mnb:sheet-opening', { detail: { name: this.nameValue } }));
+        // 2. Announce, before any state change. A sheet closing for this one hands over
+        //    its own return target.
+        const detail: SheetEventDetail = { name: this.nameValue };
+        window.dispatchEvent(new CustomEvent<SheetEventDetail>('rm-mnb:sheet-opening', { detail }));
+        this.returnTo ??= detail.handedReturnTo ?? null;
 
-        // 3. Change state. A "mobile only" sheet is a dialog only while open:
-        //    when closed, above 768 px, its content is an ordinary region of the page.
+        // 3. Change state.
         this.isOpen = true;
-        this.setDialogRole(true);
+        this.showModal();
         this.element.classList.add('rm-mnb-sheet--open');
         document.documentElement.classList.add('rm-mnb-has-open-sheet');
         this.setExpanded(true);
@@ -200,11 +228,13 @@ export default class extends Controller<HTMLElement> {
         }
 
         this.isOpen = false;
-        this.setDialogRole(false);
         if (!animate) {
             this.element.classList.add('rm-mnb-sheet--instant');
         }
         this.element.classList.remove('rm-mnb-sheet--open');
+        // Out of the top layer right away: the page is no longer inert, focus can return.
+        // The panel finishes sliding away under visibility (see _sheet.scss).
+        this.closeModal();
         this.panelTarget.style.transform = '';
 
         // Another sheet may have opened in the same tick (choreography): the scroll
@@ -231,17 +261,43 @@ export default class extends Controller<HTMLElement> {
         return Array.from(document.querySelectorAll<HTMLElement>(`[aria-controls="${this.element.id}"]`));
     }
 
-    private setDialogRole(open: boolean): void {
-        if (!this.element.classList.contains('rm-mnb-sheet--mobile-only')) {
+    private get dialog(): HTMLDialogElement | null {
+        return this.element instanceof HTMLDialogElement ? this.element : null;
+    }
+
+    private showModal(): void {
+        const dialog = this.dialog;
+        if (dialog === null || dialog.open) {
             return;
         }
-        if (open) {
-            this.element.setAttribute('role', 'dialog');
-            this.element.setAttribute('aria-modal', 'true');
+        // An engine without showModal() (an old one, jsdom) still gets an open dialog.
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
         } else {
-            this.element.removeAttribute('role');
-            this.element.removeAttribute('aria-modal');
+            dialog.setAttribute('open', '');
         }
+    }
+
+    private closeModal(): void {
+        const dialog = this.dialog;
+        if (dialog === null || !dialog.open) {
+            return;
+        }
+        if (typeof dialog.close === 'function') {
+            this.ownCloses += 1;
+            dialog.close();
+        } else {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * A "mobile only" sheet above 768 px: its content is part of the page, never a modal.
+     * The CSS decides (it holds the breakpoint, configurable): such a sheet is static.
+     */
+    private rendersInPlace(): boolean {
+        return this.element.classList.contains('rm-mnb-sheet--mobile-only')
+            && getComputedStyle(this.element).position === 'static';
     }
 
     private setExpanded(expanded: boolean): void {

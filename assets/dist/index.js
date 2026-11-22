@@ -234,6 +234,7 @@ function createHistoryTracker(signal) {
 			return stack.find((entry) => entry.id === page.id && entry.index === page.index) ?? null;
 		}
 	};
+	const focusByPage = /* @__PURE__ */ new Map();
 	document.addEventListener("turbo:visit", (event) => {
 		visitSincePopstate = true;
 		lastVisitRestores = event.detail?.action === "restore";
@@ -253,7 +254,11 @@ function createHistoryTracker(signal) {
 		if (started && loaded !== null) {
 			stack = withScroll(stack, loaded, currentScroll());
 			persist();
+			rememberFocus(focusByPage, loaded);
 		}
+	}, options);
+	window.addEventListener("popstate", (event) => {
+		if (event.hasUAVisualTransition === true) markGestureBack();
 	}, options);
 	document.addEventListener("turbo:load", () => {
 		window.requestAnimationFrame(() => document.documentElement.classList.remove("rm-mnb-restoring"));
@@ -270,6 +275,7 @@ function createHistoryTracker(signal) {
 			index: page.index
 		};
 		persist();
+		if (lastVisitRestores) restoreFocus(focusByPage, loaded);
 		if (goingBack !== null && goingBack.restoreSeen && page.index < goingBack.fromIndex) stopGoingBack();
 		lastVisitRestores = false;
 	}, options);
@@ -283,6 +289,45 @@ function createHistoryTracker(signal) {
 		}
 	}, options);
 	return tracker;
+}
+/**
+* Back to a page by the keyboard, focus goes back to the link it was left from, as on a
+* native list: the user carries on where they were. Only a link focused by the keyboard
+* (:focus-visible) is remembered: a tap leaves no focus to give back.
+*/
+function rememberFocus(focusByPage, page) {
+	const key = `${page.id}:${page.index}`;
+	const active = document.activeElement;
+	focusByPage.delete(key);
+	if (!(active instanceof HTMLAnchorElement) || !active.hasAttribute("href")) return;
+	try {
+		if (active.matches(":focus-visible")) focusByPage.set(key, active.getAttribute("href") ?? "");
+	} catch {}
+}
+function restoreFocus(focusByPage, page) {
+	const href = focusByPage.get(`${page.id}:${page.index}`);
+	if (href === void 0 || href === "") return;
+	window.requestAnimationFrame(() => {
+		const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(href) : href.replace(/["\\]/g, "\\$&");
+		const link = document.querySelector(`a[href="${escaped}"]`);
+		if (link !== null && document.activeElement === document.body) link.focus({ preventScroll: true });
+	});
+}
+/**
+* The back navigation about to start was already animated by a gesture (the bundle's
+* swipe back, or the browser's own): the directional view transition stands aside (see
+* _transitions.scss). Removed once the page is shown.
+*/
+function markGestureBack() {
+	const root = document.documentElement;
+	root.classList.add("rm-mnb-gesture-back");
+	const clear = () => {
+		window.requestAnimationFrame(() => root.classList.remove("rm-mnb-gesture-back"));
+		document.removeEventListener("turbo:load", clear);
+		window.clearTimeout(timer);
+	};
+	const timer = window.setTimeout(clear, GOING_BACK_SAFETY_MS);
+	document.addEventListener("turbo:load", clear);
 }
 /** The page Turbo has written in history.state, or null (Turbo not started, foreign state). */
 function currentPage() {
@@ -539,6 +584,10 @@ function haptic(style = "light") {
 var EVENT_PREFIX = "rm-mnb-gesture";
 var gesture_controller_default = class extends Controller {
 	static values = {
+		doubleTap: {
+			type: Boolean,
+			default: false
+		},
 		doubleTapMs: {
 			type: Number,
 			default: 280
@@ -559,6 +608,7 @@ var gesture_controller_default = class extends Controller {
 	startX = 0;
 	startY = 0;
 	moved = false;
+	touching = false;
 	disconnect() {
 		this.cancelLongPress();
 		this.cancelSingleTap();
@@ -569,6 +619,7 @@ var gesture_controller_default = class extends Controller {
 		this.startX = touch.clientX;
 		this.startY = touch.clientY;
 		this.moved = false;
+		this.touching = true;
 		this.longPressTriggered = false;
 		this.longPressTimer = setTimeout(() => {
 			this.longPressTriggered = true;
@@ -585,6 +636,7 @@ var gesture_controller_default = class extends Controller {
 	}
 	end(event) {
 		this.cancelLongPress();
+		this.touching = false;
 		const touch = event.changedTouches[0];
 		const deltaX = (touch ? touch.clientX : this.startX) - this.startX;
 		const deltaY = (touch ? touch.clientY : this.startY) - this.startY;
@@ -605,6 +657,10 @@ var gesture_controller_default = class extends Controller {
 			return;
 		}
 		if (this.moved) return;
+		if (!this.doubleTapValue) {
+			this.dispatch("tap", { prefix: EVENT_PREFIX });
+			return;
+		}
 		this.suppress(event);
 		const now = Date.now();
 		if (this.singleTapTimer && now - this.lastTapTime < this.doubleTapMsValue) {
@@ -620,8 +676,19 @@ var gesture_controller_default = class extends Controller {
 			this.dispatch("tap", { prefix: EVENT_PREFIX });
 		}, this.doubleTapMsValue);
 	}
+	/**
+	* Replaces the native context menu with a longpress. Outside a touch (right click,
+	* the Menu key, Shift+F10), it is the keyboard and mouse equivalent of the long press;
+	* during a touch, the timer already handles it (Android also fires contextmenu then).
+	*/
 	preventContextMenu(event) {
 		event.preventDefault();
+		if (!this.touching) this.dispatch("longpress", { prefix: EVENT_PREFIX });
+	}
+	cancel() {
+		this.cancelLongPress();
+		this.touching = false;
+		this.longPressTriggered = false;
 	}
 	replayNative() {
 		this.element.click();
@@ -663,12 +730,20 @@ var large_title_controller_default = class extends Controller {
 		this.unobserve();
 		this.observe();
 	};
+	resizeFrame = 0;
+	onResize = () => {
+		cancelAnimationFrame(this.resizeFrame);
+		this.resizeFrame = requestAnimationFrame(this.onMorph);
+	};
 	connect() {
 		document.addEventListener("turbo:morph", this.onMorph);
+		window.addEventListener("resize", this.onResize);
 		this.observe();
 	}
 	disconnect() {
 		document.removeEventListener("turbo:morph", this.onMorph);
+		window.removeEventListener("resize", this.onResize);
+		cancelAnimationFrame(this.resizeFrame);
 		this.unobserve();
 	}
 	observe() {
@@ -755,7 +830,12 @@ var list_controller_default = class extends Controller {
 			checkbox.dispatchEvent(new Event("change", { bubbles: true }));
 		}
 	};
-	onFrameLoad = () => this.dedupeSections();
+	onFrameLoad = (event) => {
+		this.dedupeSections();
+		const frame = event.target;
+		if (!(frame instanceof HTMLElement) || document.activeElement !== null && document.activeElement !== document.body) return;
+		frame.querySelector("a.rm-mnb-list-row__main, a.rm-mnb-load-more")?.focus({ preventScroll: true });
+	};
 	onToggleCommand = () => this.toggleSelecting();
 	onToggleEditingCommand = () => this.toggleEditing();
 	onMorph = () => this.setMode("idle");
@@ -866,35 +946,14 @@ function focusableIn(root) {
 /**
 * The element to return focus to when the sheet closes, decided BEFORE opening it.
 *
-* The active element is kept only if it is inside no sheet: when chaining More →
+* The active element is kept only if it is inside no open sheet: when chaining More →
 * Search, the active element is a row of the More sheet, which will be hidden. On iOS, a tap
 * does not focus the button: the active element is body. In both cases, we fall back to
 * the first visible trigger (aria-controls), otherwise focus will not be moved.
 */
 function returnTarget(active, triggers, isShown) {
-	if (active instanceof HTMLElement && active !== active.ownerDocument.body && active.closest("[role=\"dialog\"][aria-modal=\"true\"]") === null) return active;
+	if (active instanceof HTMLElement && active !== active.ownerDocument.body && active.closest(".rm-mnb-sheet--open") === null) return active;
 	return triggers.find(isShown) ?? null;
-}
-/** Keeps Tab and Shift+Tab inside root. */
-function trapTab(event, root) {
-	if (event.key !== "Tab") return;
-	const items = focusableIn(root);
-	if (items.length === 0) {
-		event.preventDefault();
-		root.focus({ preventScroll: true });
-		return;
-	}
-	const first = items[0];
-	const last = items[items.length - 1];
-	if (first === void 0 || last === void 0) return;
-	const active = root.ownerDocument.activeElement;
-	if (event.shiftKey && (active === first || !root.contains(active))) {
-		event.preventDefault();
-		last.focus({ preventScroll: true });
-	} else if (!event.shiftKey && (active === last || !root.contains(active))) {
-		event.preventDefault();
-		first.focus({ preventScroll: true });
-	}
 }
 /** Downwards, the sheet follows the finger; upwards, it resists. */
 function dampen(delta) {
@@ -984,6 +1043,12 @@ function attachSheetDrag(panel, callbacks) {
 /**
 * Generic iOS-style bottom sheet. No route, no label: reusable.
 *
+* The element is a <dialog>, opened with showModal(): the browser puts it in the top layer,
+* makes the rest of the page inert, keeps Tab inside it and turns Esc and the Android back
+* gesture into a `cancel` event, which closes it with its animation. A closed sheet stays
+* rendered (visibility: hidden, see _sheet.scss): it slides away after leaving the top
+* layer, and the app can tell a displayable sheet (mobile) from a hidden one.
+*
 * Commands: `<name>:toggle`, `<name>:open`, `<name>:close`, on window (dispatched by the
 * emit-event controller). They carry no detail. Opening an open sheet or
 * closing a closed sheet does nothing.
@@ -1037,24 +1102,30 @@ var sheet_controller_default = class extends Controller {
 	isOpen = false;
 	returnTo = null;
 	detachDrag = null;
+	ownCloses = 0;
 	onToggleCommand = () => this.toggle();
 	onOpenCommand = () => this.open();
 	onCloseCommand = () => this.close();
 	onOpening = (event) => {
-		if (event.detail?.name !== this.nameValue) this.close({ restoreFocus: false });
+		const detail = event.detail;
+		if (detail?.name === this.nameValue || !this.isOpen) return;
+		detail.handedReturnTo ??= this.returnTo;
+		this.close({ restoreFocus: false });
 	};
 	onForceClose = () => this.close({
 		animate: false,
 		restoreFocus: false
 	});
-	onKeydown = (event) => {
-		if (!this.isOpen) return;
-		if (event.key === "Escape") {
-			event.preventDefault();
-			this.close();
+	onCancel = (event) => {
+		event.preventDefault();
+		this.close();
+	};
+	onNativeClose = () => {
+		if (this.ownCloses > 0) {
+			this.ownCloses -= 1;
 			return;
 		}
-		trapTab(event, this.panelTarget);
+		if (this.isOpen) this.close();
 	};
 	onClick = (event) => {
 		const target = event.target;
@@ -1066,9 +1137,10 @@ var sheet_controller_default = class extends Controller {
 		window.addEventListener(`${this.nameValue}:open`, this.onOpenCommand);
 		window.addEventListener(`${this.nameValue}:close`, this.onCloseCommand);
 		window.addEventListener("rm-mnb:sheet-opening", this.onOpening);
-		window.addEventListener("keydown", this.onKeydown);
 		this.forceCloseEventsValue.forEach((name) => window.addEventListener(name, this.onForceClose));
 		this.element.addEventListener("click", this.onClick);
+		this.element.addEventListener("cancel", this.onCancel);
+		this.element.addEventListener("close", this.onNativeClose);
 		this.detachDrag = attachSheetDrag(this.panelTarget, {
 			canStart: (target) => this.canStartDrag(target),
 			onMove: (offset) => {
@@ -1092,9 +1164,10 @@ var sheet_controller_default = class extends Controller {
 		window.removeEventListener(`${this.nameValue}:open`, this.onOpenCommand);
 		window.removeEventListener(`${this.nameValue}:close`, this.onCloseCommand);
 		window.removeEventListener("rm-mnb:sheet-opening", this.onOpening);
-		window.removeEventListener("keydown", this.onKeydown);
 		this.forceCloseEventsValue.forEach((name) => window.removeEventListener(name, this.onForceClose));
 		this.element.removeEventListener("click", this.onClick);
+		this.element.removeEventListener("cancel", this.onCancel);
+		this.element.removeEventListener("close", this.onNativeClose);
 		this.detachDrag?.();
 		this.detachDrag = null;
 		this.close({
@@ -1111,11 +1184,13 @@ var sheet_controller_default = class extends Controller {
 		else this.open();
 	}
 	open() {
-		if (this.isOpen) return;
+		if (this.isOpen || this.rendersInPlace()) return;
 		this.returnTo = returnTarget(document.activeElement, this.triggers(), isVisible);
-		window.dispatchEvent(new CustomEvent("rm-mnb:sheet-opening", { detail: { name: this.nameValue } }));
+		const detail = { name: this.nameValue };
+		window.dispatchEvent(new CustomEvent("rm-mnb:sheet-opening", { detail }));
+		this.returnTo ??= detail.handedReturnTo ?? null;
 		this.isOpen = true;
-		this.setDialogRole(true);
+		this.showModal();
 		this.element.classList.add("rm-mnb-sheet--open");
 		document.documentElement.classList.add("rm-mnb-has-open-sheet");
 		this.setExpanded(true);
@@ -1128,9 +1203,9 @@ var sheet_controller_default = class extends Controller {
 	close({ animate = true, restoreFocus = true } = {}) {
 		if (!this.isOpen) return;
 		this.isOpen = false;
-		this.setDialogRole(false);
 		if (!animate) this.element.classList.add("rm-mnb-sheet--instant");
 		this.element.classList.remove("rm-mnb-sheet--open");
+		this.closeModal();
 		this.panelTarget.style.transform = "";
 		if (document.querySelector(".rm-mnb-sheet--open") === null) document.documentElement.classList.remove("rm-mnb-has-open-sheet");
 		this.setExpanded(false);
@@ -1145,15 +1220,29 @@ var sheet_controller_default = class extends Controller {
 	triggers() {
 		return Array.from(document.querySelectorAll(`[aria-controls="${this.element.id}"]`));
 	}
-	setDialogRole(open) {
-		if (!this.element.classList.contains("rm-mnb-sheet--mobile-only")) return;
-		if (open) {
-			this.element.setAttribute("role", "dialog");
-			this.element.setAttribute("aria-modal", "true");
-		} else {
-			this.element.removeAttribute("role");
-			this.element.removeAttribute("aria-modal");
-		}
+	get dialog() {
+		return this.element instanceof HTMLDialogElement ? this.element : null;
+	}
+	showModal() {
+		const dialog = this.dialog;
+		if (dialog === null || dialog.open) return;
+		if (typeof dialog.showModal === "function") dialog.showModal();
+		else dialog.setAttribute("open", "");
+	}
+	closeModal() {
+		const dialog = this.dialog;
+		if (dialog === null || !dialog.open) return;
+		if (typeof dialog.close === "function") {
+			this.ownCloses += 1;
+			dialog.close();
+		} else dialog.removeAttribute("open");
+	}
+	/**
+	* A "mobile only" sheet above 768 px: its content is part of the page, never a modal.
+	* The CSS decides (it holds the breakpoint, configurable): such a sheet is static.
+	*/
+	rendersInPlace() {
+		return this.element.classList.contains("rm-mnb-sheet--mobile-only") && getComputedStyle(this.element).position === "static";
 	}
 	setExpanded(expanded) {
 		this.triggers().forEach((trigger) => trigger.setAttribute("aria-expanded", String(expanded)));
@@ -1164,255 +1253,163 @@ var sheet_controller_default = class extends Controller {
 		return !(target instanceof Node && scroller.contains(target)) || scroller.scrollTop <= 0;
 	}
 };
-// src/utils/tones.ts
-/**
-* The module's tones: a closed list. Any unknown value falls back to `neutral`, so
-* that no data coming from the app can inject an arbitrary class or color.
-*/
-var TONES = [
-	"accent",
-	"positive",
-	"negative",
-	"info",
-	"warning",
-	"neutral"
-];
-function toTone(value) {
-	return typeof value === "string" && TONES.includes(value) ? value : "neutral";
-}
 // src/controllers/swipe_actions_controller.ts
 /**
-* Methods a browser cannot submit, sent as a POST with a "_method" field (Symfony's
-* http_method_override, Laravel's method spoofing). Same list as the HttpMethod enum
-* (PHP side); any other value gets no field, so a payload cannot inject one.
+* Swipe actions: the content and its actions panel sit side by side in a horizontal
+* scroll-snap track, rendered server side. The browser does the gesture (momentum,
+* snapping, chaining to the page): there is no touch code here. The controller only
+* keeps the state that the scroll position implies.
+*
+* - The "Actions" button reveals or hides the panel without the gesture (keyboard,
+*   screen reader, voice control, mouse): aria-expanded follows the panel.
+* - Hidden actions are out of the tab order; revealed ones are in it.
+* - One row open at a time; a tap outside, Esc, a list mode or a Turbo snapshot closes it.
+* - A writing action fills its `_redirect` field at submit time (the URL may have changed
+*   since the render: a filter rewrites it in place), goes out once (a double tap sends a
+*   single POST; a failed Turbo submission can be retried) and closes the row. A link
+*   marked carriesReturnPath gets `_redirect` on click.
+*
+* The panel listens in the bubble phase: a destructive action's confirm-submit, on the
+* form, has already held its first submit back (defaultPrevented) to ask first.
 */
-var SPOOFED_METHODS = /* @__PURE__ */ new Set([
-	"PUT",
-	"PATCH",
-	"DELETE"
-]);
-var BUTTON_WIDTH = 72;
-var MIN_SWIPE = 10;
-/**
-* Swiping a row to the left reveals its actions, each with its label. A
-* destructive action is not sent directly: it goes through the confirmation sheet.
-* The panel lives in <body> (it must stay under the sliding row) and is removed
-* before every Turbo snapshot.
-*/
+var OPENED_EVENT = "rm-mnb:swipe-opened";
 var swipe_actions_controller_default = class extends Controller {
-	static values = {
-		actions: Array,
-		csrfToken: String
-	};
-	/** Only the actions that target the current origin: any other is ignored. */
-	get actions() {
-		return this.actionsValue.filter((action) => sameOriginUrl(action.url) !== null);
-	}
-	startX = 0;
-	startY = 0;
-	currentX = 0;
-	swiping = false;
+	static targets = [
+		"track",
+		"panel",
+		"toggle"
+	];
 	opened = false;
-	panel = null;
-	panelWidth = 0;
-	panelLeft = 0;
-	panelTop = 0;
-	onTouchStart = (event) => this.touchStart(event);
-	onTouchMove = (event) => this.touchMove(event);
-	onTouchEnd = () => this.touchEnd();
-	onDocumentTouch = (event) => {
-		const target = event.target;
-		if (this.opened && !this.element.contains(target) && !this.panel?.contains(target)) this.close();
+	frame = 0;
+	onScroll = () => {
+		cancelAnimationFrame(this.frame);
+		this.frame = requestAnimationFrame(() => this.sync());
 	};
-	onBeforeCache = () => this.reset();
+	onOtherOpened = (event) => {
+		if (event.detail?.element !== this.element) this.close(false);
+	};
+	onDocumentPointer = (event) => {
+		if (this.opened && !this.element.contains(event.target)) this.close();
+	};
+	onKeydown = (event) => {
+		if (event.key !== "Escape" || !this.opened || event.defaultPrevented) return;
+		event.preventDefault();
+		this.close();
+		if (this.hasToggleTarget) this.toggleTarget.focus({ preventScroll: true });
+	};
+	onFocusIn = (event) => {
+		const target = event.target;
+		if (this.opened && !this.panelTarget.contains(target) && target !== this.toggleTargetOrNull() && target.matches(":focus-visible")) this.close();
+	};
+	sent = /* @__PURE__ */ new WeakSet();
+	onSubmit = (event) => {
+		const form = event.target;
+		if (event.defaultPrevented) return;
+		if (this.sent.has(form)) {
+			event.preventDefault();
+			return;
+		}
+		this.sent.add(form);
+		const redirect = form.elements.namedItem("_redirect");
+		if (redirect instanceof HTMLInputElement) redirect.value = currentReturnPath() ?? "";
+		this.close(false);
+	};
+	onSubmitEnd = (event) => {
+		if (!event.detail?.success) this.sent.delete(event.target);
+	};
+	onReset = () => this.close(false);
 	connect() {
-		if (this.actions.length === 0) return;
-		this.panelWidth = this.actions.length * BUTTON_WIDTH;
-		this.element.addEventListener("touchstart", this.onTouchStart, { passive: true });
-		this.element.addEventListener("touchmove", this.onTouchMove, { passive: false });
-		this.element.addEventListener("touchend", this.onTouchEnd, { passive: true });
-		document.addEventListener("turbo:before-cache", this.onBeforeCache);
-		this.buildPanel();
+		if (!this.hasTrackTarget) return;
+		this.trackTarget.addEventListener("scroll", this.onScroll, { passive: true });
+		this.element.addEventListener("keydown", this.onKeydown);
+		this.element.addEventListener("focusin", this.onFocusIn);
+		this.panelTarget.addEventListener("submit", this.onSubmit);
+		this.panelTarget.addEventListener("turbo:submit-end", this.onSubmitEnd);
+		window.addEventListener(OPENED_EVENT, this.onOtherOpened);
+		window.addEventListener(TOGGLE_SELECTING_EVENT, this.onReset);
+		window.addEventListener(TOGGLE_EDITING_EVENT, this.onReset);
+		document.addEventListener("turbo:before-cache", this.onReset);
+		if (this.hasToggleTarget) this.toggleTarget.hidden = false;
+		this.sync();
 	}
 	disconnect() {
-		this.element.removeEventListener("touchstart", this.onTouchStart);
-		this.element.removeEventListener("touchmove", this.onTouchMove);
-		this.element.removeEventListener("touchend", this.onTouchEnd);
-		document.removeEventListener("touchstart", this.onDocumentTouch, true);
-		document.removeEventListener("turbo:before-cache", this.onBeforeCache);
-		this.reset();
+		if (!this.hasTrackTarget) return;
+		cancelAnimationFrame(this.frame);
+		this.trackTarget.removeEventListener("scroll", this.onScroll);
+		this.element.removeEventListener("keydown", this.onKeydown);
+		this.element.removeEventListener("focusin", this.onFocusIn);
+		this.panelTarget.removeEventListener("submit", this.onSubmit);
+		this.panelTarget.removeEventListener("turbo:submit-end", this.onSubmitEnd);
+		window.removeEventListener(OPENED_EVENT, this.onOtherOpened);
+		window.removeEventListener(TOGGLE_SELECTING_EVENT, this.onReset);
+		window.removeEventListener(TOGGLE_EDITING_EVENT, this.onReset);
+		document.removeEventListener("turbo:before-cache", this.onReset);
+		document.removeEventListener("pointerdown", this.onDocumentPointer, true);
 	}
-	reset() {
-		this.panel?.remove();
-		this.panel = null;
-		this.opened = false;
-		this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-		this.element.style.removeProperty("transform");
-	}
-	buildPanel() {
-		this.panel = document.createElement("div");
-		this.panel.className = "rm-mnb-swipe-actions";
-		this.panel.setAttribute("data-turbo-temporary", "");
-		this.panel.style.setProperty("width", `${this.panelWidth}px`);
-		this.actions.forEach((action) => this.panel?.appendChild(this.createButton(action)));
-		document.body.appendChild(this.panel);
-	}
-	createContent(action, button) {
-		const icon = document.createElement("i");
-		icon.className = action.icon;
-		icon.setAttribute("aria-hidden", "true");
-		const label = document.createElement("span");
-		label.className = "rm-mnb-swipe-actions__label";
-		label.textContent = action.label;
-		button.append(icon, label);
-		button.setAttribute("aria-label", action.label);
-		button.className = `rm-mnb-swipe-actions__button rm-mnb-tone--${toTone(action.tone)}`;
-	}
-	hiddenInput(name, value) {
-		const input = document.createElement("input");
-		input.type = "hidden";
-		input.name = name;
-		input.value = value;
-		return input;
-	}
-	createButton(action) {
-		if (action.method === void 0 || action.method.toUpperCase() === "GET") {
-			const link = document.createElement("a");
-			link.href = action.url;
-			if (action.carriesReturnPath === true) link.addEventListener("click", () => {
-				const target = sameOriginUrl(action.url);
-				const returnPath = currentReturnPath();
-				if (target !== null && returnPath !== null && !target.searchParams.has("_redirect")) {
-					target.searchParams.set("_redirect", returnPath);
-					link.href = target.href;
-				}
-			});
-			this.createContent(action, link);
-			return link;
-		}
-		const form = document.createElement("form");
-		form.method = "POST";
-		form.action = action.url;
-		form.className = "rm-mnb-swipe-actions__form";
-		form.appendChild(this.hiddenInput("_token", this.csrfTokenValue));
-		const method = action.method.toUpperCase();
-		if (SPOOFED_METHODS.has(method)) form.appendChild(this.hiddenInput("_method", method));
-		const redirect = this.hiddenInput("_redirect", "");
-		form.appendChild(redirect);
-		let confirmed = false;
-		let sent = false;
-		const resubmit = () => {
-			confirmed = true;
-			try {
-				form.requestSubmit();
-			} finally {
-				confirmed = false;
-			}
-		};
-		form.addEventListener("submit", (event) => {
-			if (sent) {
-				event.preventDefault();
-				return;
-			}
-			if (confirmed || action.confirm === void 0) {
-				redirect.value = currentReturnPath() ?? "";
-				this.close();
-				sent = true;
-				return;
-			}
-			event.preventDefault();
+	/** The "Actions" button. */
+	toggle() {
+		if (this.opened) {
 			this.close();
-			window.dispatchEvent(new CustomEvent(CONFIRM_REQUEST_EVENT, { detail: {
-				title: action.label,
-				message: action.confirm,
-				confirmLabel: action.label,
-				onConfirm: resubmit
-			} }));
-		});
-		form.addEventListener("turbo:submit-end", (event) => {
-			if (!event.detail.success) sent = false;
-		});
-		const button = document.createElement("button");
-		button.type = "submit";
-		this.createContent(action, button);
-		form.appendChild(button);
-		return form;
-	}
-	positionPanel() {
-		if (this.panel === null) return;
-		if (!this.opened) {
-			const rect = this.element.getBoundingClientRect();
-			this.panelLeft = rect.right - this.panelWidth;
-			this.panelTop = rect.top;
-			this.panel.style.setProperty("height", `${rect.height}px`);
+			return;
 		}
-		this.panel.style.setProperty("top", `${this.panelTop}px`);
-		this.panel.style.setProperty("left", `${this.panelLeft}px`);
-		this.panel.classList.add("is-visible");
+		this.setOpened(true);
+		this.actions()[0]?.focus({ preventScroll: true });
+		this.open();
 	}
-	touchStart(event) {
-		const touch = event.touches[0];
-		if (touch === void 0) return;
-		this.startX = touch.clientX;
-		this.startY = touch.clientY;
-		this.currentX = this.startX;
-		this.swiping = false;
-		document.addEventListener("touchstart", this.onDocumentTouch, {
-			once: true,
-			capture: true
-		});
-	}
-	touchMove(event) {
-		if (this.element.closest(".is-selecting, .is-editing") !== null) return;
-		const touch = event.touches[0];
-		if (touch === void 0) return;
-		this.currentX = touch.clientX;
-		const deltaX = this.startX - this.currentX;
-		const deltaY = Math.abs(touch.clientY - this.startY);
-		if (!this.swiping && (Math.abs(deltaX) < MIN_SWIPE || deltaY > Math.abs(deltaX))) return;
-		if (!this.swiping && !this.opened && deltaX < 0) return;
-		if (!this.swiping) {
-			if (this.panel === null || !this.panel.isConnected) this.buildPanel();
-			this.positionPanel();
+	/** Click on a link marked carriesReturnPath: it takes the current path along. */
+	carryReturnPath(event) {
+		const link = event.currentTarget;
+		const target = sameOriginUrl(link.href);
+		const returnPath = currentReturnPath();
+		if (target !== null && returnPath !== null && !target.searchParams.has("_redirect")) {
+			target.searchParams.set("_redirect", returnPath);
+			link.href = target.href;
 		}
-		this.swiping = true;
-		event.preventDefault();
-		let offset;
-		if (this.opened) offset = Math.max(Math.min(-this.panelWidth + deltaX, 0), -this.panelWidth);
-		else {
-			if (deltaX <= 0) return;
-			offset = Math.max(-deltaX, -this.panelWidth);
-		}
-		this.element.classList.add("rm-mnb-swipe--moving");
-		this.element.classList.remove("rm-mnb-swipe--settling");
-		this.element.style.setProperty("transform", `translateX(${offset}px)`);
-		this.panel?.style.setProperty("clip-path", `inset(0 0 0 ${this.panelWidth - Math.abs(offset)}px)`);
-		if (Math.abs(offset) >= this.panelWidth) haptic("light");
-	}
-	touchEnd() {
-		if (!this.swiping) return;
-		this.swiping = false;
-		const deltaX = this.startX - this.currentX;
-		if (this.opened ? deltaX < -this.panelWidth * .3 : deltaX <= this.panelWidth * .4) this.close();
-		else this.open();
 	}
 	open() {
-		this.opened = true;
-		this.element.classList.add("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-		this.element.style.setProperty("transform", `translateX(${-this.panelWidth}px)`);
-		this.panel?.style.setProperty("clip-path", "inset(0)");
+		this.scrollTo(this.trackTarget.scrollWidth - this.trackTarget.clientWidth, true);
+		this.setOpened(true);
 	}
-	close() {
-		this.opened = false;
-		this.element.classList.add("rm-mnb-swipe--settling");
-		this.element.style.removeProperty("transform");
-		window.setTimeout(() => {
-			if (!this.opened) {
-				this.element.classList.remove("rm-mnb-swipe--moving", "rm-mnb-swipe--settling");
-				this.panel?.classList.remove("is-visible");
-				this.panel?.style.removeProperty("clip-path");
-			}
-		}, 300);
+	close(animate = true) {
+		if (!this.hasTrackTarget) return;
+		this.scrollTo(0, animate);
+		this.setOpened(false);
+	}
+	scrollTo(left, animate) {
+		const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+		if (typeof this.trackTarget.scrollTo === "function") this.trackTarget.scrollTo({
+			left,
+			behavior: animate && !reduce ? "smooth" : "instant"
+		});
+		else this.trackTarget.scrollLeft = left;
+	}
+	/** The scroll position is the truth: a swipe opens or closes the panel by itself. */
+	sync() {
+		const max = this.trackTarget.scrollWidth - this.trackTarget.clientWidth;
+		if (max <= 0) {
+			this.setOpened(false);
+			return;
+		}
+		if (Math.abs(this.trackTarget.scrollLeft) >= max - 1) this.setOpened(true);
+		else if (Math.abs(this.trackTarget.scrollLeft) <= 1) this.setOpened(false);
+	}
+	setOpened(opened) {
+		const changed = opened !== this.opened;
+		this.opened = opened;
+		this.toggleTargetOrNull()?.setAttribute("aria-expanded", String(opened));
+		this.actions().forEach((action) => action.setAttribute("tabindex", opened ? "0" : "-1"));
+		if (!changed) return;
+		if (opened) {
+			haptic("light");
+			window.dispatchEvent(new CustomEvent(OPENED_EVENT, { detail: { element: this.element } }));
+			document.addEventListener("pointerdown", this.onDocumentPointer, true);
+		} else document.removeEventListener("pointerdown", this.onDocumentPointer, true);
+	}
+	actions() {
+		return Array.from(this.panelTarget.querySelectorAll("a[href], button"));
+	}
+	toggleTargetOrNull() {
+		return this.hasToggleTarget ? this.toggleTarget : null;
 	}
 };
 // src/controllers/swipe_back_controller.ts
@@ -1628,6 +1625,7 @@ var swipe_back_controller_default = class extends Controller {
 				return;
 			}
 			document.documentElement.classList.add("rm-mnb-restoring");
+			markGestureBack();
 			window.setTimeout(() => {
 				if (underlay?.isConnected) this.reset();
 			}, SAFETY_MS);

@@ -7,6 +7,8 @@
 // [data-rm-mnb-theme="dark"], or through the app selector that includes dark-defaults().
 
 @mixin light-defaults {
+    // Native controls (fields, pickers, scrollbars) follow the theme.
+    color-scheme: light;
     // Side margin of the app content (large title edge).
     --rm-mnb-page-inset: 16px;
     --rm-mnb-page-bg: #f2f2f7;
@@ -60,6 +62,7 @@
 }
 
 @mixin dark-defaults {
+    color-scheme: dark;
     --rm-mnb-page-bg: #000;
     --rm-mnb-page-bg-rgb: 0, 0, 0;
     --rm-mnb-surface: #1c1c1e;
@@ -131,13 +134,13 @@
     .rm-mnb-scroller {
         padding-bottom: calc(#{$rm-mnb-tab-bar-height} + max(env(safe-area-inset-bottom, 0px), 8px) + 16px);
     }
-}
 
-// Scroll lock while a sheet is open, in both modes (document or container).
-html.rm-mnb-has-open-sheet,
-html.rm-mnb-has-open-sheet body,
-html.rm-mnb-has-open-sheet .rm-mnb-scroller {
-    overflow: hidden;
+    // A focused element is never scrolled under the fixed bars (WCAG 2.4.11).
+    html,
+    .rm-mnb-scroller {
+        scroll-padding-top: calc(env(safe-area-inset-top, 0px) + #{$rm-mnb-top-row-offset} + #{$rm-mnb-control-size} + 8px);
+        scroll-padding-bottom: calc(#{$rm-mnb-tab-bar-height} + max(env(safe-area-inset-bottom, 0px), 8px) + 8px);
+    }
 }
 
 // Screen-reader-only text (titles of sheets without a visible title).
@@ -148,7 +151,7 @@ html.rm-mnb-has-open-sheet .rm-mnb-scroller {
     padding: 0 !important;
     margin: -1px !important;
     overflow: hidden !important;
-    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
     white-space: nowrap !important;
     border: 0 !important;
 }

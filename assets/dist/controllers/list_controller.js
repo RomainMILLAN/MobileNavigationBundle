@@ -56,7 +56,12 @@ var list_controller_default = class extends Controller {
 			checkbox.dispatchEvent(new Event("change", { bubbles: true }));
 		}
 	};
-	onFrameLoad = () => this.dedupeSections();
+	onFrameLoad = (event) => {
+		this.dedupeSections();
+		const frame = event.target;
+		if (!(frame instanceof HTMLElement) || document.activeElement !== null && document.activeElement !== document.body) return;
+		frame.querySelector("a.rm-mnb-list-row__main, a.rm-mnb-load-more")?.focus({ preventScroll: true });
+	};
 	onToggleCommand = () => this.toggleSelecting();
 	onToggleEditingCommand = () => this.toggleEditing();
 	onMorph = () => this.setMode("idle");

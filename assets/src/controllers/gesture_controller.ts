@@ -7,11 +7,15 @@ const EVENT_PREFIX = 'rm-mnb-gesture';
 
 export default class extends Controller {
     static values = {
+        // Off by default: telling a single tap from a double tap delays every tap by
+        // doubleTapMs. Turn it on only where the app listens to doubletap.
+        doubleTap: { type: Boolean, default: false },
         doubleTapMs: { type: Number, default: 280 },
         longPressMs: { type: Number, default: 500 },
         swipeDistance: { type: Number, default: 30 },
     };
 
+    declare readonly doubleTapValue: boolean;
     declare readonly doubleTapMsValue: number;
     declare readonly longPressMsValue: number;
     declare readonly swipeDistanceValue: number;
@@ -23,6 +27,7 @@ export default class extends Controller {
     private startX = 0;
     private startY = 0;
     private moved = false;
+    private touching = false;
 
     disconnect(): void {
         this.cancelLongPress();
@@ -37,6 +42,7 @@ export default class extends Controller {
         this.startX = touch.clientX;
         this.startY = touch.clientY;
         this.moved = false;
+        this.touching = true;
         this.longPressTriggered = false;
         this.longPressTimer = setTimeout(() => {
             this.longPressTriggered = true;
@@ -57,6 +63,7 @@ export default class extends Controller {
 
     public end(event: TouchEvent): void {
         this.cancelLongPress();
+        this.touching = false;
 
         const touch = event.changedTouches[0];
         const deltaX = (touch ? touch.clientX : this.startX) - this.startX;
@@ -86,6 +93,13 @@ export default class extends Controller {
             return;
         }
 
+        if (!this.doubleTapValue) {
+            // No double tap to wait for: the tap is immediate, the native click goes through.
+            this.dispatch('tap', { prefix: EVENT_PREFIX });
+
+            return;
+        }
+
         // Tap: swallow the native click to tell single from double
         this.suppress(event);
 
@@ -106,8 +120,22 @@ export default class extends Controller {
         }, this.doubleTapMsValue);
     }
 
+    /**
+     * Replaces the native context menu with a longpress. Outside a touch (right click,
+     * the Menu key, Shift+F10), it is the keyboard and mouse equivalent of the long press;
+     * during a touch, the timer already handles it (Android also fires contextmenu then).
+     */
     public preventContextMenu(event: Event): void {
         event.preventDefault();
+        if (!this.touching) {
+            this.dispatch('longpress', { prefix: EVENT_PREFIX });
+        }
+    }
+
+    public cancel(): void {
+        this.cancelLongPress();
+        this.touching = false;
+        this.longPressTriggered = false;
     }
 
     public replayNative(): void {

@@ -5,34 +5,51 @@ import { Application } from '@hotwired/stimulus';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ConfirmSheetController from '../src/controllers/confirm_sheet_controller';
+import ConfirmSubmitController from '../src/controllers/confirm_submit_controller';
 import SheetController from '../src/controllers/sheet_controller';
 import SwipeActionsController from '../src/controllers/swipe_actions_controller';
 
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 const query = <T extends Element>(selector: string): T => document.querySelector(selector) as T;
-
-const ACTIONS = [
-    { url: '/edit', icon: 'icon-edit', tone: 'accent', label: 'Modifier' },
-    { url: '/cancel', icon: 'icon-x', tone: 'negative', label: 'Annuler', method: 'POST', confirm: 'Elle ne comptera plus.' },
-    { url: '/validate', icon: 'icon-ok', tone: '<img src=x>', label: '<b>Valider</b>', method: 'POST' },
-    { url: '/delete', icon: 'icon-trash', tone: 'negative', label: 'Supprimer', method: 'DELETE', confirm: 'Définitivement.' },
-    { url: '/patch', icon: 'icon-pen', tone: 'accent', label: 'Corriger', method: 'patch' },
-    { url: '/odd', icon: 'icon-x', tone: 'accent', label: 'Bizarre', method: 'TRACE' },
-    // SwipeAction::confirmed() and ::write(): not negative, yet confirmed / spoofed.
-    { url: '/resend', icon: 'icon-send', tone: 'accent', label: 'Renvoyer', method: 'POST', confirm: 'Il repart vers ses destinataires.' },
-    { url: '/unmute', icon: 'icon-bell', tone: 'accent', label: 'Réactiver', method: 'DELETE' },
-];
+const queryAll = <T extends Element>(selector: string): T[] => Array.from(document.querySelectorAll<T>(selector));
 
 // The ConfirmSheet.html.twig markup, with short Stimulus identifiers.
 const confirmSheet = `
-    <div id="confirm" class="rm-mnb-sheet" role="alertdialog" aria-modal="true"
-         data-controller="sheet confirm-sheet" data-sheet-name-value="confirm" data-confirm-sheet-sheet-value="confirm">
-        <div class="rm-mnb-sheet__backdrop" data-action="click->sheet#dismiss"></div>
+    <dialog id="rm-mnb-confirm" class="rm-mnb-sheet" role="alertdialog"
+         data-controller="sheet confirm-sheet" data-sheet-name-value="rm-mnb-confirm" data-confirm-sheet-sheet-value="rm-mnb-confirm">
         <div class="rm-mnb-sheet__panel" tabindex="-1" data-sheet-target="panel">
             <h2 data-confirm-sheet-target="title"></h2>
             <p data-confirm-sheet-target="message"></p>
             <button type="button" id="destroy" data-confirm-sheet-target="confirm" data-action="confirm-sheet#confirm"></button>
             <button type="button" id="close" data-action="sheet#dismiss">Fermer</button>
+        </div>
+    </dialog>`;
+
+// What ListRow.html.twig renders around a row with actions (_swipe_toggle, _swipe_panel).
+const row = (id: string): string => `
+    <div class="rm-mnb-list-row" id="${id}" data-controller="swipe-actions">
+        <div class="rm-mnb-swipe" data-swipe-actions-target="track">
+            <div class="rm-mnb-swipe__content">
+                <a href="/items/${id}" class="rm-mnb-list-row__main">Item ${id}</a>
+                <button type="button" class="rm-mnb-swipe__toggle" hidden aria-expanded="false" aria-controls="${id}-panel"
+                        data-swipe-actions-target="toggle" data-action="swipe-actions#toggle">…</button>
+            </div>
+            <div class="rm-mnb-swipe-actions" id="${id}-panel" role="group" data-swipe-actions-target="panel">
+                <a href="/items/${id}/edit" class="rm-mnb-swipe-actions__button" data-action="click->swipe-actions#carryReturnPath">Modifier</a>
+                <form method="post" action="/items/${id}/validate" class="rm-mnb-swipe-actions__form">
+                    <input type="hidden" name="_token" value="token">
+                    <input type="hidden" name="_redirect" value="">
+                    <button type="submit" class="rm-mnb-swipe-actions__button">Valider</button>
+                </form>
+                <form method="post" action="/items/${id}/delete" class="rm-mnb-swipe-actions__form"
+                      data-controller="confirm-submit" data-confirm-submit-title-value="Supprimer"
+                      data-confirm-submit-message-value="Définitivement." data-confirm-submit-confirm-label-value="Supprimer">
+                    <input type="hidden" name="_token" value="token">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="_redirect" value="">
+                    <button type="submit" class="rm-mnb-swipe-actions__button">Supprimer</button>
+                </form>
+            </div>
         </div>
     </div>`;
 
@@ -48,29 +65,34 @@ const onDocumentSubmit = (event: Event): void => {
     }
     event.preventDefault();
 };
-let nativeSubmit: ReturnType<typeof vi.spyOn>;
 
-// A browser ignores requestSubmit() while the form is still firing its submit event (the
-// "firing submission events" flag); jsdom does not. Reproduced here, or a resubmission from
-// inside the submit listener would pass the tests and do nothing in a browser.
-const firing = new WeakSet<HTMLFormElement>();
-const requestSubmit = HTMLFormElement.prototype.requestSubmit;
-const whileFiring = (form: HTMLFormElement, fire: () => void): void => {
-    firing.add(form);
-    try {
-        fire();
-    } finally {
-        firing.delete(form);
-    }
+const submit = (url: string): void => {
+    query<HTMLFormElement>(`form[action="${url}"]`).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 };
 
+/** jsdom has no layout: the track is given a scrollable width, and scrollTo moves it. */
+function layOut(track: HTMLElement, max = 216): void {
+    Object.defineProperty(track, 'scrollWidth', { configurable: true, value: 375 + max });
+    Object.defineProperty(track, 'clientWidth', { configurable: true, value: 375 });
+    track.scrollTo = ((options: ScrollToOptions) => {
+        track.scrollLeft = options.left ?? 0;
+        track.dispatchEvent(new Event('scroll'));
+    }) as typeof track.scrollTo;
+}
+
+const track = (id: string): HTMLElement => query(`#${id} .rm-mnb-swipe`);
+const toggle = (id: string): HTMLButtonElement => query(`#${id} .rm-mnb-swipe__toggle`);
+const actionsOf = (id: string): HTMLElement[] => queryAll(`#${id} .rm-mnb-swipe-actions__button`);
+
 beforeAll(() => {
-    if (typeof window.requestAnimationFrame !== 'function') {
-        vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(0), 0));
-    }
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+    });
     const application = Application.start();
     application.register('sheet', SheetController);
     application.register('confirm-sheet', ConfirmSheetController);
+    application.register('confirm-submit', ConfirmSubmitController);
     application.register('swipe-actions', SwipeActionsController);
 });
 
@@ -78,19 +100,12 @@ beforeEach(async () => {
     submitted = [];
     redirects = [];
     document.addEventListener('submit', onDocumentSubmit);
-    nativeSubmit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => undefined);
-    vi.spyOn(HTMLFormElement.prototype, 'requestSubmit').mockImplementation(function (this: HTMLFormElement, submitter?: HTMLElement | null) {
-        if (!firing.has(this)) {
-            whileFiring(this, () => requestSubmit.call(this, submitter));
-        }
-    });
     vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
-    document.body.innerHTML = `
-        ${confirmSheet}
-        <div class="rm-mnb-list-row" data-controller="swipe-actions"
-             data-swipe-actions-actions-value='${JSON.stringify(ACTIONS).replace(/'/g, '&#39;')}'
-             data-swipe-actions-csrf-token-value="token"></div>`;
+    history.replaceState(null, '', '/items?page=2');
+    document.body.innerHTML = confirmSheet + row('a') + row('b');
     await tick();
+    layOut(track('a'));
+    layOut(track('b'));
 });
 
 afterEach(async () => {
@@ -100,230 +115,170 @@ afterEach(async () => {
     vi.restoreAllMocks();
 });
 
-const panelButtons = (): HTMLElement[] => Array.from(document.querySelectorAll<HTMLElement>('.rm-mnb-swipe-actions__button'));
-const submitAction = (url: string): void => {
-    const form = query<HTMLFormElement>(`form[action="${url}"]`);
-    // The user's tap: a real submit event, which bubbles.
-    whileFiring(form, () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-};
-const touch = (type: string, clientX: number): void => {
-    const event = new Event(type, { bubbles: true, cancelable: true });
-    Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [{ clientX, clientY: 10 }] });
-    query('.rm-mnb-list-row').dispatchEvent(event);
-};
-
-describe('swipe panel', () => {
-    it('gives each button a visible and accessible label, set as text', () => {
-        const buttons = panelButtons();
-
-        expect(buttons.slice(0, 3).map((button) => button.getAttribute('aria-label'))).toEqual(['Modifier', 'Annuler', '<b>Valider</b>']);
-        expect(buttons[2]?.querySelector('b')).toBeNull();
-        expect(buttons[2]?.textContent).toContain('<b>Valider</b>');
+describe('the panel without the gesture', () => {
+    it('shows the "Actions" button and keeps hidden actions out of the tab order', () => {
+        expect(toggle('a').hidden).toBe(false);
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+        expect(actionsOf('a').map((action) => action.getAttribute('tabindex'))).toEqual(['-1', '-1', '-1']);
     });
 
-    it('only sets a tone class from the closed list', () => {
-        const buttons = panelButtons();
+    it('reveals the actions, makes them focusable and focuses the first one', () => {
+        toggle('a').click();
 
-        expect(buttons[1]?.classList.contains('rm-mnb-tone--negative')).toBe(true);
-        expect(buttons[2]?.className).toContain('rm-mnb-tone--neutral');
-        expect(buttons[2]?.className).not.toContain('img');
+        expect(track('a').scrollLeft).toBe(216);
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('true');
+        expect(actionsOf('a').map((action) => action.getAttribute('tabindex'))).toEqual(['0', '0', '0']);
+        expect(document.activeElement).toBe(actionsOf('a')[0]);
     });
 
-    it('sends a POST action without confirmation right away', () => {
-        submitAction('/validate');
+    it('hides them again from the same button', () => {
+        toggle('a').click();
+        toggle('a').click();
 
-        expect(submitted).toEqual(['/validate']);
+        expect(track('a').scrollLeft).toBe(0);
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('closes on Escape and gives the focus back to the button', () => {
+        toggle('a').click();
+
+        actionsOf('a')[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+        expect(document.activeElement).toBe(toggle('a'));
     });
 });
 
-describe('destructive action confirmation', () => {
-    it('sends nothing before confirmation and opens the sheet with the action label', () => {
-        submitAction('/cancel');
+describe('the state follows the scroll position', () => {
+    it('opens when a swipe snaps the panel into view, and vibrates once', () => {
+        const vibrate = vi.fn();
+        Object.defineProperty(navigator, 'vibrate', { configurable: true, value: vibrate });
 
-        expect(submitted).toEqual([]);
-        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
-        expect(query('[data-confirm-sheet-target="title"]').textContent).toBe('Annuler');
-        expect(query('[data-confirm-sheet-target="message"]').textContent).toBe('Elle ne comptera plus.');
-        expect(query('#destroy').textContent).toBe('Annuler');
-        expect(query('#close').textContent).toBe('Fermer');
+        track('a').scrollLeft = 216;
+        track('a').dispatchEvent(new Event('scroll'));
+        track('a').dispatchEvent(new Event('scroll'));
+
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('true');
+        expect(vibrate).toHaveBeenCalledTimes(1);
     });
 
-    it('sends the action once confirmed', () => {
-        submitAction('/cancel');
+    it('does not change state mid-gesture', () => {
+        track('a').scrollLeft = 100;
+        track('a').dispatchEvent(new Event('scroll'));
+
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('keeps a single row open', () => {
+        toggle('a').click();
+        toggle('b').click();
+
+        expect(track('a').scrollLeft).toBe(0);
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+        expect(toggle('b').getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('closes on a tap outside the row', () => {
+        toggle('a').click();
+
+        document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+        expect(toggle('a').getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('closes before a Turbo snapshot and when a list mode starts', () => {
+        toggle('a').click();
+        document.dispatchEvent(new Event('turbo:before-cache'));
+        expect(track('a').scrollLeft).toBe(0);
+
+        toggle('a').click();
+        window.dispatchEvent(new CustomEvent('rm-mnb-list:toggle-editing'));
+        expect(track('a').scrollLeft).toBe(0);
+    });
+});
+
+describe('writing actions', () => {
+    it('sends a POST action right away, with the current path as _redirect, and closes the row', () => {
+        toggle('a').click();
+
+        submit('/items/a/validate');
+
+        expect(submitted).toEqual(['/items/a/validate']);
+        expect(redirects).toEqual(['/items?page=2']);
+        expect(track('a').scrollLeft).toBe(0);
+    });
+
+    it('sends a single POST on a double tap, and again after a failed Turbo submission', () => {
+        submit('/items/a/validate');
+        submit('/items/a/validate');
+        expect(submitted).toEqual(['/items/a/validate']);
+
+        query('form[action="/items/a/validate"]').dispatchEvent(new CustomEvent('turbo:submit-end', { bubbles: true, detail: { success: false } }));
+        submit('/items/a/validate');
+
+        expect(submitted).toEqual(['/items/a/validate', '/items/a/validate']);
+    });
+
+    it('confirms a destructive action first, then sends it once', () => {
+        submit('/items/a/delete');
+
+        expect(submitted).toEqual([]);
+        expect(query('#rm-mnb-confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
+        expect(query('[data-confirm-sheet-target="message"]').textContent).toBe('Définitivement.');
 
         query<HTMLButtonElement>('#destroy').click();
 
-        expect(submitted).toEqual(['/cancel']);
-        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(false);
+        expect(submitted).toEqual(['/items/a/delete']);
+        expect(redirects).toEqual(['/items?page=2']);
     });
 
-    it('discards the action when closing without confirming', () => {
-        submitAction('/cancel');
+    it('discards the destructive action when closing without confirming', () => {
+        submit('/items/a/delete');
         query<HTMLButtonElement>('#close').click();
 
         query<HTMLButtonElement>('#destroy').click();
 
         expect(submitted).toEqual([]);
     });
-});
 
-describe('a confirmed write that is not destructive', () => {
-    it('asks first, in its own tone, then sends once confirmed', () => {
-        expect(panelButtons()[6]?.classList.contains('rm-mnb-tone--accent')).toBe(true);
+    it('sends an empty _redirect from a page whose path is not local', () => {
+        vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, pathname: '//evil.tld', search: '' } as unknown as Location);
 
-        submitAction('/resend');
-        expect(submitted).toEqual([]);
-        expect(query('[data-confirm-sheet-target="title"]').textContent).toBe('Renvoyer');
+        submit('/items/a/validate');
 
-        query<HTMLButtonElement>('#destroy').click();
-
-        expect(submitted).toEqual(['/resend']);
-    });
-
-    it('sends a write with a spoofed DELETE right away, without confirmation', () => {
-        expect(query<HTMLFormElement>('form[action="/unmute"]').querySelector<HTMLInputElement>('input[name="_method"]')?.value).toBe('DELETE');
-
-        submitAction('/unmute');
-
-        expect(submitted).toEqual(['/unmute']);
+        expect(redirects).toEqual(['']);
     });
 });
 
-describe('method spoofing', () => {
-    const methodField = (url: string): HTMLInputElement | null => query<HTMLFormElement>(`form[action="${url}"]`).querySelector('input[name="_method"]');
-
-    it('still submits a POST form, carrying the method in a _method field', () => {
-        expect(query<HTMLFormElement>('form[action="/delete"]').method.toUpperCase()).toBe('POST');
-        expect(methodField('/delete')?.value).toBe('DELETE');
-        expect(methodField('/patch')?.value).toBe('PATCH');
-    });
-
-    it('adds no _method field to a plain POST nor to a method outside the closed list', () => {
-        expect(methodField('/validate')).toBeNull();
-        expect(methodField('/odd')).toBeNull();
-    });
-
-    it('still confirms a destructive DELETE before sending it', () => {
-        submitAction('/delete');
-        expect(submitted).toEqual([]);
-
-        query<HTMLButtonElement>('#destroy').click();
-
-        expect(submitted).toEqual(['/delete']);
-    });
-});
-
-describe('submission through Turbo', () => {
-    it('lets exactly one submit reach the document, never through form.submit()', () => {
-        history.replaceState(null, '', '/accounts/3?page=2');
-
-        submitAction('/validate');
-
-        expect(submitted).toEqual(['/validate']);
-        expect(redirects).toEqual(['/accounts/3?page=2']);
-        expect(nativeSubmit).not.toHaveBeenCalled();
-    });
-
-    it('lets the user\'s own submit through for an action without confirmation', () => {
-        submitAction('/validate');
-
-        expect(HTMLFormElement.prototype.requestSubmit).not.toHaveBeenCalled();
-        expect(submitted).toEqual(['/validate']);
-    });
-
-    it('sends a single POST on a double tap', () => {
-        submitAction('/validate');
-        submitAction('/validate');
-
-        expect(submitted).toEqual(['/validate']);
-    });
-
-    it('lets the action be sent again after a failed Turbo submission', () => {
-        submitAction('/validate');
-        query('form[action="/validate"]').dispatchEvent(new CustomEvent('turbo:submit-end', { detail: { success: false } }));
-
-        submitAction('/validate');
-
-        expect(submitted).toEqual(['/validate', '/validate']);
-    });
-
-    it('keeps the confirmation for the next tap after a confirmed destructive action', () => {
-        submitAction('/cancel');
-        query<HTMLButtonElement>('#destroy').click();
-
-        submitAction('/delete');
-
-        expect(submitted).toEqual(['/cancel']);
-        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
-    });
-
-    it('drops the pass when the form was detached and fired nothing', () => {
-        const form = query<HTMLFormElement>('form[action="/cancel"]');
-        // A browser fires no submit event for a detached form; jsdom would.
-        form.requestSubmit = (): void => undefined;
-        submitAction('/cancel');
-        query<HTMLButtonElement>('#destroy').click();
-
-        submitAction('/cancel');
-
-        expect(submitted).toEqual([]);
-        expect(query('#confirm').classList.contains('rm-mnb-sheet--open')).toBe(true);
-    });
-
-    it('rebuilds its panel removed by a Turbo morph, and its actions still go through', () => {
-        submitAction('/validate');
-        document.querySelectorAll('.rm-mnb-swipe-actions').forEach((panel) => panel.remove());
-
-        touch('touchstart', 300);
-        touch('touchmove', 0);
-        touch('touchend', 0);
-
-        const panel = query('.rm-mnb-swipe-actions');
-        expect(panel?.isConnected).toBe(true);
-        expect(panelButtons()).toHaveLength(ACTIONS.length);
-        submitAction('/validate');
-        expect(submitted).toEqual(['/validate', '/validate']);
-    });
-});
-
-describe('return path', () => {
-    const mountLink = async (action: Record<string, unknown>): Promise<HTMLAnchorElement> => {
-        document.body.innerHTML = `
-            <div class="rm-mnb-list-row" data-controller="swipe-actions"
-                 data-swipe-actions-actions-value='${JSON.stringify([action])}'
-                 data-swipe-actions-csrf-token-value="token"></div>`;
-        await tick();
-        const link = query<HTMLAnchorElement>('a.rm-mnb-swipe-actions__button');
+describe('return path of a link', () => {
+    const link = (): HTMLAnchorElement => {
+        const element = query<HTMLAnchorElement>('#a a.rm-mnb-swipe-actions__button');
         // jsdom would navigate on an unprevented click.
-        link.addEventListener('click', (event) => event.preventDefault());
+        element.addEventListener('click', (event) => event.preventDefault());
 
-        return link;
+        return element;
     };
-    const edit = { url: '/transactions/7/edit', icon: 'icon-edit', tone: 'accent', label: 'Modifier' };
 
-    it('adds the current path on click, read at click time', async () => {
-        history.replaceState(null, '', '/accounts/3');
-        const link = await mountLink({ ...edit, carriesReturnPath: true });
-        history.replaceState(null, '', '/accounts/3?page=2');
+    it('adds the current path on click, read at click time', () => {
+        const edit = link();
+        history.replaceState(null, '', '/accounts/3?page=4');
 
-        link.click();
+        edit.click();
 
-        expect(new URL(link.href).searchParams.get('_redirect')).toBe('/accounts/3?page=2');
+        expect(new URL(edit.href).searchParams.get('_redirect')).toBe('/accounts/3?page=4');
     });
 
-    it('leaves the link alone when not asked, or when it already has one', async () => {
-        history.replaceState(null, '', '/accounts/3');
-        const plain = await mountLink(edit);
-        plain.click();
-        expect(new URL(plain.href).searchParams.has('_redirect')).toBe(false);
+    it('keeps the one the link already has', () => {
+        const edit = link();
+        edit.href = '/items/a/edit?_redirect=/home';
 
-        const own = await mountLink({ ...edit, url: '/transactions/7/edit?_redirect=/home', carriesReturnPath: true });
-        own.click();
-        expect(new URL(own.href).searchParams.get('_redirect')).toBe('/home');
+        edit.click();
+
+        expect(new URL(edit.href).searchParams.get('_redirect')).toBe('/home');
     });
 
-    it('never carries a path that is not local', async () => {
-        const link = await mountLink({ ...edit, carriesReturnPath: true });
+    it('never carries a path that is not local', () => {
+        const edit = link();
         vi.spyOn(window, 'location', 'get').mockReturnValue({
             ...window.location,
             href: 'https://app.example//evil.tld',
@@ -332,20 +287,8 @@ describe('return path', () => {
             search: '',
         } as unknown as Location);
 
-        link.click();
+        edit.click();
 
-        expect(new URL(link.href).searchParams.has('_redirect')).toBe(false);
-    });
-
-    it('sends an empty _redirect from a page whose path is not local', () => {
-        vi.spyOn(window, 'location', 'get').mockReturnValue({
-            ...window.location,
-            pathname: '//evil.tld',
-            search: '',
-        } as unknown as Location);
-
-        submitAction('/validate');
-
-        expect(redirects).toEqual(['']);
+        expect(new URL(edit.href).searchParams.has('_redirect')).toBe(false);
     });
 });
