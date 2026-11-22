@@ -142,8 +142,10 @@ export default class extends Controller<HTMLElement> {
             this.close();
             return;
         }
-        this.open();
+        // Focus first: focusing during a smooth scroll of the track would cancel it.
+        this.setOpened(true);
         this.actions()[0]?.focus({ preventScroll: true });
+        this.open();
     }
 
     /** Click on a link marked carriesReturnPath: it takes the current path along. */

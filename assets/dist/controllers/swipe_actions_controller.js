@@ -139,8 +139,9 @@ var swipe_actions_controller_default = class extends Controller {
 			this.close();
 			return;
 		}
-		this.open();
+		this.setOpened(true);
 		this.actions()[0]?.focus({ preventScroll: true });
+		this.open();
 	}
 	/** Click on a link marked carriesReturnPath: it takes the current path along. */
 	carryReturnPath(event) {
