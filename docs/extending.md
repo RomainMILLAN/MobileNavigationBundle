@@ -65,6 +65,14 @@ final class TransactionRow
 }) }}
 ```
 
+For swipe actions around markup that is not a `ListRow`, wrap it in `Swipeable`:
+
+```twig
+<twig:MobileNavigation:Swipeable label="{{ card.name }}" :swipe="this.swipe" class="app-card">
+    {# the content that slides over the actions #}
+</twig:MobileNavigation:Swipeable>
+```
+
 ## Value attributes
 
 `valueAttributes` (on `ListRow` and `SheetRow`) is the way to put app attributes on the

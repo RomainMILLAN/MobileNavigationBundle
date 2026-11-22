@@ -14,6 +14,16 @@ import '@romainmillan/mobile-navigation-bundle/dist/mobile-navigation.css';
 
 Then map the CSS variables to your theme in **one file**.
 
+The safe areas (`env(safe-area-inset-*)`) the bars rely on need the viewport to cover the
+whole screen:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+```
+
+Every font size is in `rem`: the text follows the size the user chose in the browser or
+the system, and the bars grow with it (`min-height`, never a fixed `height`).
+
 ## CSS variables
 
 Every variable has a neutral default. They are all prefixed `--rm-mnb-`.
@@ -44,7 +54,22 @@ in your own dark selector, then override what you need:
 }
 ```
 
-`light-defaults` is available the same way.
+`light-defaults` is available the same way. Both set `color-scheme`, so native controls
+(fields, pickers, scrollbars) follow the theme. To follow the system setting:
+
+```scss
+@media (prefers-color-scheme: dark) {
+    :root {
+        @include mnb.dark-defaults;
+    }
+}
+```
+
+## Forced colors
+
+Under `forced-colors: active` (Windows contrast themes), the marks that relied on a
+background or a box-shadow get a system color: focus rings become outlines, the current tab
+and segment get a `Highlight` outline, glass surfaces a `CanvasText` border.
 
 ## Sass tokens
 

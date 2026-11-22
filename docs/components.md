@@ -24,24 +24,25 @@ spread `{{ ...stimulus_action('x', 'y') }}`) go on the root element of the compo
 | Component | Props (default) | Blocks | Notes |
 |---|---|---|---|
 | `TabBar` | `label` (required), `tabs` (required, list of `{href, label, icon, current = false, badge = null}`, `badge` being a `TabBadge`), `fab` (`null`, `{label, icon, href?, sheet?}`), `more` (`null`, `{sheet, label, icon}`), `fabAttributes` (`null`, `?StimulusAttributes`) | `tab_icon` (variable `tab`), `more_icon` (`more`), `fab_icon` (`fab`) | controllers `tab-bar`, `emit-event` (`<sheet>:toggle`); without `fab` there is no "+" and the pill takes the whole width; the "+" is a link with `href`, a button that emits `<sheet>:toggle` with `sheet`, disabled otherwise; a tab `badge` is drawn on its icon (`TabBadge::createFromCount(int $count, Tone $tone = Tone::Negative, $accessibleLabel = null)`: never below 1, "99+" above 99; with an accessible label, the number is hidden from screen readers and the label read instead); `fabAttributes` is chained to `emit-event` in a **single** `data-controller` |
-| `Sheet` | `id` (required), `title` (required), `titleHidden` (`false`), `scrollable` (`true`), `forceCloseEvents` (`['turbo:before-cache']`), `mobileOnly` (`false`) | `content` | controller `sheet`; with `mobileOnly`, above 768 px the content renders in place |
+| `Sheet` | `id` (required), `title` (required), `titleHidden` (`false`), `scrollable` (`true`), `forceCloseEvents` (`['turbo:before-cache']`), `mobileOnly` (`false`) | `content` | a `<dialog>`, controller `sheet`; with `mobileOnly`, above 768 px the content renders in place |
 | `SheetGroup` | `heading` (`null`), `closesSheet` (`false`), `footer` (`null`, a note under the group) | `content` | target `sheet:closeZone` with `closesSheet` |
 | `SheetRow` | `label` (`null`), `href` (`null`), `icon` (`null`), `tone` (`'neutral'`), `value` (`null`, string), `valueAttributes` (array, empty by default), `badge` (`null`, string), `chevron` (`false`), `checked` (`false`), `danger` (`false`), `static` (`false`), `switch` (`false`), `multiline` (`false`), `valueTone` (`null`) | `content`, `icon` | renders an `a` with `href`, a `div` with `static`, a `button` otherwise; with `switch`, the state is `aria-checked`, held by the app; with `multiline`, the value goes under the label, on several lines; `valueTone` inks the value (`neutral` or unknown = body ink) |
 | `SheetFormRow` | `action` (required), `token` (required), `label` (required), `icon` (`null`), `tone` (`'neutral'`), `danger` (`false`), `confirm` (`null`, `{title, message, confirmLabel = label}`), `fields` (`{}`, hidden fields with scalar values, `_token` refused) | — | a POST `<form>` holding a submit `SheetRow`; with `confirm`, controller `confirm-submit` asks the `ConfirmSheet` first (or `confirm()` when the sheet is not shown), and lets a single submission through |
 | `BackButton` | `href` (required), `label` (required) | — | goes to the previous page when the history proves one, otherwise to `href`, the parent fallback (`label` names it). A `data-controller` passed by the app replaces the `back` controller |
 | `CompactBar` | `title` (required), `back` (`null`, `{href, label}`) | `trailing` | target `large-title:bar` |
 | `ListSection` | `title` (`''`), `rows` (`[]`, rows already rendered) | `content` | target `list:section` |
-| `ListRow` | `title` (required), `href` (`null`), `titleStrike` (`false`), `subtitle` (`null`), `leading` (`null`, `{icon, tone}`), `value` (`null`, `{text, tone}`), `valueAttributes` (array, empty by default), `caption` (`null`, `{text, tone}`, a second value under the value), `captionAttributes` (array, empty by default), `badge` (`null`, `{label, tone}`), `chevron` (`true`), `swipe` (`null`, `{actions: list<SwipeAction>, csrfToken}`), `selectable` (`null`, `{name, value, label, attributes: ?StimulusAttributes}`), `turboFrame` (`'_top'`), `reorder` (`null`, `{label, attributes: ?StimulusAttributes}`) | `leading_icon` (variable `leading`) | controller `swipe-actions` when there are actions; `reorder` adds a drag handle shown in "Edit" mode only, the app sets its drag target on it through `attributes` |
+| `ListRow` | `title` (required), `href` (`null`), `titleStrike` (`false`), `subtitle` (`null`), `leading` (`null`, `{icon, tone}`), `value` (`null`, `{text, tone}`), `valueAttributes` (array, empty by default), `caption` (`null`, `{text, tone}`, a second value under the value), `captionAttributes` (array, empty by default), `badge` (`null`, `{label, tone}`), `chevron` (`true`), `swipe` (`null`, `{actions: list<SwipeAction>, csrfToken}`), `selectable` (`null`, `{name, value, label, attributes: ?StimulusAttributes}`), `turboFrame` (`'_top'`), `reorder` (`null`, `{label, attributes: ?StimulusAttributes}`) | `leading_icon` (variable `leading`) | controller `swipe-actions` when there are actions, rendered with an "Actions" button; `reorder` adds a drag handle (a `<button>`) shown and focusable in "Edit" mode only, the app sets its drag target, and its keyboard alternative, on it through `attributes` |
 | `SelectToggle` | — | — | a `rm-mnb-glass-pill` button that emits the window event `rm-mnb-list:toggle-selecting`; it can live outside the list; its label follows the `rm-mnb-list-selecting` class the `list` controller sets on `<html>` |
 | `EditToggle` | — | — | the twin of `SelectToggle` for the "Edit" (reorder) mode: emits `rm-mnb-list:toggle-editing`; its label follows `html.rm-mnb-list-editing` |
 | `ActionsDisc` | `sheet` (required), `label` (`null`: "More actions"), `icon` (`null`: three dots) | `icon` (variable `icon`) | a `rm-mnb-glass-disc` button that emits `<sheet>:toggle` |
 | `Hero` | `value` (required), `label` (`null`), `tone` (`'neutral'`), `valueAttributes` (array, empty by default), `caption` (`null`), `captionTone` (`'neutral'`), `captionAttributes` (array, empty by default), `progress` (`null`, 0–100, clamped), `progressLabel` (`null`), `progressTone` (`'positive'`) | `content` | the main figure of a page; the gauge is a `progressbar` |
 | `SegmentedControl` | `items` (`[]`, list of `{href, label, count = null, current = false}`), `label` (`null`) | — | links, not ARIA tabs: the current one has `aria-current="page"` |
-| `EmptyState` | `title` (required), `icon` (`null`), `message` (`null`), `action` (`null`, `{href, label}`) | `icon` (variable `icon`) | empty state outside a list |
+| `EmptyState` | `title` (required), `icon` (`null`), `message` (`null`), `action` (`null`, `{href, label}`), `headingLevel` (`2`, 1 to 6; `null` for a paragraph) | `icon` (variable `icon`) | empty state outside a list; the title is a heading |
+| `Swipeable` | `label` (required, the item name), `swipe` (required, `{actions, csrfToken}` or `SwipeActions`) | `content` | swipe actions around app markup: controller `swipe-actions`, "Actions" button |
 | `ChartFrame` | `title` (`null`), `caption` (`null`) | `content` | fixed-height frame: the app renders its chart in `content` and puts its controller on the root |
 | `LoadMore` | `href` (required), `frameId` (required) | — | `<turbo-frame>`: requires Turbo |
 | `FilterBar` | `form` (required), `sheet` (required), `field` (`null`), `placeholder` (`null`), `activeCount` (`0`) | — | controller `filter-bar` |
-| `ConfirmSheet` | `id` (`'rm-mnb-confirm'`), `forceCloseEvents` (`['turbo:before-cache']`) | — | controllers `sheet` + `confirm-sheet`; answers `rm-mnb-confirm:request` |
+| `ConfirmSheet` | `id` (`'rm-mnb-confirm'`), `forceCloseEvents` (`['turbo:before-cache']`) | — | a `<dialog role="alertdialog">`, controllers `sheet` + `confirm-sheet`; answers `rm-mnb-confirm:request` |
 
 `valueAttributes` (and `captionAttributes` of `Hero` and `ListRow`) puts `data-*` / `aria-*` attributes on the **value element**,
 e.g. `{'data-maskable': true}` for an amount the app hides on demand. `true` renders the
@@ -73,16 +74,19 @@ its `HttpMethod` is `Put`, `Patch` or `Delete`, the form also carries `_method`,
 Symfony reads with `framework.http_method_override: true` and Laravel natively; the
 controller emits that field for these three values only.
 
-To mount the controller on markup the app renders itself:
-`<div {{ rm_mnb_swipe_controller(actions, csrf_token('item')) }}>` (no `|raw` needed). Without
-action, it renders nothing.
+The actions are rendered server side, next to the row content, in a horizontal scroll-snap
+track: the browser does the swipe (no touch code). Each row also gets an "Actions" button
+(`aria-expanded`), always shown for a fine pointer, out of sight but focusable and named for
+touch, so the actions never depend on the gesture. A destructive action's form carries the
+`confirm-submit` controller.
+
+Around markup the app renders itself, use `Swipeable` (`label`, `swipe`, block `content`).
 
 ## Twig functions
 
 | Function | Returns |
 |---|---|
 | `rm_mnb_controller(name)` | the Stimulus name of a bundle controller, for `stimulus_controller()`, `stimulus_action()`, `stimulus_target()` |
-| `rm_mnb_swipe_controller(actions, csrfToken)` | the `StimulusAttributes` of the `swipe-actions` controller |
 
 ## Events
 
@@ -117,7 +121,8 @@ while the list is in that mode.
 ## Known inconsistencies (candidates for 0.2)
 
 - `value` is a **string** in `SheetRow` and a **`{text, tone}` array** in `ListRow`.
-- `icon` of a `SwipeAction` is a CSS class list rendered on an `<i>` by the controller,
-  while the `*_icon` Twig blocks hold markup; an `iconClass` name would be clearer.
+- `icon` of a `SwipeAction` is a CSS class list rendered on an `<i>` (block
+  `swipe_action_icon` of `_swipe_panel.html.twig`), while the other `*_icon` blocks hold
+  markup; an `iconClass` name would be clearer.
 - `SheetRow` boolean flags (`danger`, `static`, `switch`, `checked`, `chevron`) could
   become a variant.

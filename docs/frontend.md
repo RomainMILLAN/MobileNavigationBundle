@@ -10,16 +10,16 @@ Composer package. It ships prebuilt ESM files (`dist/`), one per controller, wit
 |---|---|
 | `tab-bar` | lens that follows the finger, haptics |
 | `emit-event` | dispatches a window event on click (sheet toggles) |
-| `sheet` | sheet: open/close commands, focus trap, drag to dismiss |
+| `sheet` | sheet: a `<dialog>` opened with `showModal()` (inert page, Esc and Android back close it), open/close commands, drag to dismiss |
 | `confirm-sheet` | the confirmation sheet (answers `rm-mnb-confirm:request`) |
 | `confirm-submit` | a POST form confirmed first (`SheetFormRow`), submitted once |
 | `large-title` | shows the compact bar when the `<h1>` scrolls out |
 | `list` | section headers deduplicated after "Load more", "Select" and "Edit" modes |
-| `swipe-actions` | actions revealed by swiping a row to the left |
+| `swipe-actions` | state of the actions a row reveals when swiped (scroll snap) or from its "Actions" button |
 | `swipe-back` | swipe from the left edge to go back (installed PWA) |
 | `back` | back link: the previous page when proven, otherwise its `href` (`BackButton`) |
 | `filter-bar` | mirrors the proxy search field into the app form |
-| `gesture` | tap / double tap / swipe / long press events |
+| `gesture` | tap / double tap (opt-in: `data-…-double-tap-value="true"`) / swipe / long press events; a context menu (right click, Shift+F10) is a long press too. Bind `touchstart` and `touchmove` with `:passive` |
 | `navigate` | navigates to a URL (same origin only) |
 
 With Webpack Encore or AssetMapper, enable them through Symfony UX (see the README). To
@@ -59,12 +59,13 @@ Optional; when present, Turbo 8. The bundle never imports `@hotwired/turbo`; it 
 | `LoadMore` | loads the next page in a frame | **requires Turbo** |
 | `forceCloseEvents` default | closes sheets before a snapshot | harmless (the event never fires) |
 
-`navigate` and `swipe-actions` only follow http(s) URLs of the current origin.
+`navigate` only follows http(s) URLs of the current origin; swipe actions are local paths
+(`LocalPath`), checked server side.
 
 ### Keeping the scroll after an action
 
-A POST swipe action is submitted with `requestSubmit()`, so Turbo takes it over (without
-Turbo, it is a native submission, as before). It sends `_redirect` = the current path and
+A writing swipe action is a POST form rendered server side, so Turbo takes it over (without
+Turbo, it is a native submission). It sends `_redirect` = the current path and
 query when that is a local path, an empty value otherwise. To keep the scroll position and the pages already loaded by `LoadMore`, the app sets:
 
 ```html
@@ -81,7 +82,7 @@ does not render a 200 HTML answer to a form. An endpoint that picks its format f
 receives `text/vnd.turbo-stream.html`, sent by Turbo on every POST.
 
 Rule for the bundle's controllers: a state or a node set outside the server rendering must be
-realigned after `turbo:morph`, or rebuilt on demand (like the swipe panel). One scheme: an
+realigned after `turbo:morph`, or rebuilt on demand. One scheme: an
 arrow function held as a property, added in `connect()`, removed in `disconnect()`, that
 applies the state again (`large-title`, `list`).
 
@@ -112,3 +113,17 @@ link) leaves such a hole on purpose.
   the large title), `document.title` otherwise.
 - A gesture cancelled by the system (`touchcancel`), or during which the history already
   moved, never navigates.
+- Back to a page, the link a keyboard user followed to leave it gets the focus again
+  (remembered in memory only, like the titles). After "Load more", the focus moves to the
+  first new row.
+
+## Page transitions
+
+With `<meta name="view-transition" content="same-origin">`, Turbo 8 renders each visit in
+a view transition and marks `<html>` with `data-turbo-visit-direction`. The bundle styles
+it (`_transitions.scss`): going forward the new page slides in from the right, going back
+the page slides away to the right; the tab bar stays still (`view-transition-name`). Under
+`prefers-reduced-motion`, Turbo's plain cross-fade remains. A back navigation already
+animated by a gesture (the bundle's swipe back, or the browser's own:
+`PopStateEvent.hasUAVisualTransition`) skips it: `html.rm-mnb-gesture-back`. Without the meta
+tag, nothing changes.
