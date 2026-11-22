@@ -102,4 +102,55 @@ final class SwipeActionTest extends TestCase
 
         SwipeAction::destructive('javascript:alert(1)', 'icon', new TranslatableMessage('x'), new TranslatableMessage('y'));
     }
+
+    #[Test]
+    public function it_should_write_with_the_method_the_route_expects_without_confirmation(): void
+    {
+        $action = SwipeAction::write('/items/1/mute', 'icon-bell', Tone::Accent, new TranslatableMessage('item.validate', domain: 'app'), HttpMethod::Delete);
+
+        self::assertSame(['url' => '/items/1/mute', 'icon' => 'icon-bell', 'tone' => 'accent', 'label' => 'Validate', 'method' => 'DELETE'], $action->payload(TestTranslator::create()));
+        self::assertFalse($action->requiresConfirmation());
+        self::assertFalse($action->isDestructive());
+    }
+
+    #[Test]
+    public function it_should_make_post_a_write_with_post(): void
+    {
+        $label = new TranslatableMessage('item.validate', domain: 'app');
+
+        self::assertEquals(SwipeAction::write('/items/1', 'icon-ok', Tone::Positive, $label), SwipeAction::post('/items/1', 'icon-ok', Tone::Positive, $label));
+    }
+
+    #[Test]
+    public function it_should_confirm_a_write_that_is_not_destructive(): void
+    {
+        $action = SwipeAction::confirmed('/items/1/resend', 'icon-send', Tone::Accent, new TranslatableMessage('item.validate', domain: 'app'), new TranslatableMessage('item.cancel_confirm', domain: 'app'));
+
+        self::assertSame([
+            'url' => '/items/1/resend',
+            'icon' => 'icon-send',
+            'tone' => 'accent',
+            'label' => 'Validate',
+            'method' => 'POST',
+            'confirm' => 'It will no longer count.',
+        ], $action->payload(TestTranslator::create()));
+        self::assertTrue($action->requiresConfirmation());
+        self::assertFalse($action->isDestructive());
+    }
+
+    #[Test]
+    public function it_should_refuse_a_confirmed_action_in_the_negative_tone(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        SwipeAction::confirmed('/items/1', 'icon-trash', Tone::Negative, new TranslatableMessage('x'), new TranslatableMessage('y'));
+    }
+
+    #[Test]
+    public function it_should_refuse_a_write_that_is_not_local(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        SwipeAction::write('https://evil.example/x', 'icon', Tone::Accent, new TranslatableMessage('x'), HttpMethod::Delete);
+    }
 }

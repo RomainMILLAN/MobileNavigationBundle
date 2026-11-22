@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file. The format is b
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.4.0 - 2026-11-22
+## 0.5.0 - 2026-11-22
 
 Audit against the modern web platform guides: native dialogs, swipe actions without
 gesture code, accessibility of the chrome and the lists.
@@ -57,6 +57,29 @@ gesture code, accessibility of the chrome and the lists.
   the row half open; an open panel stayed in place while the page scrolled. (All gone with
   the scroll-snap rewrite.)
 - The large title recomputes its collapse threshold on resize and rotation.
+
+## 0.4.0 - 2026-11-06
+
+Reported from Notifier (more swipe actions on its lists, and a swipe that lands on a sheet).
+
+### Added
+
+- `SwipeAction::write()`: a write that loses nothing, with the method its route expects
+  (an "unmute" served by a DELETE route), sent without confirmation. `post()` is now its
+  shorthand for `HttpMethod::Post`.
+- `SwipeAction::confirmed()`: a write that loses nothing but reaches someone (resend),
+  confirmed first in its own tone. It refuses `Tone::Negative`: what destroys stays
+  `destructive()`. `SwipeAction::requiresConfirmation()` for consumer tests.
+- `Sheet` props `open` and `cleanUrl` (values `openOnLoad` and `cleanUrl` of the `sheet`
+  controller): the sheet opens itself once connected, drops the value (a restored snapshot
+  does not reopen it), then replaces the address bar with `cleanUrl`. `cleanUrl` must be a
+  local path: refused at mount, ignored by the controller otherwise.
+- `contract.json`: `write` and `confirmed` reference payloads.
+
+### Changed
+
+- `SwipeAction::isDestructive()` is true only for a negative, confirmed action: a
+  `confirmed()` one requires confirmation without being destructive.
 
 ## 0.3.1 - 2026-10-30
 

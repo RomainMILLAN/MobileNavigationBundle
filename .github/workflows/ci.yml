@@ -29,7 +29,7 @@ jobs:
           - { php: '8.2', symfony: '^6.4.24', ux: '^2.25.2', dependencies: lowest }
           - { php: '8.3', symfony: '7.4.*', ux: '^2.25.2', dependencies: highest }
           - { php: '8.4', symfony: '7.4.*', ux: '^3.0', dependencies: highest }
-          - { php: '8.5', symfony: '8.0.*', ux: '^3.0', dependencies: highest }
+          - { php: '8.5', symfony: '8.1.*', ux: '^3.0', dependencies: highest }
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

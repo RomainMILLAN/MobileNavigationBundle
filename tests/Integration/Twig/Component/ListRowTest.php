@@ -177,6 +177,30 @@ final class ListRowTest extends ComponentTestCase
     }
 
     #[Test]
+    public function it_should_confirm_a_confirmed_write_in_its_own_tone(): void
+    {
+        $swipe = SwipeActions::createFromActions([SwipeAction::confirmed('/items/1/resend', 'icon-send', Tone::Accent, new TranslatableMessage('Resend'), new TranslatableMessage('It goes out again.'))], 'token');
+
+        $form = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $swipe])->filter('form[action="/items/1/resend"]');
+
+        self::assertSame(self::PREFIX.'confirm-submit', $form->attr('data-controller'));
+        self::assertSame('It goes out again.', $form->attr('data-'.self::PREFIX.'confirm-submit-message-value'));
+        self::assertCount(0, $form->filter('input[name="_method"]'));
+        self::assertSame('rm-mnb-swipe-actions__button rm-mnb-tone--accent', $form->filter('button')->attr('class'));
+    }
+
+    #[Test]
+    public function it_should_send_a_write_with_a_spoofed_method_without_confirmation(): void
+    {
+        $swipe = SwipeActions::createFromActions([SwipeAction::write('/items/1/mute', 'icon-bell', Tone::Accent, new TranslatableMessage('Unmute'), HttpMethod::Delete)], 'token');
+
+        $form = $this->renderComponent('ListRow', ['title' => 'Groceries', 'swipe' => $swipe])->filter('form[action="/items/1/mute"]');
+
+        self::assertSame('DELETE', $form->filter('input[name="_method"]')->attr('value'));
+        self::assertNull($form->attr('data-controller'));
+    }
+
+    #[Test]
     public function it_should_escape_the_action_texts(): void
     {
         $swipe = SwipeActions::createFromActions([SwipeAction::link('/x', 'icon', Tone::Accent, new TranslatableMessage('<b>X</b>'))], 'to"ken');
